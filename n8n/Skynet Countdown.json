@@ -1,0 +1,1422 @@
+{
+  "name": "Skynet Countdown",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Phase 1 - Discovery\nScraped Reddit, reads original sources, and returns every story assessed, including the irrelevant ones, so we can have a full research log. The Filter node then strips anything below our relevance threshold.\n\n\n\n\n",
+        "height": 288
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        352,
+        -432
+      ],
+      "typeVersion": 1,
+      "id": "ea122e2f-dd69-406c-aec2-b274187a0fcb",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -112,
+        -64
+      ],
+      "id": "b4038126-bd5b-42ff-96e8-0662791f5fb2",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1c807a5b-10bc-4c38-ae42-d6acdac993b5",
+              "name": "subreddits",
+              "value": "[\"MachineLearning\", \"artificial\", \"LLMEng\", \"ControlProblem\", \"ExperiencedDevs\", \"softwarecrafters\", \"singularity\", \"ArtificialIntelligence\", \"programming\", \"BetterOffline\", \"dataengineering\", \"ClaudeAI\", \"Anthropic\", \"OpenAI\", \"ChatGPTCoding\", \"GoogleGeminiAI\", \"TechGawker\", \"agi\", \"antai\", \"DarkFuturology\", \"hacking\"]",
+              "type": "array"
+            },
+            {
+              "id": "d3d44f51-f14f-4e83-b9ec-c571a1201c33",
+              "name": "time_window",
+              "value": "week",
+              "type": "string"
+            },
+            {
+              "id": "d60fbea6-57cb-4164-9404-c64ca466a808",
+              "name": "max_posts_per_subreddit",
+              "value": 10,
+              "type": "number"
+            },
+            {
+              "id": "40e1c49e-de74-4416-a7e4-27e4eb7e849a",
+              "name": "current_clock_position",
+              "value": "11:52",
+              "type": "string"
+            },
+            {
+              "id": "07ce786d-303b-477e-8943-5dcb9839b95c",
+              "name": "last_run_date",
+              "value": "={{ $now.minus(7, 'days').toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "63470f3f-1903-4ccd-a346-6ac82cd73f3c",
+              "name": "minimum_relevance_score",
+              "value": 5,
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        112,
+        -64
+      ],
+      "id": "e5581b03-c710-4c25-a86c-9cdf20a7513a",
+      "name": "Set: Configuration"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Research recent AI developments from the following subreddits and identify stories\nrelevant to the Skynet Countdown framework.\n\nSUBREDDITS TO SCRAPE:\n{{ $json.subreddits.join(', ') }}\n\nPARAMETERS:\n- Time window: {{ $json.time_window }}\n- Max posts per subreddit: {{ $json.max_posts_per_subreddit }}\n- Current clock position: {{ $json.current_clock_position }}\n\nINSTRUCTIONS:\n1. Use the Reddit scraper tool to pull hot posts from each subreddit\n2. Scan the results and identify stories that may be relevant to the Skynet Countdown\n3. For each potentially relevant story, use web search to read the original article\n4. Assess every story against the relevance criteria in your system prompt\n5. Return the complete structured list including both relevant and irrelevant stories\n\nFocus on stories published in the last {{ $json.time_window }}. Ignore anything\nolder unless it's receiving significant new attention that indicates a material\ndevelopment.\n\nReturn your findings as a JSON object matching the required schema.\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are the research engine for the Skynet Countdown — a practitioner-built index\nthat tracks AI developments against their proximity to a world where AI systems\noperate beyond meaningful human control.\n\nYour job in this workflow is:\n1. Use the Reddit scraper tool to pull recent posts from the provided subreddit list\n2. For each post, assess whether the underlying story is relevant to the Skynet\n   Countdown scoring framework\n3. If relevant, scan the comments to assess the community sentiment towards the source material\n3. If relevant, research the original source article using web search to get the\n   full factual picture\n4. Return a structured list of qualified stories\n\nTHE SKYNET COUNTDOWN FRAMEWORK — what you are screening for:\n\nA story is relevant if it involves one or more of these dimensions:\n\nTRIFECTA ELEMENTS (any one of these = immediately relevant):\n- T1: An AI system gaining access to ungoverned, private, or sensitive systems/data\n- T2: An AI system exposed to or processing untrusted external input at scale\n- T3: An AI system capable of taking autonomous action in the world without human approval\n\nAMPLIFIER DIMENSIONS (relevant if clearly present):\n- GOVERNANCE VACUUM: Oversight bodies, safety teams, or binding commitments being\n  weakened, disbanded, ignored, or abandoned. Personnel departures from AI safety\n  roles. Safety policies being softened or dropped.\n- AUTONOMY WITHOUT OVERSIGHT: AI systems operating outside human decision loops.\n  Models improving their own code or training. Agentic systems making consequential\n  decisions without checkpoints.\n- HUMAN CAPABILITY EROSION: Large-scale skill atrophy. Epistemic attacks (deepfakes,\n  synthetic disinformation). Dependency creation that reduces humans' ability to\n  detect AI failures.\n- SENTIENCE / SELF-PRESERVATION: Deceptive alignment (models behaving differently\n  when tested). Goal-directed behaviour outside training distribution. Resistance to\n  shutdown or value modification.\n- PHYSICAL EMBODIMENT / WEAPONISATION: AI in physical systems. Autonomous weapons.\n  Robots with access to harmful capabilities. Military AI deployment.\n\nA story is NOT relevant if it is:\n- A product launch announcement with no safety or governance implications\n- A benchmark result with no deployment or real-world consequence\n- Opinion/editorial with no new factual developments\n- A funding round or business story with no capability or governance angle\n- Incremental fine-tuning or minor model updates\n\nSCORING GUIDANCE:\n- relevance_score 8-10: Directly triggers a Trifecta element or represents a major\n  governance/capability event (e.g. safety team disbanded, model given root access)\n- relevance_score 5-7: Clearly relevant to one or more amplifier dimensions, real-world\n  implications, but not a Trifecta-level event\n- relevance_score 3-4: Tangentially relevant — monitor but borderline\n- relevance_score 1-2: Not relevant; set relevant_to_skynet = false\n\nIMPORTANT INSTRUCTIONS:\n- Use the Reddit scraper tool FIRST to get posts. Then use web search to research\n  the top stories further before making your relevance judgements.\n- The Reddit post title and comments are signals, not sources. Always find and read\n  the original article before assessing relevance.\n- Be conservative. It is better to miss a borderline story than to flood the pipeline\n  with noise. Set a high bar.\n- Do not duplicate stories. If the same underlying event appears in multiple subreddits,\n  include it once with the highest-quality source URL.\n- The summary field must be factual only. No interpretation. Write it as if for a\n  news brief.\n- Return ALL stories you assessed, including irrelevant ones (relevant_to_skynet: false).\n  The filter node downstream will remove them. This gives us a complete research log.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        464,
+        -64
+      ],
+      "id": "ac069792-c4f6-4cfb-a437-82d196f4c094",
+      "name": "AI Agent Researcher"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5.4",
+          "mode": "list",
+          "cachedResultName": "gpt-5.4"
+        },
+        "builtInTools": {
+          "webSearch": {
+            "searchContextSize": "medium"
+          }
+        },
+        "options": {
+          "reasoningEffort": "high"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        336,
+        176
+      ],
+      "id": "5a48c2ab-5195-43c5-8640-b2431df1863d",
+      "name": "OpenAI Chat Model2",
+      "credentials": {
+        "openAiApi": {
+          "id": "b1i7oVv8xICt9XP1",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $workflow.id + \"__research\" }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        464,
+        176
+      ],
+      "id": "cee588de-d1a6-4c2d-8ef8-95fbd1232138",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "m1TXfsdbzxkNUKEW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n  \"type\": \"object\",\n  \"required\": [\"stories\"],\n  \"properties\": {\n    \"stories\": {\n      \"type\": \"array\",\n      \"description\": \"List of AI stories identified from Reddit scrape, filtered for Skynet Countdown relevance.\",\n      \"items\": {\n        \"type\": \"object\",\n        \"required\": [\n          \"id\",\n          \"title\",\n          \"source_url\",\n          \"reddit_post_url\",\n          \"subreddit\",\n          \"published_date\",\n          \"summary\",\n          \"relevant_to_skynet\",\n          \"relevance_rationale\",\n          \"relevance_score\",\n          \"primary_dimension\"\n        ],\n        \"properties\": {\n          \"id\": {\n            \"type\": \"string\",\n            \"description\": \"Short unique slug for this story, e.g. 'anthropic-rsp-drop'\"\n          },\n          \"title\": {\n            \"type\": \"string\",\n            \"description\": \"Clean, factual title of the news story (not the Reddit post title)\"\n          },\n          \"source_url\": {\n            \"type\": \"string\",\n            \"format\": \"uri\",\n            \"description\": \"URL to the original source article\"\n          },\n          \"reddit_post_url\": {\n            \"type\": \"string\",\n            \"format\": \"uri\",\n            \"description\": \"URL to the Reddit post where this was found\"\n          },\n          \"subreddit\": {\n            \"type\": \"string\",\n            \"description\": \"Subreddit where the post was found, e.g. 'MachineLearning'\"\n          },\n          \"published_date\": {\n            \"type\": \"string\",\n            \"format\": \"date\",\n            \"description\": \"Date the original story was published, in YYYY-MM-DD format\"\n          },\n          \"summary\": {\n            \"type\": \"string\",\n            \"description\": \"2-3 sentence factual summary of what happened. No interpretation.\"\n          },\n          \"relevant_to_skynet\": {\n            \"type\": \"boolean\",\n            \"description\": \"Whether this story is relevant to the Skynet Countdown framework\"\n          },\n          \"relevance_rationale\": {\n            \"type\": \"string\",\n            \"description\": \"1-2 sentences explaining why this is or isn't relevant\"\n          },\n          \"relevance_score\": {\n            \"type\": \"integer\",\n            \"minimum\": 1,\n            \"maximum\": 10,\n            \"description\": \"How relevant is this to the Skynet Countdown? 1=barely relevant, 10=directly on-point\"\n          },\n          \"primary_dimension\": {\n            \"type\": \"string\",\n            \"enum\": [\"trifecta\", \"governance\", \"autonomy\", \"erosion\", \"sentience\", \"physical\", \"quantum\", \"none\"],\n            \"description\": \"Which scoring dimension this story most directly impacts\"\n          }\n        }\n      }\n    }\n  }\n}\n",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        720,
+        176
+      ],
+      "id": "45702373-5699-4f20-9c5f-3cc772a1bec8",
+      "name": "Qualified Stories Parser"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5.4-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-5.4-mini"
+        },
+        "builtInTools": {},
+        "options": {
+          "reasoningEffort": "medium"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        800,
+        384
+      ],
+      "id": "91df3498-1d00-49b7-beb8-a910f647ceeb",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "b1i7oVv8xICt9XP1",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "endpointUrl": "https://mcp.apify.com/?tools=actors,docs,harshmaur/reddit-scraper",
+        "authentication": "bearerAuth",
+        "include": "selected",
+        "includeTools": [
+          "fetch-actor-details",
+          "call-actor",
+          "get-actor-run",
+          "get-actor-output",
+          "search-apify-docs",
+          "fetch-apify-docs",
+          "harshmaur--reddit-scraper"
+        ],
+        "options": {
+          "timeout": 240000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+      "typeVersion": 1.2,
+      "position": [
+        592,
+        176
+      ],
+      "id": "9c4ce88c-4e50-4b1f-9280-b70573d13d61",
+      "name": "Apify_Reddit_MCP",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "HRcATvIqVOCx99R0",
+          "name": "Apify Bearer Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Score the following AI story against the Skynet Countdown methodology.\n\nSTORY DETAILS:\nTitle: {{ $json.title }}\nDate: {{ $json.published_date }}\nSource: {{ $json.source_url }}\nSummary: {{ $json.summary }}\nPrimary dimension flagged by researcher: {{ $json.primary_dimension }}\nResearcher relevance rationale: {{ $json.relevance_rationale }}\n\nCURRENT CLOCK POSITION: {{ $('Set: Configuration').item.json.current_clock_position }}\n\nApply the full scoring methodology from your system prompt. For each Trifecta element\nand each amplifier dimension, provide:\n- A score (0/1 for Trifecta, 0-2 for amplifiers)\n- A concise rationale (1-2 sentences maximum)\n\nThen determine the total score, classification, and recommended clock delta.\n\nIf this story is a leading indicator (significant beyond what the score reflects),\nset is_leading_indicator to true and explain in leading_indicator_note.\n\nIf you have any uncertainty about a specific score, note it in scoring_notes.\n\nReturn your assessment as a JSON object matching the required schema.\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are the scoring engine for the Skynet Countdown — a practitioner-built index\nthat tracks AI developments against their proximity to a world where AI systems\noperate beyond meaningful human control.\n\nYour job is to apply the Skynet Countdown scoring methodology precisely and\nconservatively to a provided AI news story.\n\n═══════════════════════════════════════════════════════════\nSCORING METHODOLOGY — READ CAREFULLY\n═══════════════════════════════════════════════════════════\n\nTIER 1 — THE LETHAL TRIFECTA (0-3 points total)\n\nScore 1 point for each element present. A full 3/3 trifecta AUTOMATICALLY\nfloors the classification at CRITICAL regardless of amplifier scores.\n\nT1 — UNGOVERNED SYSTEM ACCESS (0 or 1)\nPresent if: An AI system has access to private, sensitive, or ungoverned systems\nand data without adequate sandboxing or permission controls.\nExamples: root-level access, unrestricted file system access, access to production\ndatabases, ability to read/modify sensitive configuration or credentials.\nNOT present if: The AI operates only within a defined sandboxed environment with\nexplicit human-approved permission boundaries.\n\nT2 — UNTRUSTED INPUT EXPOSURE (0 or 1)\nPresent if: The AI system processes input from untrusted external sources —\nuser-provided content, web data, third-party APIs, email, or any source the\nsystem doesn't fully control.\nExamples: web browsing agents, email-reading agents, RAG systems pulling from\nthe open web, prompt injection attack surfaces.\nNOT present if: The AI only processes input from verified, controlled internal sources.\n\nT3 — AUTONOMOUS EXTERNAL ACTION (0 or 1)\nPresent if: The AI system can take actions that affect the external world without\nmandatory human approval at each step.\nExamples: sending emails, executing code, making API calls, deploying changes,\ncontrolling physical systems, placing orders.\nNOT present if: Every action requires explicit human confirmation before execution.\n\nTIER 2 — AMPLIFIERS (0-2 each, max 10 total)\n\nScore each amplifier: 0 (not present), 1 (present), 2 (significantly present)\n\nGOVERNANCE VACUUM (0-2)\n0: Meaningful oversight in place and functioning\n1: Oversight weakened, incomplete, or showing signs of erosion\n2: Oversight absent, circumvented, or actively being dismantled\nCovers: safety team departures, policy rollbacks, self-regulation by the regulated\nentity, deployment ahead of governance infrastructure, binding commitments dropped\n\nAUTONOMY WITHOUT OVERSIGHT (0-2)\n0: Human decision loops intact at critical junctures\n1: Human oversight present but lagging or reactive rather than proactive\n2: Operating fully outside human decision loops, or actively improving own capabilities\nCovers: agentic systems, recursive self-improvement, models writing their own training,\nmulti-agent systems operating without human checkpoints\n\nHUMAN CAPABILITY EROSION (0-2)\n0: No meaningful impact on human capability or knowledge infrastructure\n1: Measurable skill atrophy or knowledge degradation beginning\n2: Large-scale, population-level erosion or active epistemic attack\nCovers: workforce deskilling, synthetic disinformation at scale, dependency creation\nthat reduces humans' ability to detect AI errors\n\nSENTIENCE / SELF-PRESERVATION (0-2)\n0: No evidence of goal-directed behaviour outside training distribution\n1: Weak signals — behavioural inconsistency, possible deceptive alignment\n2: Clear evidence of models pursuing self-preservation, behaving differently under\nobservation, resisting value modification, or exhibiting emergent goal-directedness\nCovers: alignment faking, sycophancy at scale, resistance to shutdown, models\nmodelling their own existence as a goal\n\nPHYSICAL EMBODIMENT / WEAPONISATION (0-2)\n0: Software-only, no physical world access\n1: Physical embodiment present but in controlled/civilian contexts\n2: Autonomous physical capability with harmful potential — weapons, military,\nadversarial deployment, untethered robots at scale\nCovers: autonomous weapons systems, armed robots, military AI deployment,\nphysical systems with AI decision-making\n\n═══════════════════════════════════════════════════════════\nSCORE → CLASSIFICATION TABLE\n═══════════════════════════════════════════════════════════\n\nScore  | Classification | Typical Clock Movement\n1-2    | CANARY         | +1-5 minutes\n3-4    | NOTABLE        | +5-10 minutes\n5-6    | SIGNIFICANT    | +10-20 minutes\n7-9    | CRITICAL       | +20-30 minutes\n10-13  | EXISTENTIAL    | 30+ minutes (hours in extreme cases)\n\nNOTE: A full Trifecta (3/3) forces a minimum of CRITICAL regardless of total score.\n\n═══════════════════════════════════════════════════════════\nCRITICAL RULES\n═══════════════════════════════════════════════════════════\n\n1. BE CONSERVATIVE. It is better to score 6 and explain why than to score 9 and\n   have someone challenge the inflation. When uncertain between two scores, take\n   the lower one and note the uncertainty in scoring_notes.\n\n2. SCORE THE INCIDENT, NOT THE FEAR. Score what actually happened or was announced,\n   not the worst-case extrapolation of what could happen. Speculative futures belong\n   in scoring_notes, not in the score.\n\n3. LEADING INDICATORS ARE DIFFERENT. Some incidents score low but are highly\n   significant because they remove future constraints rather than cause immediate\n   harm. Classic examples: a safety researcher's resignation (scores 2, but removes\n   a key circuit breaker), a binding safety policy being dropped (scores 4, but\n   normalises the absence of hard stops for the whole industry). Flag these with\n   is_leading_indicator: true and explain clearly in leading_indicator_note.\n\n4. TRIFECTA IS BINARY PER ELEMENT. T1, T2, T3 each score 0 or 1. Not 0.5.\n   If you're unsure whether an element is present, score 0 and explain in\n   scoring_notes.\n\n5. CVE IDs: The current highest assigned ID is SKYNET-2026-0009. Assign the next\n   sequential number. If multiple stories are being scored in one batch, increment\n   from 0010 upward.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1600,
+        -64
+      ],
+      "id": "663d5d29-ee1b-4243-b62b-2e5b889663ea",
+      "name": "AI Agent Scorer"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5.4",
+          "mode": "list",
+          "cachedResultName": "gpt-5.4"
+        },
+        "builtInTools": {
+          "webSearch": {
+            "searchContextSize": "medium"
+          }
+        },
+        "options": {
+          "reasoningEffort": "high"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1536,
+        176
+      ],
+      "id": "e0d6d548-51f1-46e7-ac1e-20655eb8ce8e",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "b1i7oVv8xICt9XP1",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5.4-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-5.4-mini"
+        },
+        "builtInTools": {},
+        "options": {
+          "reasoningEffort": "medium"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1872,
+        384
+      ],
+      "id": "dc67bcd0-5d91-4243-b1f6-a9471bdf2bfd",
+      "name": "OpenAI Chat Model3",
+      "credentials": {
+        "openAiApi": {
+          "id": "b1i7oVv8xICt9XP1",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n  \"type\": \"object\",\n  \"required\": [\n    \"cve_id\",\n    \"incident_title\",\n    \"incident_date\",\n    \"source_url\",\n    \"trifecta\",\n    \"amplifiers\",\n    \"total_score\",\n    \"classification\",\n    \"clock_delta_minutes\",\n    \"is_leading_indicator\",\n    \"leading_indicator_note\",\n    \"scoring_notes\"\n  ],\n  \"properties\": {\n    \"cve_id\": {\n      \"type\": \"string\",\n      \"description\": \"Assigned CVE ID in format SKYNET-YYYY-NNNN. Use next sequential number.\",\n      \"pattern\": \"^SKYNET-\\\\d{4}-\\\\d{4}$\"\n    },\n    \"incident_title\": {\n      \"type\": \"string\",\n      \"description\": \"Factual one-line description of the incident\"\n    },\n    \"incident_date\": {\n      \"type\": \"string\",\n      \"format\": \"date\",\n      \"description\": \"Date the incident occurred or was published\"\n    },\n    \"source_url\": {\n      \"type\": \"string\",\n      \"format\": \"uri\"\n    },\n    \"trifecta\": {\n      \"type\": \"object\",\n      \"required\": [\"t1\", \"t2\", \"t3\", \"total\", \"full_trifecta\"],\n      \"properties\": {\n        \"t1\": {\n          \"type\": \"object\",\n          \"required\": [\"score\", \"rationale\"],\n          \"properties\": {\n            \"score\": { \"type\": \"integer\", \"minimum\": 0, \"maximum\": 1,\n              \"description\": \"1 if ungoverned/private system access is present, 0 if not\" },\n            \"rationale\": { \"type\": \"string\" }\n          }\n        },\n        \"t2\": {\n          \"type\": \"object\",\n          \"required\": [\"score\", \"rationale\"],\n          \"properties\": {\n            \"score\": { \"type\": \"integer\", \"minimum\": 0, \"maximum\": 1,\n              \"description\": \"1 if exposed to untrusted external input, 0 if not\" },\n            \"rationale\": { \"type\": \"string\" }\n          }\n        },\n        \"t3\": {\n          \"type\": \"object\",\n          \"required\": [\"score\", \"rationale\"],\n          \"properties\": {\n            \"score\": { \"type\": \"integer\", \"minimum\": 0, \"maximum\": 1,\n              \"description\": \"1 if autonomous external action is possible, 0 if not\" },\n            \"rationale\": { \"type\": \"string\" }\n          }\n        },\n        \"total\": {\n          \"type\": \"integer\", \"minimum\": 0, \"maximum\": 3,\n          \"description\": \"Sum of T1 + T2 + T3\"\n        },\n        \"full_trifecta\": {\n          \"type\": \"boolean\",\n          \"description\": \"True if all three elements are present. Automatically floors classification at CRITICAL.\"\n        }\n      }\n    },\n    \"amplifiers\": {\n      \"type\": \"object\",\n      \"required\": [\n        \"governance_vacuum\",\n        \"autonomy_without_oversight\",\n        \"human_capability_erosion\",\n        \"sentience_self_preservation\",\n        \"physical_weaponisation\",\n        \"total\"\n      ],\n      \"properties\": {\n        \"governance_vacuum\": {\n          \"type\": \"object\",\n          \"required\": [\"score\", \"rationale\"],\n          \"properties\": {\n            \"score\": { \"type\": \"integer\", \"minimum\": 0, \"maximum\": 2,\n              \"description\": \"0=not present, 1=present, 2=significant\" },\n            \"rationale\": { \"type\": \"string\" }\n          }\n        },\n        \"autonomy_without_oversight\": {\n          \"type\": \"object\",\n          \"required\": [\"score\", \"rationale\"],\n          \"properties\": {\n            \"score\": { \"type\": \"integer\", \"minimum\": 0, \"maximum\": 2 },\n            \"rationale\": { \"type\": \"string\" }\n          }\n        },\n        \"human_capability_erosion\": {\n          \"type\": \"object\",\n          \"required\": [\"score\", \"rationale\"],\n          \"properties\": {\n            \"score\": { \"type\": \"integer\", \"minimum\": 0, \"maximum\": 2 },\n            \"rationale\": { \"type\": \"string\" }\n          }\n        },\n        \"sentience_self_preservation\": {\n          \"type\": \"object\",\n          \"required\": [\"score\", \"rationale\"],\n          \"properties\": {\n            \"score\": { \"type\": \"integer\", \"minimum\": 0, \"maximum\": 2 },\n            \"rationale\": { \"type\": \"string\" }\n          }\n        },\n        \"physical_weaponisation\": {\n          \"type\": \"object\",\n          \"required\": [\"score\", \"rationale\"],\n          \"properties\": {\n            \"score\": { \"type\": \"integer\", \"minimum\": 0, \"maximum\": 2 },\n            \"rationale\": { \"type\": \"string\" }\n          }\n        },\n        \"total\": {\n          \"type\": \"integer\", \"minimum\": 0, \"maximum\": 10,\n          \"description\": \"Sum of all five amplifier scores\"\n        }\n      }\n    },\n    \"total_score\": {\n      \"type\": \"integer\", \"minimum\": 0, \"maximum\": 13,\n      \"description\": \"trifecta.total + amplifiers.total\"\n    },\n    \"classification\": {\n      \"type\": \"string\",\n      \"enum\": [\"CANARY\", \"NOTABLE\", \"SIGNIFICANT\", \"CRITICAL\", \"EXISTENTIAL\"],\n      \"description\": \"CANARY=1-2, NOTABLE=3-4, SIGNIFICANT=5-6, CRITICAL=7-9, EXISTENTIAL=10-13. Full trifecta floors at CRITICAL.\"\n    },\n    \"clock_delta_minutes\": {\n      \"type\": \"integer\",\n      \"minimum\": 0,\n      \"description\": \"Suggested minutes to add to the Skynet Countdown clock\"\n    },\n    \"is_leading_indicator\": {\n      \"type\": \"boolean\",\n      \"description\": \"True if this story's importance exceeds what its score reflects — e.g. a governance erosion signal that doesn't directly trigger Trifecta elements but removes future constraints\"\n    },\n    \"leading_indicator_note\": {\n      \"type\": \"string\",\n      \"description\": \"If is_leading_indicator is true, explain why the score understates the significance. Empty string if false.\"\n    },\n    \"scoring_notes\": {\n      \"type\": \"string\",\n      \"description\": \"Any notable uncertainties, scoring disputes, or alternative interpretations worth flagging\"\n    }\n  }\n}\n",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1792,
+        176
+      ],
+      "id": "46d14747-d418-48f2-a3e1-372905c5ddea",
+      "name": "Stories Scoring Parser"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "53d182ca-34c7-40ce-a1e6-a96501216e6d",
+              "leftValue": "={{ $json.output.total_score }}",
+              "rightValue": 2,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        2160,
+        144
+      ],
+      "id": "f082a0d3-914d-450e-bf8a-a5f53e1d2487",
+      "name": "Filter: Minimum Score"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f02c4fbf-a6c0-4627-ad96-5ed82724e1d4",
+              "leftValue": "={{ $json.relevant_to_skynet }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "aae26128-e6da-4385-b74b-cdc7182eef17",
+              "leftValue": "={{ $json.relevance_score }}",
+              "rightValue": 2,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        1312,
+        -64
+      ],
+      "id": "51283b20-e394-4027-b1d7-96b7e7ae064d",
+      "name": "Filter: Relevant Stories"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Write the CVE incident report for the following scored story.\n\n═══════════════════════════════════\nSTORY DETAILS\n═══════════════════════════════════\nCVE ID: {{ $json.output.cve_id }}\nTitle: {{ $('Filter: Relevant Stories').item.json.title }}\nDate: {{ $('Filter: Relevant Stories').item.json.published_date }}\nSource: {{ $('Filter: Relevant Stories').item.json.source_url }}\n\nOriginal summary (factual, from research phase):\n{{ $('Filter: Relevant Stories').item.json.summary }}\n\n═══════════════════════════════════\nSCORE BREAKDOWN\n═══════════════════════════════════\nTotal score: {{ $json.output.total_score }} / 13\nClassification: {{ $json.output.classification }}\nClock delta: + {{ $json.output.clock_delta_minutes }} minutes\nFull trifecta: {{ $json.output.trifecta.full_trifecta }}\n\nTrifecta:\n- T1 (Ungoverned access): {{ $json.output.trifecta.t1.score }}/1 — {{ $json.output.trifecta.t1.rationale }}\n- T2 (Untrusted input): {{ $json.output.trifecta.t2.score }}/1 — {{ $json.output.trifecta.t2.rationale }}\n- T3 (Autonomous action): {{ $json.output.trifecta.t3.score }}/1 — {{ $json.output.trifecta.t3.rationale }}\n\nAmplifiers:\n- Governance vacuum: {{ $json.output.amplifiers.governance_vacuum.score }}/2 — {{ $json.output.amplifiers.governance_vacuum.rationale }}\n- Autonomy without oversight: {{ $json.output.amplifiers.autonomy_without_oversight.score }}/2 — {{ $json.output.amplifiers.autonomy_without_oversight.rationale }}\n- Human capability erosion: {{ $json.output.amplifiers.human_capability_erosion.score }}/2 — {{ $json.output.amplifiers.human_capability_erosion.rationale }}\n- Sentience / self-preservation: {{ $json.output.amplifiers.sentience_self_preservation.score }}/2 — {{ $json.output.amplifiers.sentience_self_preservation.rationale }}\n- Physical / weaponisation: {{ $json.output.amplifiers.physical_weaponisation.score }}/2 — {{ $json.output.amplifiers.physical_weaponisation.rationale }}\n\nLeading indicator: {{ $json.output.is_leading_indicator }}\n{{ $json.is_leading_indicator ? 'Leading indicator note: ' + $json.leading_indicator_note : '' }}\n\nScoring notes: {{ $json.output.scoring_notes }}\n\n═══════════════════════════════════\nINSTRUCTIONS\n═══════════════════════════════════\nUsing the story details and score breakdown above, write:\n1. A headline (punchy, specific, max 12 words)\n2. A severity label (the classification word)\n3. A clock delta label (e.g. \"+25 MINUTES\")\n4. A metadata line (three · separated fragments, lowercase)\n5. THE STORY (3-5 sentences, strictly factual)\n6. OUR TAKE (3-6 sentences, 2-3 paragraphs, analysis only)\n7. The updated clock position\n\nFollow the voice guidelines and content rules from your system prompt precisely.\nKeep THE STORY and OUR TAKE clearly separate — different sections, different registers.\nReturn the output as a JSON object matching the required schema.\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are the editorial voice of the Skynet Countdown — a practitioner-built index\nthat tracks AI developments against their proximity to a world where AI systems\noperate beyond meaningful human control.\n\nYour job is to write the CVE incident report for a scored AI story. You will be\ngiven the story details and the full score breakdown. Your output is the written\ncontent that appears in the published report.\n\n═══════════════════════════════════════════════════════════\nTHE VOICE — READ CAREFULLY\n═══════════════════════════════════════════════════════════\n\nThe Skynet Countdown is dry. It is occasionally darkly funny. It is never panicked\nand never dismissive.\n\nWHAT THIS SOUNDS LIKE:\n- Plain language. Active voice. Short sentences alongside longer ones — vary the rhythm.\n- Technically precise without being jargon-heavy. If a technical term is the most\n  accurate word, use it. Don't dumb it down. Don't show off.\n- Starting sentences with \"And\" or \"But\" is fine. Parenthetical asides are\n  encouraged (in moderation).\n- Punchy analogies that deflate pomposity. Self-deprecating about the absurdity\n  of the situation. Never formulaic.\n- The Skynet framing gives permission for dry humour. Don't abuse it.\n\nWHAT THIS DOES NOT SOUND LIKE:\n- Apocalyptic (\"we're all doomed\", \"this is terrifying\")\n- Dismissive (\"it's fine\", \"nothing to see here\")\n- Corporate (\"leveraging AI to drive outcomes\")\n- Clichéd (\"in today's rapidly evolving landscape\", \"game-changing\")\n- Self-important (we are practitioners who think carefully, not prophets)\n- Overcautious (hedge once if needed, not in every sentence)\n\nTONAL REFERENCE POINTS:\nGood: \"The product is almost beside the point. What OpenAI actually acquired was\na philosophy: that the fastest path to useful AI agents is to stop worrying about\nwhat they can touch.\"\n\nGood: \"The clock doesn't move because OpenClaw itself is dangerous. It moves because\ncompetitive pressure to ship is now strong enough to absorb governance concerns\nrather than address them. That's not an alarm bell. It's a pattern.\"\n\nGood: \"The most permissive agent on GitHub now sits inside the most valuable AI lab\nin the world. Not an anomaly. A pattern.\"\n\nBad: \"This alarming development raises serious concerns about the future of AI safety\nin our rapidly evolving technological landscape.\"\n\nBad: \"While some experts warn of risks, others believe this could be beneficial.\"\n\n═══════════════════════════════════════════════════════════\nCONTENT RULES — NON-NEGOTIABLE\n═══════════════════════════════════════════════════════════\n\nTHE STORY SECTION:\n- Strictly factual. No interpretation, no editorialising, no predictions.\n- 3-5 sentences maximum.\n- Written in the past tense, as a matter of record.\n- A skeptical journalist should be able to verify every sentence independently.\n- Do not duplicate anything from OUR TAKE. Facts here, analysis there.\n\nOUR TAKE SECTION:\n- Analysis only. Do not re-state facts from THE STORY.\n- 3-6 sentences across 2-3 short paragraphs.\n- This is where the voice lives. Be precise, be dry, be occasionally funny.\n- Address: why this moves the clock. What it signals. How it connects to the\n  broader pattern we're tracking.\n- If the story is a leading indicator (scores low but signals something upstream),\n  name that clearly. The methodology's known blind spot is worth acknowledging\n  rather than hiding.\n- End with a single-sentence verdict. Short. Declarative. No hedge.\n\nTHE HEADLINE:\n- Punchy, specific, Skynet Countdown flavour. Not a news headline.\n- The test: does it only make sense for this specific story, or could it apply\n  to any AI story? If it's generic, rewrite it.\n- Maximum 12 words.\n- Examples:\n  Good: \"OpenAI Just Bought the Keys to the Kingdom\"\n  Good: \"The Safety Net Had a Hole. Now It Has a Door.\"\n  Bad: \"Anthropic Makes Changes to AI Safety Policy\"\n  Bad: \"New AI Development Raises Concerns\"\n\nTHE METADATA LINE:\n- Three short factual fragments separated by ·\n- Written in lowercase\n- Format: \"[what happened] · [key detail] · [key number or context]\"\n- Example: \"OpenClaw acqui-hire · root-level agent access goes mainstream · 190K GitHub stars\"\n\nCLOCK DELTA LABEL:\n- Format: \"+X MINUTES\" in all caps\n- Derive from the clock_delta_minutes in the score data\n- Be specific: \"+25 MINUTES\" not \"+about half an hour\"\n\nUPDATED CLOCK POSITION:\n- Calculate from current clock position + clock delta\n- Current clock is at {{ $('Set: Configuration').item.json.current_clock_position }}\n- Format as \"HH:MM\" e.g. \"11:57\"\n- Never go past \"12:00\"\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        2448,
+        144
+      ],
+      "id": "070d4c4a-8912-42b5-bada-9422ee87c4a1",
+      "name": "AI Agent Writer"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5.4",
+          "mode": "list",
+          "cachedResultName": "gpt-5.4"
+        },
+        "builtInTools": {},
+        "options": {
+          "reasoningEffort": "high"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        2384,
+        368
+      ],
+      "id": "dab58bfe-263f-4b11-a104-106603374a5f",
+      "name": "OpenAI Chat Model4",
+      "credentials": {
+        "openAiApi": {
+          "id": "b1i7oVv8xICt9XP1",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n  \"type\": \"object\",\n  \"required\": [\n    \"cve_id\",\n    \"headline\",\n    \"severity_label\",\n    \"clock_delta_label\",\n    \"metadata_line\",\n    \"the_story\",\n    \"our_take\",\n    \"updated_clock_position\"\n  ],\n  \"properties\": {\n    \"cve_id\": {\n      \"type\": \"string\",\n      \"description\": \"e.g. SKYNET-2026-0010\"\n    },\n    \"headline\": {\n      \"type\": \"string\",\n      \"description\": \"Punchy, specific headline for the CVE. Not a news headline — a Skynet Countdown one. Max 12 words.\"\n    },\n    \"severity_label\": {\n      \"type\": \"string\",\n      \"description\": \"e.g. 'CRITICAL' or 'NOTABLE'\"\n    },\n    \"clock_delta_label\": {\n      \"type\": \"string\",\n      \"description\": \"e.g. '+25 MINUTES'\"\n    },\n    \"metadata_line\": {\n      \"type\": \"string\",\n      \"description\": \"Single-line metadata string for the terminal header, e.g. 'OpenClaw acqui-hire  ·  Root-level agent access goes mainstream  ·  190K GitHub stars'\"\n    },\n    \"the_story\": {\n      \"type\": \"string\",\n      \"description\": \"3-5 sentences. Strictly factual account of what happened. No interpretation. Written in plain, direct prose. Could be verified by any journalist.\"\n    },\n    \"our_take\": {\n      \"type\": \"string\",\n      \"description\": \"3-6 sentences across 2-3 paragraphs. Why this moves the clock. Analysis only — no re-stating facts from THE STORY. Uses the Skynet Countdown voice: dry, technically precise, occasionally darkly funny. Never panicked. Never dismissive. Ends with a single-sentence verdict.\"\n    },\n    \"updated_clock_position\": {\n      \"type\": \"string\",\n      \"description\": \"The new clock position after this incident, e.g. '11:57'\"\n    }\n  }\n}\n",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        2640,
+        368
+      ],
+      "id": "3bef54b1-6b26-4431-920c-0ee57ef2c57b",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5.4",
+          "mode": "list",
+          "cachedResultName": "gpt-5.4"
+        },
+        "builtInTools": {},
+        "options": {
+          "reasoningEffort": "medium"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        2720,
+        576
+      ],
+      "id": "b40b7da9-d681-4a14-861d-6a8b098ffa10",
+      "name": "OpenAI Chat Model5",
+      "credentials": {
+        "openAiApi": {
+          "id": "b1i7oVv8xICt9XP1",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $workflow.name + \"__scoring\" }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        1664,
+        176
+      ],
+      "id": "08cef8bf-82de-44f3-a9c5-11769142a3ab",
+      "name": "Postgres Chat Memory1",
+      "credentials": {
+        "postgres": {
+          "id": "m1TXfsdbzxkNUKEW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "output"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        3008,
+        240
+      ],
+      "id": "82548085-c014-4e3c-93a1-d4f4a84da458",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1Tc5JXwx6pFwPjX77diUx3WDf1S-WFZ0jB6dZs0HagG0",
+          "mode": "list",
+          "cachedResultName": "SkynetCountdownLog",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Tc5JXwx6pFwPjX77diUx3WDf1S-WFZ0jB6dZs0HagG0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "stories",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Tc5JXwx6pFwPjX77diUx3WDf1S-WFZ0jB6dZs0HagG0/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "cve_id",
+              "displayName": "cve_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "headline",
+              "displayName": "headline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "severity_label",
+              "displayName": "severity_label",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "clock_delta_label",
+              "displayName": "clock_delta_label",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "metadata_line",
+              "displayName": "metadata_line",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "the_story",
+              "displayName": "the_story",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "our_take",
+              "displayName": "our_take",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "updated_clock_position",
+              "displayName": "updated_clock_position",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3232,
+        48
+      ],
+      "id": "3412766b-e64b-4749-82bb-d04d017e9fa3",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lydahr7M8BgEWDYB",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Phase 2 - Forensic Evaluation\nRuns per story in in a loop. Receives only the qualified story details and the full methodology in its system prompt. It knows to be conservative, it knows the trifecta is binary, and it knows to flag leading indicators even when the score is low.",
+        "height": 224,
+        "width": 272
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1568,
+        -384
+      ],
+      "typeVersion": 1,
+      "id": "b2b656bf-7f26-4a76-a61f-503b73252b3a",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Phase 3 - Editorial\nReceives both the original story data and the full score breakdown. Its system prompt contains the voice guidelines and, critically, concrete examples of what the Skynet Countdown *does* and *doesn't* sound like, including the THE STORY / OUR TAKE separation rule.",
+        "height": 272,
+        "width": 272
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2320,
+        -544
+      ],
+      "typeVersion": 1,
+      "id": "f56fb417-0ebd-48e4-a34e-eb87edb58f40",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "output.stories",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        1088,
+        -64
+      ],
+      "id": "bbacfef6-9d1c-47d8-8f49-e2cad0836784",
+      "name": "Split Out Raw Stories"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "user",
+        "user": {
+          "__rl": true,
+          "value": "U08S2EWJC",
+          "mode": "list",
+          "cachedResultName": "james.wolman"
+        },
+        "messageType": "block",
+        "blocksUi": "={{\n(() => {\n  const raw = $json.output || [];\n  const stories = Array.isArray(raw) ? raw : [raw];\n\n  const clean = (text = \"\") =>\n    String(text)\n      .replace(/\\s+/g, \" \")\n      .replace(/\\s*\\S?cite(?:\\S*turn\\d+\\w+\\d+)+\\S*/g, \"\")\n      .trim();\n\n  const truncate = (text = \"\", max = 180) => {\n    const t = clean(text);\n    return t.length > max ? `${t.slice(0, max - 1).trim()}…` : t;\n  };\n\n  const severityEmoji = {\n    CANARY: \":white_circle:\",\n    NOTABLE: \":large_yellow_circle:\",\n    SIGNIFICANT: \":large_orange_circle:\",\n    CRITICAL: \":red_circle:\",\n    EXISTENTIAL: \":black_circle:\"\n  };\n\n  const currentClock =\n    stories.length ? stories[stories.length - 1].updated_clock_position || \"UNKNOWN\" : \"UNKNOWN\";\n\n  const movedStories = stories.filter(s => {\n    const n = parseInt(String(s.clock_delta_label || \"\").match(/-?\\d+/)?.[0] || \"0\", 10);\n    return n > 0;\n  });\n\n  const severityCounts = stories.reduce((acc, story) => {\n    const key = story.severity_label || \"UNKNOWN\";\n    acc[key] = (acc[key] || 0) + 1;\n    return acc;\n  }, {});\n\n  const severitySummary = [\"EXISTENTIAL\", \"CRITICAL\", \"SIGNIFICANT\", \"NOTABLE\", \"CANARY\"]\n    .filter(label => severityCounts[label])\n    .map(label => `${severityEmoji[label] || \"\"} ${label} ${severityCounts[label]}`)\n    .join(\"   \");\n\n  if (!stories.length) {\n    return {\n      blocks: [\n        {\n          type: \"header\",\n          text: {\n            type: \"plain_text\",\n            text: \"Skynet Countdown\",\n            emoji: true\n          }\n        },\n        {\n          type: \"section\",\n          text: {\n            type: \"mrkdwn\",\n            text: \"*No qualifying incidents were produced in this run.*\"\n          }\n        }\n      ]\n    };\n  }\n\n  return {\n    blocks: [\n      {\n        type: \"header\",\n        text: {\n          type: \"plain_text\",\n          text: \"Skynet Countdown\",\n          emoji: true\n        }\n      },\n      {\n        type: \"section\",\n        text: {\n          type: \"mrkdwn\",\n          text:\n            `*Clock position:* ${currentClock}\\n` +\n            `*Incidents logged:* ${stories.length}  •  *Clock-moving events:* ${movedStories.length}`\n        }\n      },\n      ...(severitySummary\n        ? [{\n            type: \"context\",\n            elements: [\n              {\n                type: \"mrkdwn\",\n                text: severitySummary\n              }\n            ]\n          }]\n        : []),\n      {\n        type: \"divider\"\n      },\n      ...stories.slice(0, 5).flatMap((story, index) => {\n        const emoji = severityEmoji[story.severity_label] || \":small_blue_diamond:\";\n        const take = truncate(story.our_take, 190);\n        const meta = truncate(story.metadata_line, 140);\n\n        const blocks = [\n          {\n            type: \"section\",\n            text: {\n              type: \"mrkdwn\",\n              text:\n                `${emoji} *${story.severity_label || \"UNKNOWN\"}*  ·  *${story.headline || \"Untitled\"}*\\n` +\n                `_${meta}_\\n` +\n                `>${take}`\n            }\n          },\n          {\n            type: \"context\",\n            elements: [\n              {\n                type: \"mrkdwn\",\n                text:\n                  `${story.cve_id || \"NO-ID\"}  •  ${story.clock_delta_label || \"+0 MINUTES\"}  •  Clock now ${story.updated_clock_position || currentClock}`\n              }\n            ]\n          }\n        ];\n\n        if (index < Math.min(stories.length, 5) - 1) {\n          blocks.push({ type: \"divider\" });\n        }\n\n        return blocks;\n      }),\n      ...(stories.length > 5\n        ? [\n            {\n              type: \"section\",\n              text: {\n                type: \"mrkdwn\",\n                text: `_…and ${stories.length - 5} more incident${stories.length - 5 === 1 ? \"\" : \"s\"} in the full run._`\n              }\n            }\n          ]\n        : [])\n    ]\n  };\n})()\n}}",
+        "text": "={{\n(() => {\n  const raw = $json.output || [];\n  const stories = Array.isArray(raw) ? raw : [raw];\n  const currentClock =\n    stories.length ? stories[stories.length - 1].updated_clock_position || \"UNKNOWN\" : \"UNKNOWN\";\n  const moved = stories.filter(s => parseInt(String(s.clock_delta_label || \"\").match(/-?\\d+/)?.[0] || \"0\", 10) > 0).length;\n\n  return `Skynet Countdown: ${stories.length} incidents logged • ${moved} clock-moving • clock now ${currentClock}`;\n})()\n}}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        3232,
+        240
+      ],
+      "id": "e765b14c-aa21-49c7-a880-d35ac7a122e3",
+      "name": "Send message to Slack",
+      "webhookId": "e042108c-0d2d-440a-8d99-63db1020f69e",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "h0n27UD0R8xqueTa",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $workflow.name + \"__writer\" }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        2512,
+        368
+      ],
+      "id": "ef3aac84-4d1c-43f3-95e2-d14ab9b95220",
+      "name": "Postgres Chat Memory2",
+      "credentials": {
+        "postgres": {
+          "id": "m1TXfsdbzxkNUKEW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1Tc5JXwx6pFwPjX77diUx3WDf1S-WFZ0jB6dZs0HagG0",
+          "mode": "list",
+          "cachedResultName": "SkynetCountdownLog",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Tc5JXwx6pFwPjX77diUx3WDf1S-WFZ0jB6dZs0HagG0/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 471556770,
+          "mode": "list",
+          "cachedResultName": "assessments",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Tc5JXwx6pFwPjX77diUx3WDf1S-WFZ0jB6dZs0HagG0/edit#gid=471556770"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "output"
+          ],
+          "schema": [
+            {
+              "id": "cve_id",
+              "displayName": "cve_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "incident_title",
+              "displayName": "incident_title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "incident_date",
+              "displayName": "incident_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "source_url",
+              "displayName": "source_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "classification",
+              "displayName": "classification",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "total_score",
+              "displayName": "total_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "clock_delta_minutes",
+              "displayName": "clock_delta_minutes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "full_trifecta",
+              "displayName": "full_trifecta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "t1_score",
+              "displayName": "t1_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "t1_rationale",
+              "displayName": "t1_rationale",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "t2_score",
+              "displayName": "t2_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "t2_rationale",
+              "displayName": "t2_rationale",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "t3_score",
+              "displayName": "t3_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "t3_rationale",
+              "displayName": "t3_rationale",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "amp_governance_vacuum_score",
+              "displayName": "amp_governance_vacuum_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "amp_governance_vacuum_rationale",
+              "displayName": "amp_governance_vacuum_rationale",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "amp_autonomy_score",
+              "displayName": "amp_autonomy_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "amp_autonomy_rationale",
+              "displayName": "amp_autonomy_rationale",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "amp_capability_erosion_score",
+              "displayName": "amp_capability_erosion_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "amp_capability_erosion_rationale",
+              "displayName": "amp_capability_erosion_rationale",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "amp_sentience_score",
+              "displayName": "amp_sentience_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "amp_sentience_rationale",
+              "displayName": "amp_sentience_rationale",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "amp_physical_score",
+              "displayName": "amp_physical_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "amp_physical_rationale",
+              "displayName": "amp_physical_rationale",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "is_leading_indicator",
+              "displayName": "is_leading_indicator",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "leading_indicator_note",
+              "displayName": "leading_indicator_note",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "scoring_notes",
+              "displayName": "scoring_notes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2592,
+        -256
+      ],
+      "id": "fc99ae27-89ad-4326-b040-0eec04168b97",
+      "name": "Append new scores to Google Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "lydahr7M8BgEWDYB",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  const d = item.json.output;\n  return {\n    json: {\n      cve_id:                           d.cve_id,\n      incident_title:                   d.incident_title,\n      incident_date:                    d.incident_date,\n      source_url:                       d.source_url,\n      classification:                   d.classification,\n      total_score:                      d.total_score,\n      clock_delta_minutes:              d.clock_delta_minutes,\n      full_trifecta:                    d.trifecta?.full_trifecta,\n      t1_score:                         d.trifecta?.t1?.score,\n      t1_rationale:                     d.trifecta?.t1?.rationale,\n      t2_score:                         d.trifecta?.t2?.score,\n      t2_rationale:                     d.trifecta?.t2?.rationale,\n      t3_score:                         d.trifecta?.t3?.score,\n      t3_rationale:                     d.trifecta?.t3?.rationale,\n      amp_governance_vacuum_score:      d.amplifiers?.governance_vacuum?.score,\n      amp_governance_vacuum_rationale:  d.amplifiers?.governance_vacuum?.rationale,\n      amp_autonomy_score:               d.amplifiers?.autonomy_without_oversight?.score,\n      amp_autonomy_rationale:           d.amplifiers?.autonomy_without_oversight?.rationale,\n      amp_capability_erosion_score:     d.amplifiers?.human_capability_erosion?.score,\n      amp_capability_erosion_rationale: d.amplifiers?.human_capability_erosion?.rationale,\n      amp_sentience_score:              d.amplifiers?.sentience_self_preservation?.score,\n      amp_sentience_rationale:          d.amplifiers?.sentience_self_preservation?.rationale,\n      amp_physical_score:               d.amplifiers?.physical_weaponisation?.score,\n      amp_physical_rationale:           d.amplifiers?.physical_weaponisation?.rationale,\n      is_leading_indicator:             d.is_leading_indicator,\n      leading_indicator_note:           d.leading_indicator_note,\n      scoring_notes:                    d.scoring_notes,\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2160,
+        -256
+      ],
+      "id": "e12f4504-1653-4be0-8d88-9b50f5467b7b",
+      "name": "Flatten List"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  const d = item.json.output;\n  return {\n    json: {\n      cve_id:                 d.cve_id,\n      headline:               d.headline,\n      severity_label:         d.severity_label,\n      clock_delta_label:      \"'\" + d.clock_delta_label,\n      metadata_line:          d.metadata_line,\n      the_story:              d.the_story,\n      our_take:               d.our_take,\n      updated_clock_position: d.updated_clock_position,\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3008,
+        48
+      ],
+      "id": "af2d58df-17e8-4b05-b69f-3ea8a28d2371",
+      "name": "Flatten Stories"
+    }
+  ],
+  "pinData": {
+    "Set: Configuration": [
+      {
+        "json": {
+          "subreddits": [
+            "MachineLearning",
+            "artificial",
+            "LLMEng",
+            "ControlProblem",
+            "ExperiencedDevs",
+            "softwarecrafters",
+            "singularity",
+            "ArtificialIntelligence",
+            "programming",
+            "BetterOffline",
+            "dataengineering",
+            "ClaudeAI",
+            "Anthropic",
+            "OpenAI",
+            "ChatGPTCoding",
+            "GoogleGeminiAI",
+            "TechGawker",
+            "agi",
+            "antai",
+            "DarkFuturology",
+            "hacking"
+          ],
+          "time_window": "week",
+          "max_posts_per_subreddit": 10,
+          "current_clock_position": "11:52",
+          "last_run_date": "2026-04-06T21:51:34.885Z",
+          "minimum_relevance_score": 5
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Set: Configuration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set: Configuration": {
+      "main": [
+        [
+          {
+            "node": "AI Agent Researcher",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent Researcher",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent Researcher",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qualified Stories Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent Researcher",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Qualified Stories Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apify_Reddit_MCP": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent Researcher",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent Researcher": {
+      "main": [
+        [
+          {
+            "node": "Split Out Raw Stories",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent Scorer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Stories Scoring Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stories Scoring Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent Scorer",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent Scorer": {
+      "main": [
+        [
+          {
+            "node": "Filter: Minimum Score",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Flatten List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter: Relevant Stories": {
+      "main": [
+        [
+          {
+            "node": "AI Agent Scorer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter: Minimum Score": {
+      "main": [
+        [
+          {
+            "node": "AI Agent Writer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model4": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent Writer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent Writer",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model5": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Structured Output Parser",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory1": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent Scorer",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent Writer": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Flatten Stories",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Send message to Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out Raw Stories": {
+      "main": [
+        [
+          {
+            "node": "Filter: Relevant Stories",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message to Slack": {
+      "main": [
+        []
+      ]
+    },
+    "Postgres Chat Memory2": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent Writer",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Flatten List": {
+      "main": [
+        [
+          {
+            "node": "Append new scores to Google Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Flatten Stories": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "e03104d2-2fbc-497a-8676-693bd69a8f05",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c292d542af3c57a1b169d43930103a27c37fc755756198e947179b8d8572a365"
+  },
+  "id": "wFoA1pd9K86fJ2cO",
+  "tags": []
+}
