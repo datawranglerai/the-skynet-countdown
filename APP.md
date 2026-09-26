@@ -24,14 +24,30 @@ npm run test:e2e
 
 `build` runs data validation before producing `dist/`. `test:e2e` starts a local production preview and exercises desktop/mobile navigation, archive filters, evidence details, history, the calculator, downloads and page widths. Browser screenshots and failure traces appear under `test-results/` (ignored by Git). If a compatible Chromium is already installed, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to its executable path.
 
-`npm run preview` is for local review. Upload `dist/` to a static host when ready to publish. No account, database, API key or active n8n connection is needed to run the site.
+`npm run preview` is for local review. No account, database, API key or active n8n connection is needed to run the site.
+
+## GitHub Pages deployment
+
+`.github/workflows/deploy-pages.yml` builds and deploys on every push to `main`, including merged pull requests. It also supports **Actions → Deploy GitHub Pages → Run workflow** on `main`.
+
+The build uses Node.js 24 and `npm ci`, then runs lint and `npm run build` (data validation, TypeScript checks and the Vite production build). A final check blocks deployment if `dist/index.html` is missing its `noindex` directive. Only `dist/` is uploaded to Pages. Deployment uses the built-in `GITHUB_TOKEN`; no additional secret is required. The build job has read permissions, and the deployment job has Pages write and OpenID Connect permissions.
+
+The repository is already configured with **Settings → Pages → Build and deployment → Source: GitHub Actions** and the custom domain `skynetcountdown.org`. Once this workflow is committed and pushed to `main`, the first run publishes the site. Subsequent commits redeploy automatically. Deployment runs share a concurrency group so they cannot overlap. If copying this setup to a different repository, enable the GitHub Actions Pages source there first.
+
+Vite's relative asset paths and the existing hash routes work on both the custom domain and the default repository Pages URL. Keep the domain configured in GitHub's Pages settings; this workflow does not hard-code it into the build.
+
+### Search indexing
+
+The shared `index.html` includes `<meta name="robots" content="noindex, nofollow">`, so crawlers receive the directive before JavaScript runs, including when following archive and methodology links. No blocking `robots.txt` is added: search engines must be able to crawl the page to see `noindex`. See [Google's robots meta tag guidance](https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag).
+
+This requests exclusion from search results; it does not make the site or downloadable files private. Search engines need to recrawl any previously indexed page before removing it.
 
 ## Append new records
 
 1. Append rows to the existing CSVs, preserving their headers and quoted CSV format. The app reads these files directly at build time.
 2. Prefer a stable `event_id` in both exports. The stories CSV may also include `incident_date` and `source_url` together. With the original schema, a new globally unique CVE can join a report to an assessment only when the match is unambiguous.
 3. Run `npm run validate:data`. Resolve every reported ambiguity or unexpected change before publishing.
-4. Rebuild and redeploy. An already deployed static bundle does not automatically see new local rows.
+4. Commit and push to `main`, or merge the update into `main`. GitHub Actions rebuilds and deploys the updated bundle. Local edits are not visible on the published site until deployed.
 
 The existing exports reuse CVE IDs for unrelated stories. The audited import manifest in `src/lib/manifest.ts` assigns stable incident IDs, records explicit source/date aliases, selects assessment versions, and links original editorial reports. It retains all original variants while counting an event once. A new conflicting assessment requires an explicit review and manifest update; it never silently replaces or adds to the old score. Missing or changed audited content must be reviewed too.
 

@@ -13,6 +13,8 @@ npm run dev
 
 Open the local URL printed by Vite. `npm run build` validates the data, checks types and produces `dist/`; `npm run preview` serves that build locally. Full startup, data-update and verification instructions are in [APP.md](APP.md).
 
+GitHub Actions deploys to GitHub Pages when changes reach `main`. The site includes a `noindex` directive, checked before each deployment. See [deployment and indexing](APP.md#github-pages-deployment) for details.
+
 **The app uses methodology v2**, effective 26 September 2026. It replaces the original fixed minute additions below with a published diminishing scale: `remaining seconds = 3600 / (1 + cumulative evidence points / 100)`. The initial import contains 29 distinct events and 69 effective points, giving **35:30 symbolic minutes to midnight**. The methodology page explains calibration, reconciled assessments, worked examples and limitations. The clock is an editorial index, not a forecast or probability.
 
 The original project brief follows. Its `11:47` position and legacy minute rules describe the initial concept; the app calculates its position from the current CSVs using v2. The raw CSVs and n8n workflow remain unchanged.
