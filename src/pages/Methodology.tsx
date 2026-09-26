@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import assessmentsUrl from '../../data/Skynet Countdown Log - assessments.csv?url';
 import storiesUrl from '../../data/Skynet Countdown Log - stories.csv?url';
-import terminatorPortrait from '../../assets/terminator-1.png';
+import terminatorPortrait from '../../assets/terminator-1-no-bg.png';
 import { CALIBRATION, CRITERIA, calculateClock, effectivePoints as calculateEffectivePoints, formatTime } from '../lib/index';
 import type { Dataset, Incident } from '../lib/types';
 import './methodology.css';
@@ -224,9 +224,12 @@ export default function Methodology({ dataset }: MethodologyProps) {
   return (
     <div className="method-page">
       <section className="method-hero container" aria-labelledby="method-title">
-        <div>
+        <div className="method-hero-heading">
           <p className="eyebrow">Methodology · Version {CALIBRATION.version} · {formatDate(CALIBRATION.effectiveDate)}</p>
           <h1 id="method-title">Show your working.</h1>
+          <figure className="method-reference" aria-hidden="true">
+            <img src={terminatorPortrait} alt="" width="500" height="500" loading="lazy" decoding="async" />
+          </figure>
         </div>
         <div className="method-hero-copy">
           <p className="method-deck">
@@ -235,9 +238,6 @@ export default function Methodology({ dataset }: MethodologyProps) {
           <p>
             Each incident is scored against eight published criteria. Those scores add to a cumulative evidence base, which a diminishing formula converts into symbolic time. The clock is an organising metaphor, not a probability, forecast or predicted date.
           </p>
-          <figure className="method-reference" aria-hidden="true">
-            <img src={terminatorPortrait} alt="" width="1170" height="1170" loading="lazy" decoding="async" />
-          </figure>
         </div>
       </section>
 

@@ -16,7 +16,7 @@
   gap: clamp(48px, 8vw, 128px);
   align-items: center;
   min-height: min(620px, 78vh);
-  padding-block: clamp(72px, 8vw, 128px) clamp(56px, 6vw, 88px);
+  padding-block: clamp(56px, 6vw, 88px) clamp(40px, 4vw, 64px);
   border-bottom: 1px solid var(--line);
 }
 
@@ -45,29 +45,20 @@
 }
 
 .method-reference {
-  position: relative;
-  width: min(100%, 360px);
-  aspect-ratio: 1.65;
-  margin: 28px 0 0;
-  overflow: hidden;
-  mask-image: linear-gradient(180deg, transparent, #000 12%, #000 60%, transparent 100%);
+  width: min(100%, 340px);
+  aspect-ratio: 1;
+  margin: 26px 0 0;
 }
 
 .method-reference > img {
   display: block;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: 50% 28%;
-  filter: saturate(.55) brightness(.7);
-}
-
-.method-reference::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, var(--bg), transparent 16%, transparent 88%, var(--bg));
-  pointer-events: none;
+  height: auto;
+  filter: saturate(.65) brightness(.85);
+  mask-image:
+    linear-gradient(180deg, #000 72%, transparent 100%),
+    linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+  mask-composite: intersect;
 }
 
 .method-score-section,
@@ -878,14 +869,15 @@
 }
 
 @media (max-width: 900px) {
-  .method-hero,
   .method-formula-layout,
   .method-calculator {
     grid-template-columns: 1fr;
   }
 
   .method-hero {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     min-height: auto;
+    gap: 32px;
   }
 
   .method-tiers,
@@ -928,15 +920,31 @@
   }
 }
 
+@media (max-width: 700px) {
+  .method-hero {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+
 @media (max-width: 600px) {
   .method-hero {
     display: block;
-    padding-top: 88px;
+    padding-top: 56px;
   }
 
   .method-hero h1 {
-    margin-bottom: 56px;
+    margin-bottom: 0;
     font-size: clamp(2.5rem, 12vw, 4rem);
+  }
+
+  .method-reference {
+    width: min(100%, 260px);
+    margin-top: 20px;
+  }
+
+  .method-hero-copy {
+    margin-top: 24px;
   }
 
   .method-page .section-heading {
