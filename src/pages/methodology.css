@@ -14,20 +14,20 @@
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(320px, .75fr);
   gap: clamp(48px, 8vw, 128px);
-  align-items: end;
-  min-height: min(720px, 78vh);
-  padding-block: clamp(96px, 14vw, 200px) clamp(72px, 10vw, 144px);
+  align-items: center;
+  min-height: min(620px, 78vh);
+  padding-block: clamp(72px, 8vw, 128px) clamp(56px, 6vw, 88px);
   border-bottom: 1px solid var(--line);
 }
 
 .method-hero h1 {
   max-width: 850px;
   margin-bottom: 0;
-  font-family: var(--display);
-  font-size: clamp(5.2rem, 13vw, 12.5rem);
-  font-weight: 900;
-  letter-spacing: -.055em;
-  line-height: .76;
+  font-family: var(--heading);
+  font-size: clamp(3rem, 7.2vw, 6.6rem);
+  font-weight: 400;
+  letter-spacing: -.035em;
+  line-height: 1.05;
   text-transform: uppercase;
 }
 
@@ -42,6 +42,32 @@
   color: var(--ink);
   font-size: clamp(1.35rem, 2.2vw, 2rem);
   line-height: 1.3;
+}
+
+.method-reference {
+  position: relative;
+  width: min(100%, 360px);
+  aspect-ratio: 1.65;
+  margin: 28px 0 0;
+  overflow: hidden;
+  mask-image: linear-gradient(180deg, transparent, #000 12%, #000 60%, transparent 100%);
+}
+
+.method-reference > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 28%;
+  filter: saturate(.55) brightness(.7);
+}
+
+.method-reference::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, var(--bg), transparent 16%, transparent 88%, var(--bg));
+  pointer-events: none;
 }
 
 .method-score-section,
@@ -64,10 +90,11 @@
 .method-page .section-heading h2 {
   max-width: 800px;
   margin-bottom: 20px;
-  font-family: var(--display);
-  font-size: clamp(3rem, 6vw, 6.5rem);
-  letter-spacing: -.035em;
-  line-height: .9;
+  font-family: var(--heading);
+  font-size: clamp(2rem, 4vw, 3.75rem);
+  font-weight: 400;
+  letter-spacing: -.025em;
+  line-height: 1.12;
   text-transform: uppercase;
 }
 
@@ -660,6 +687,7 @@
   border-left: 1px solid #bfc2b9;
   background: var(--bg);
   color: var(--ink);
+  box-shadow: var(--instrument-edges), inset 0 1px 0 var(--instrument-glint);
 }
 
 .method-projected-time {
@@ -908,7 +936,7 @@
 
   .method-hero h1 {
     margin-bottom: 56px;
-    font-size: clamp(4.4rem, 25vw, 7.2rem);
+    font-size: clamp(2.5rem, 12vw, 4rem);
   }
 
   .method-page .section-heading {

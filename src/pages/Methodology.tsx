@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import assessmentsUrl from '../../data/Skynet Countdown Log - assessments.csv?url';
 import storiesUrl from '../../data/Skynet Countdown Log - stories.csv?url';
+import terminatorPortrait from '../../assets/terminator-1.png';
 import { CALIBRATION, CRITERIA, calculateClock, effectivePoints as calculateEffectivePoints, formatTime } from '../lib/index';
 import type { Dataset, Incident } from '../lib/types';
 import './methodology.css';
@@ -234,6 +235,9 @@ export default function Methodology({ dataset }: MethodologyProps) {
           <p>
             Each incident is scored against eight published criteria. Those scores add to a cumulative evidence base, which a diminishing formula converts into symbolic time. The clock is an organising metaphor, not a probability, forecast or predicted date.
           </p>
+          <figure className="method-reference" aria-hidden="true">
+            <img src={terminatorPortrait} alt="" width="1170" height="1170" loading="lazy" decoding="async" />
+          </figure>
         </div>
       </section>
 
