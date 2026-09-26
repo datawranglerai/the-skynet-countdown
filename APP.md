@@ -1,0 +1,86 @@
+# Running The Skynet Countdown
+
+## Local development
+
+Use a current Node.js LTS release (22.13+ or 24+) and npm.
+
+```sh
+npm ci
+npm run dev
+```
+
+The site has a clock and history explorer, a searchable archive, individual incident reports and an interactive methodology page. Navigation uses hash URLs so direct links work on static hosts without server rewrite rules. Fonts are bundled locally; their OFL licences are in `public/fonts/`.
+
+## Verify and build
+
+```sh
+npm test
+npm run lint
+npm run typecheck
+npm run build
+npx playwright install chromium
+npm run test:e2e
+```
+
+`build` runs data validation before producing `dist/`. `test:e2e` starts a local production preview and exercises desktop/mobile navigation, archive filters, evidence details, history, the calculator, downloads and page widths. Browser screenshots and failure traces appear under `test-results/` (ignored by Git). If a compatible Chromium is already installed, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to its executable path.
+
+`npm run preview` is for local review. Upload `dist/` to a static host when ready to publish. No account, database, API key or active n8n connection is needed to run the site.
+
+## Append new records
+
+1. Append rows to the existing CSVs, preserving their headers and quoted CSV format. The app reads these files directly at build time.
+2. Prefer a stable `event_id` in both exports. The stories CSV may also include `incident_date` and `source_url` together. With the original schema, a new globally unique CVE can join a report to an assessment only when the match is unambiguous.
+3. Run `npm run validate:data`. Resolve every reported ambiguity or unexpected change before publishing.
+4. Rebuild and redeploy. An already deployed static bundle does not automatically see new local rows.
+
+The existing exports reuse CVE IDs for unrelated stories. The audited import manifest in `src/lib/manifest.ts` assigns stable incident IDs, records explicit source/date aliases, selects assessment versions, and links original editorial reports. It retains all original variants while counting an event once. A new conflicting assessment requires an explicit review and manifest update; it never silently replaces or adds to the old score. Missing or changed audited content must be reviewed too.
+
+When explicit unique `event_id` values are supplied, legacy CVE labels may repeat: identity comes from `event_id`, not the old label. Without explicit IDs, a reused CVE on a new unrelated event stops validation.
+
+### Review a correction without deleting history
+
+For a revised assessment, retain the old row and append the correction. Add its full content hash to the manifest event's `assessmentContentFingerprints`, then set `selectedAssessmentContentFingerprint` to the approved version. This works even when the CVE, date, URL and total score are unchanged. `selectedAssessmentFingerprint` keeps the shared record identity.
+
+Each editorial link specifies the exact `assessmentContentFingerprint` that the report describes. A rewritten report may retain the same CVE and headline: preserve both rows and add separate `storyContentFingerprint` entries, marking one link `preferred: true`. Executable examples of both review operations are in `src/lib/data-engine.test.ts`. The manifest is a reviewed record, so hashes are never refreshed automatically during a build.
+
+Source/date matching detects repeated records; it cannot understand that two different articles cover the same development. Assign a shared reviewed event identity for those cases. Treat an intentionally new development reported at the same URL/date as an explicit identity decision.
+
+The supplied n8n JSON is preserved. Before relying on unattended publishing, update that workflow to generate persistent unique event IDs, include them on both exports, and stop generating the authoritative clock position in the writer prompt. The app owns the calculation.
+
+## Methodology v2
+
+The eight original criteria remain: three binary Trifecta checks and five amplifiers worth zero to two points each. Raw scores range from 0 to 13. A full Trifecta sets a minimum CRITICAL severity and a minimum of seven effective evidence points. Zero-score events remain visible and add nothing.
+
+For cumulative effective points `B`:
+
+```text
+symbolic seconds remaining = 3600 / (1 + B / 100)
+evidence pressure = 100 × (1 − remaining seconds / 3600)
+```
+
+The fixed 100-point parameter halves the symbolic hour after 100 evidence points. It is an editorial normalisation, not an empirically estimated risk parameter or a fit to a desired current reading. The curve approaches midnight without reaching it. It cannot declare that human control has been lost. More coverage can increase the index even if underlying risk has not changed; the selected sources and inclusion decisions matter.
+
+The clock changes with records, not wall time. There is no passive decay or positive-event recovery model in v2. Published improvements can score zero; they do not subtract previous evidence. Formal corrective or recovery events would require a versioned methodology change.
+
+History sorts events by incident date, then stable ID. Each displayed movement is the difference between the positions before and after that event. Late discoveries and explicit revisions recompute this history. It is a reconstruction under the current method, not an archive of readings previously published by the n8n workflow. The methodology version and dataset's latest incident date are visible in the app; the CSV export does not provide a collection timestamp.
+
+## Initial import
+
+- 33 assessments, grouped into 29 distinct events.
+- 27 original reports cover 25 events; four events have no editorial copy.
+- 68 raw score points, 69 effective points after the full-Trifecta floor.
+- 35:30 symbolic minutes remaining; 40.83/100 evidence pressure.
+- Latest recorded event: 18 September 2026.
+
+Historical conflicting assessments use explicitly reviewed, conservative selections. Original editorial text remains available and is labelled when written for a different assessment version. Machine citation markers are removed from display; original source links and raw downloadable CSVs are preserved.
+
+The supplied stories are automated workflow outputs, not independently verified by this app. Readers can inspect the source and disagree with the analysis. The frontend adds no invented incidents or replacement news copy.
+
+## Main files
+
+- `src/lib/`: CSV validation, identity reconciliation, scoring, calibration and regression tests.
+- `src/data.ts`: imports the two source files.
+- `src/components/`: shared clock, history and editorial components.
+- `src/pages/`: home, archive, report and methodology views.
+- `src/styles.css`, `src/pages/methodology.css`: the visual system documented in `DESIGN.md`.
+- `tests/app.spec.ts`: production-browser checks.

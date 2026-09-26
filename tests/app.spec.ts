@@ -1,0 +1,92 @@
+import { expect, test } from '@playwright/test';
+
+test('clock, archive filters, direct report links, and scoring evidence', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.goto('/');
+  await expect(page.locator('.clock-digits')).toHaveText('35:30');
+  await expect(page.getByRole('heading', { name: 'THE FUTURE IS NOT SET.' })).toBeVisible();
+  const range = page.getByLabel('EXPLORE THE RECORD', { exact: false });
+  await range.focus();
+  await range.press('Home');
+  await expect(range).toHaveValue('0');
+  await expect(page.locator('.timeline-selected .eyebrow')).toContainText('07 Apr 2026');
+  await page.getByRole('link', { name: 'Incident archive', exact: true }).click();
+  await expect(page.locator('.archive-row')).toHaveCount(29);
+  await page.getByRole('button', { name: 'NO MOVEMENT', exact: true }).click();
+  await expect(page.locator('.archive-row')).toHaveCount(5);
+  await page.getByRole('button', { name: 'CRITICAL', exact: true }).click();
+  await expect(page.locator('.archive-row')).toHaveCount(2);
+  await page.getByRole('searchbox', { name: 'Search incidents' }).fill('does-not-exist-in-the-record');
+  await expect(page.getByRole('heading', { name: 'No matching developments.' })).toBeVisible();
+  await page.getByRole('button', { name: 'Clear filters' }).click();
+  await expect(page.locator('.archive-row')).toHaveCount(29);
+  await page.getByRole('searchbox', { name: 'Search incidents' }).fill('The Models Found');
+  await expect(page.locator('.archive-row')).toHaveCount(1);
+  await page.getByRole('link', { name: 'The Models Found the Repo, the Key, and the Internet', exact: true }).click();
+  await expect(page.locator('.report-header h1')).toContainText('The Models Found');
+  await expect(page.getByRole('heading', { name: 'What happened.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Why it matters.' })).toBeVisible();
+  await expect(page.locator('.criterion-detail')).toHaveCount(8);
+  await expect(page.locator('.trifecta-alert')).toContainText('ALL THREE CONDITIONS PRESENT');
+  await page.locator('.criterion-detail summary').first().click();
+  await expect(page.locator('.criterion-detail').first()).toHaveAttribute('open', '');
+  await page.reload();
+  await expect(page.locator('.report-header h1')).toContainText('The Models Found');
+  await page.goto('/#/incidents/2026-04-08-turbotax-claude');
+  await expect(page.locator('.editorial-version-note')).toContainText('2-point assessment');
+  await expect(page.locator('.editorial-version-note')).toContainText('displayed 1-point version');
+  await page.goto('/#/incidents/2026-09-12-amodei-slowdown-warning');
+  await expect(page.getByRole('heading', { name: 'The recorded development.' })).toBeVisible();
+  await expect(page.locator('.editorial-pending')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Why it matters.' })).toHaveCount(0);
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+  expect(overflow).toBe(false);
+  expect(errors).toEqual([]);
+});
+
+test('methodology calculator, worked examples, downloads, and responsive layout', async ({ page }) => {
+  await page.goto('/#/methodology');
+  await expect(page.locator('h1')).toBeVisible();
+  await expect(page.locator('.method-projected-time')).toHaveText('35:30');
+  const trifecta = page.locator('.method-toggle input');
+  await expect(trifecta).toHaveCount(3);
+  for (const label of await page.locator('.method-toggle').all()) await label.click();
+  for (const input of await trifecta.all()) await expect(input).toBeChecked();
+  await expect(page.locator('.method-output-alert')).toBeVisible();
+  await expect(page.locator('.method-projected-time')).not.toHaveText('35:30');
+  await page.getByRole('button', { name: /Reset/i }).click();
+  await expect(page.locator('.method-projected-time')).toHaveText('35:30');
+  await page.getByRole('button', { name: 'Example 02' }).click();
+  await expect(page.locator('.method-trifecta-note')).toBeVisible();
+  const downloads = page.locator('.method-downloads a[download]');
+  await expect(downloads).toHaveCount(2);
+  for (const link of await downloads.all()) {
+    const href = await link.getAttribute('href');
+    const response = await page.request.get(href!);
+    expect(response.ok()).toBe(true);
+    expect(await response.text()).toContain('cve_id');
+  }
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+  expect(overflow).toBe(false);
+});
+
+test('main pages render with local assets and unknown links recover', async ({ page }, testInfo) => {
+  const failed: string[] = [];
+  page.on('response', (response) => { if (response.status() >= 400 && response.url().includes('127.0.0.1')) failed.push(response.url()); });
+  await page.goto('/');
+  await page.evaluate(() => document.fonts.ready);
+  expect(await page.evaluate(() => document.fonts.check('600 24px "Barlow Condensed"'))).toBe(true);
+  await expect(page.locator('body')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath('home.png'), fullPage: true });
+  await page.goto('/#/incidents');
+  await page.screenshot({ path: testInfo.outputPath('archive.png'), fullPage: true });
+  await page.goto('/#/methodology');
+  await page.screenshot({ path: testInfo.outputPath('methodology.png'), fullPage: true });
+  await page.goto('/#/incidents/not-a-real-record');
+  await expect(page.getByRole('heading', { name: 'This report isn’t on the record.' })).toBeVisible();
+  await page.getByRole('link', { name: 'Return to the archive' }).click();
+  await expect(page.locator('.archive-row')).toHaveCount(29);
+  expect(failed).toEqual([]);
+});

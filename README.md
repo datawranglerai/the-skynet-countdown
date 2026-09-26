@@ -2,6 +2,23 @@
 
 **A living index of how fast we're building things we don't fully understand.**
 
+## Run the web app
+
+The app uses Vite, React, TypeScript and the CSV files in `data/`.
+
+```sh
+npm install
+npm run dev
+```
+
+Open the local URL printed by Vite. `npm run build` validates the data, checks types and produces `dist/`; `npm run preview` serves that build locally. Full startup, data-update and verification instructions are in [APP.md](APP.md).
+
+**The app uses methodology v2**, effective 26 September 2026. It replaces the original fixed minute additions below with a published diminishing scale: `remaining seconds = 3600 / (1 + cumulative evidence points / 100)`. The initial import contains 29 distinct events and 69 effective points, giving **35:30 symbolic minutes to midnight**. The methodology page explains calibration, reconciled assessments, worked examples and limitations. The clock is an editorial index, not a forecast or probability.
+
+The original project brief follows. Its `11:47` position and legacy minute rules describe the initial concept; the app calculates its position from the current CSVs using v2. The raw CSVs and n8n workflow remain unchanged.
+
+---
+
 The Skynet Countdown is a living, public-facing creative asset modelled loosely on the Bulletin of Atomic Scientists' Doomsday Clock. Except instead of nuclear annihilation, we're tracking humanity's march toward a world where AI systems slip beyond meaningful human control.
 
 The clock ticks forward when real-world events suggest we're getting closer to that threshold. It resets (slightly) when the news is reassuring.
@@ -228,4 +245,3 @@ recovery is impossible — it's an acknowledgement that we haven't seen the kind
 ---
 
 *Not affiliated with Skydance Media, James Cameron, or the actual robot apocalypse (pending).*
-
