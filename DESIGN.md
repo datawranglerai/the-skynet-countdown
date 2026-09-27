@@ -1,7 +1,7 @@
 # Design
 
 ## Source of truth
-Active · 26 September 2026. Surfaces: clock, incident archive, individual reports, methodology. Evidence: README.md, both source CSVs, the n8n prompts and the user's visual feedback. The latest direction restores the original open clock, uses the supplied Anta font for H1/H2 headings, and adds two supplied Terminator images sparingly. Reference assets inspected: assets/terminator-1.png, terminator-2.png and terminator-3.png; public/fonts/Anta/Anta-Regular.ttf and its OFL licence. The revised scale below supersedes the README's original minute mapping in this app.
+Active · 27 September 2026. Surfaces: clock, incident archive, individual reports, methodology. Evidence: README.md, both source CSVs, the n8n prompts and the user's visual feedback. The visual direction uses the original open clock, the supplied Anta font for H1/H2 headings and two supplied Terminator images sparingly. Reference assets inspected: assets/terminator-1.png, terminator-2.png and terminator-3.png; public/fonts/Anta/Anta-Regular.ttf and its OFL licence.
 
 ## Brand
 An independent practitioner's field journal: technically literate, dry, curious, occasionally darkly funny. Terminator influences appear in the instruments, warning red, Anta headings and two considered images. Earn trust through linked sources, visible reasoning, explicit limitations and separate facts/analysis. Avoid panic, faux classified information, invented scientific certainty and decorative glitches. The imagery is a framing device; it must not crowd the evidence or obscure text.
@@ -40,12 +40,12 @@ Desktop: broad two-column hero, data strip, spacious report grid. Below 900px: s
 Data is bundled locally, so no artificial loading state. Empty archive explains how to clear filters. Unknown routes provide a return link. Invalid data produces a visible error instead of invented clock values. Unmatched editorial reports remain out of the published joins and are reported by validation. Assessment-only events identify that editorial coverage is pending. External sources open with safe link attributes.
 
 ## Content voice
-Plain, precise British English. Dry humour belongs in editorial context. Use "symbolic time", "evidence points" and "editorial index". Do not claim the display measures a probability, a predicted date or the actual percentage of human control. Zero-score records remain visible with no clock movement. The original CVE identifier is a legacy reference, not a unique database key.
+Plain, precise British English. Dry humour belongs in editorial context. Use "symbolic time", "evidence points", "share of the remaining gap" and "editorial index". Describe an incident's score and gap share as its stable impact measures; describe seconds as its movement at that point in the timeline. Do not claim the display measures a probability, a predicted date or the actual percentage of human control. Zero-score records remain visible with no clock movement. The CVE-style identifier is a source reference, not a unique database key.
 
 ## Implementation constraints
-Vite, React, TypeScript, CSS, inline SVG. Source CSVs and workflow remain unchanged. Preserve raw original minute values only as historical assessment metadata. Local CSV imports require rebuilding to publish changes. No browser secrets or live automation connections. Tests cover parsing, reconciliation, calibration, saturation, zero scores, append behaviour, routes and main interactions.
+Vite, React, TypeScript, CSS, inline SVG. The app calculates symbolic seconds as `3600 × 2^(-B / 100)`, where `B` is cumulative effective evidence points. Each incident closes `100 × (1 − 2^(-s / 100))` per cent of the remaining gap, where `s` is its effective point score. Source workflow movement fields remain metadata and are never presented as the authoritative calculation. Local CSV imports require rebuilding to publish changes. No browser secrets or live automation connections. Tests cover parsing, reconciliation, exponential calibration, fixed gap shares, saturation, zero scores, append behaviour, routes and main interactions.
 
 ## Open questions
 - [x] Production host: GitHub Pages via Actions, with skynetcountdown.org configured in Pages settings.
-- [ ] Future methodology for governance improvements and formal assessment corrections — owner: editor; v1 only scores the supplied non-negative evidence.
+- [ ] Future treatment of governance improvements and formal recovery events — owner: editor; methodology 1.0 only accumulates non-negative evidence.
 - [ ] Future n8n export should emit a persistent event key and source/date on editorial records — owner: workflow maintainer; historical collisions are reconciled explicitly in this app.

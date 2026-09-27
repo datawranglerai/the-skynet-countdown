@@ -48,6 +48,7 @@ export interface Incident {
   headline: string;
   selectionRationale: string;
   effectivePoints: number;
+  gapClosedPercent: number;
   cumulativePoints: number;
   remainingSeconds: number;
   movementSeconds: number;

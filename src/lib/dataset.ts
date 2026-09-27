@@ -1,4 +1,9 @@
-import { calculateClock, CALIBRATION, effectivePoints } from './calibration.ts';
+import {
+  calculateClock,
+  calculateGapClosedPercent,
+  calculateMovementSeconds,
+  effectivePoints,
+} from './calibration.ts';
 import { cleanMachineCitations, parseCsv, stableContentFingerprint, type CsvRecord } from './csv.ts';
 import { CRITERIA, SEVERITIES } from './criteria.ts';
 import {
@@ -545,9 +550,9 @@ export function loadDataset(
 
   working.sort((left, right) => left.assessment.date.localeCompare(right.assessment.date) || left.id.localeCompare(right.id));
   let cumulativePoints = 0;
-  let previousRemaining: number = CALIBRATION.startingSeconds;
   const incidents: Incident[] = working.map((value) => {
     const points = effectivePoints(value.assessment.score, value.assessment.fullTrifecta);
+    const priorPoints = cumulativePoints;
     const nextCumulativePoints = cumulativePoints + points;
     if (!Number.isSafeInteger(nextCumulativePoints)) {
       throw new RangeError('Cumulative evidence points must remain a non-negative safe integer');
@@ -579,11 +584,11 @@ export function loadDataset(
       headline: canonicalEditorial?.headline ?? value.assessment.title,
       selectionRationale: value.selectionRationale,
       effectivePoints: points,
+      gapClosedPercent: calculateGapClosedPercent(points),
       cumulativePoints,
       remainingSeconds: clock.remainingSeconds,
-      movementSeconds: points === 0 ? 0 : previousRemaining - clock.remainingSeconds,
+      movementSeconds: calculateMovementSeconds(priorPoints, points),
     };
-    previousRemaining = clock.remainingSeconds;
     return incident;
   });
   const clock = calculateClock(cumulativePoints);

@@ -63,30 +63,42 @@ Source/date matching detects repeated records; it cannot understand that two dif
 
 The supplied n8n JSON is preserved. Before relying on unattended publishing, update that workflow to generate persistent unique event IDs, include them on both exports, and stop generating the authoritative clock position in the writer prompt. The app owns the calculation.
 
-## Methodology v2
+## Methodology
 
 The eight original criteria remain: three binary Trifecta checks and five amplifiers worth zero to two points each. Raw scores range from 0 to 13. A full Trifecta sets a minimum CRITICAL severity and a minimum of seven effective evidence points. Zero-score events remain visible and add nothing.
 
 For cumulative effective points `B`:
 
 ```text
-symbolic seconds remaining = 3600 / (1 + B / 100)
-evidence pressure = 100 × (1 − remaining seconds / 3600)
+symbolic seconds remaining = 3600 × 2^(-B / 100)
+evidence pressure = 100 × (1 − 2^(-B / 100))
 ```
 
-The fixed 100-point parameter halves the symbolic hour after 100 evidence points. It is an editorial normalisation, not an empirically estimated risk parameter or a fit to a desired current reading. The curve approaches midnight without reaching it. It cannot declare that human control has been lost. More coverage can increase the index even if underlying risk has not changed; the selected sources and inclusion decisions matter.
+The fixed 100-point parameter halves the remaining symbolic time after every 100 evidence points. It is an editorial normalisation, not an empirically estimated risk parameter or a fit to a desired current reading. The curve approaches midnight without reaching it and cannot declare that human control has been lost. More coverage can increase the index even if underlying risk has not changed, so the selected sources and inclusion decisions matter.
 
-The clock changes with records, not wall time. There is no passive decay or positive-event recovery model in v2. Published improvements can score zero; they do not subtract previous evidence. Formal corrective or recovery events would require a versioned methodology change.
+The cumulative point total defines the clock position. The interface shows `<00:01` below one second. At extreme totals, stored seconds are limited to JavaScript's smallest positive number; this is a numeric representation limit. Per-event movement is calculated from effective points and proportional impact, so a positive event is still shown as moving less than one second, rather than as a zero-score event.
 
-History sorts events by incident date, then stable ID. Each displayed movement is the difference between the positions before and after that event. Late discoveries and explicit revisions recompute this history. It is a reconstruction under the current method, not an archive of readings previously published by the n8n workflow. The methodology version and dataset's latest incident date are visible in the app; the CSV export does not provide a collection timestamp.
+For an incident worth `s` effective points:
 
-## Initial import
+```text
+share of remaining gap closed = 100 × (1 − 2^(-s / 100))
+```
 
-- 33 assessments, grouped into 29 distinct events.
-- 27 original reports cover 25 events; four events have no editorial copy.
-- 68 raw score points, 69 effective points after the full-Trifecta floor.
-- 35:30 symbolic minutes remaining; 40.83/100 evidence pressure.
-- Latest recorded event: 18 September 2026.
+The same point score always closes the same proportion of the remaining gap. A two-point incident closes 1.38%; a 13-point incident closes 8.62%. Its movement in seconds depends on the clock position when it occurs because the remaining interval gets smaller over time. Incident impact should therefore be compared by score and share of gap closed, with seconds shown as the movement in historical context.
+
+The clock changes with records, not wall time. There is no passive decay or positive-event recovery model. Published improvements can score zero; they do not subtract previous evidence. Formal corrective or recovery events would require a defined extension to the methodology.
+
+History sorts events by incident date, then stable ID. Each displayed movement is the difference between the positions before and after that event. Late discoveries and explicit assessment changes recompute the history. The methodology version and dataset's latest incident date are visible in the app; the CSV export does not provide a collection timestamp.
+
+The `clock_delta_minutes`, `clock_delta_label` and `updated_clock_position` values in the source CSVs are automation metadata. The app does not use them to calculate or display the published position.
+
+## Current data snapshot
+
+- 39 assessment rows, grouped into 35 distinct events.
+- 30 editorial reports cover 28 events; seven events have no editorial copy.
+- 83 raw score points, 88 effective points after three full-Trifecta floors.
+- 32:36 symbolic minutes remaining; 45.7/100 evidence pressure.
+- Latest recorded event: 25 September 2026.
 
 Historical conflicting assessments use explicitly reviewed, conservative selections. Original editorial text remains available and is labelled when written for a different assessment version. Machine citation markers are removed from display; original source links and raw downloadable CSVs are preserved.
 

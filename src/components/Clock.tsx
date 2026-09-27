@@ -1,4 +1,4 @@
-import { formatTime } from '../lib/index';
+import { formatTime, formatPressure } from '../lib/index';
 import type { Dataset } from '../lib/types';
 
 export default function Clock({ dataset }: { dataset: Dataset }) {
@@ -6,7 +6,7 @@ export default function Clock({ dataset }: { dataset: Dataset }) {
   const circumference = 2 * Math.PI * 208;
   return <div className="clock-panel">
     <div className="clock-panel-top"><span>HUMAN CONTROL MONITOR</span><span className="monitoring"><i /> OBSERVING</span></div>
-    <div className="clock-instrument" role="img" aria-label={`${formatTime(dataset.remainingSeconds)} symbolic minutes to midnight. Editorial pressure index ${dataset.pressure.toFixed(1)} out of 100.`}>
+    <div className="clock-instrument" role="img" aria-label={`${formatTime(dataset.remainingSeconds)} symbolic minutes to midnight. Editorial pressure index ${formatPressure(dataset.pressure)} out of 100.`}>
       <svg className="clock-svg" viewBox="0 0 600 600" fill="none" aria-hidden="true">
         <defs><radialGradient id="dial-glow"><stop offset="0" stopColor="#eb553e" stopOpacity=".06" /><stop offset="1" stopColor="#eb553e" stopOpacity="0" /></radialGradient></defs>
         <circle cx="300" cy="300" r="260" fill="url(#dial-glow)" />
@@ -23,9 +23,9 @@ export default function Clock({ dataset }: { dataset: Dataset }) {
         <path d="m294 72 6 10 6-10" fill="var(--accent)" />
         <path d="M129 290h12m-6-6v12m324-6h12m-6-6v12" stroke="#68705f" />
         <text x="300" y="139" textAnchor="middle" className="dial-label">MIDNIGHT / 00:00</text>
-        <text x="300" y="466" textAnchor="middle" className="dial-label">METHOD 02 · BASELINE 60:00</text>
+        <text x="300" y="466" textAnchor="middle" className="dial-label">METHOD 01 · BASELINE 60:00</text>
       </svg>
-      <div className="clock-readout"><div className="clock-eyebrow"><span /> DISTANCE TO MIDNIGHT</div><div className="clock-digits">{formatTime(dataset.remainingSeconds)}</div><div className="clock-unit">SYMBOLIC MINUTES : SECONDS</div><div className="clock-pressure"><span className="pressure-dot" />{dataset.pressure.toFixed(1)}<span>/100 EVIDENCE PRESSURE</span></div></div>
+      <div className="clock-readout"><div className="clock-eyebrow"><span /> DISTANCE TO MIDNIGHT</div><div className="clock-digits">{formatTime(dataset.remainingSeconds)}</div><div className="clock-unit">SYMBOLIC MINUTES : SECONDS</div><div className="clock-pressure"><span className="pressure-dot" />{formatPressure(dataset.pressure)}<span>/100 EVIDENCE PRESSURE</span></div></div>
     </div>
     <div className="clock-panel-bottom"><span>DRIVEN BY EVIDENCE. NOT ELAPSED TIME.</span><a href="#/methodology">SHOW THE WORKING ↗</a></div>
   </div>;

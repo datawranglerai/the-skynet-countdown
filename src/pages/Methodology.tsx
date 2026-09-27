@@ -2,7 +2,16 @@ import { useMemo, useState } from 'react';
 import assessmentsUrl from '../../data/Skynet Countdown Log - assessments.csv?url';
 import storiesUrl from '../../data/Skynet Countdown Log - stories.csv?url';
 import terminatorPortrait from '../../assets/terminator-1-no-bg.png';
-import { CALIBRATION, CRITERIA, calculateClock, effectivePoints as calculateEffectivePoints, formatTime } from '../lib/index';
+import {
+  CALIBRATION,
+  CRITERIA,
+  calculateClock,
+  calculateGapClosedPercent,
+  calculateMovementSeconds,
+  effectivePoints as calculateEffectivePoints,
+  formatGapClosedPercent,
+  formatTime,
+} from '../lib/index';
 import type { Dataset, Incident } from '../lib/types';
 import './methodology.css';
 
@@ -96,8 +105,9 @@ function ExampleInspector({ incidents }: { incidents: Incident[] }) {
         </header>
 
         <div className="method-example-result">
+          <div className="method-example-impact"><span>Remaining gap to midnight closed</span><strong>{formatGapClosedPercent(incident.gapClosedPercent)}</strong></div>
           <div><span>Effective points</span><strong>{incident.effectivePoints}</strong></div>
-          <div><span>Index movement</span><strong>{formatMovement(incident.movementSeconds)}</strong></div>
+          <div><span>Time change at this position</span><strong>{formatMovement(incident.movementSeconds)}</strong></div>
           <div><span>Position after event</span><strong>{formatTime(incident.remainingSeconds)}</strong></div>
         </div>
 
@@ -146,7 +156,8 @@ function IncidentCalculator({ dataset }: { dataset: Dataset }) {
   const fullTrifecta = ['t1', 't2', 't3'].every((key) => scores[key] === 1);
   const effectivePoints = calculateEffectivePoints(rawScore, fullTrifecta);
   const { remainingSeconds: projectedSeconds } = calculateClock(dataset.totalPoints + effectivePoints);
-  const movementSeconds = dataset.remainingSeconds - projectedSeconds;
+  const movementSeconds = calculateMovementSeconds(dataset.totalPoints, effectivePoints);
+  const gapClosedPercent = calculateGapClosedPercent(effectivePoints);
 
   const updateScore = (key: string, value: number) => {
     setScores((current) => ({ ...current, [key]: value }));
@@ -198,14 +209,15 @@ function IncidentCalculator({ dataset }: { dataset: Dataset }) {
 
       <aside className="method-calculator-output" aria-live="polite">
         <p className="eyebrow">Hypothetical result</p>
-        <div className="method-projected-time">{formatTime(projectedSeconds)}</div>
-        <p className="method-output-label">symbolic time remaining</p>
+        <div className="method-projected-time">{formatGapClosedPercent(gapClosedPercent)}</div>
+        <p className="method-output-label">of the remaining gap to midnight closed</p>
 
         <dl>
           <div><dt>Raw score</dt><dd>{rawScore} / 13</dd></div>
           <div><dt>Effective points</dt><dd>{effectivePoints}</dd></div>
           <div><dt>Current evidence base</dt><dd>{dataset.totalPoints} pts</dd></div>
-          <div><dt>Movement</dt><dd>{formatMovement(movementSeconds)}</dd></div>
+          <div><dt>Projected clock</dt><dd>{formatTime(projectedSeconds)}</dd></div>
+          <div><dt>Time change here</dt><dd>{formatMovement(movementSeconds)}</dd></div>
         </dl>
 
         {fullTrifecta && rawScore < 7 && (
@@ -225,7 +237,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
     <div className="method-page">
       <section className="method-hero container" aria-labelledby="method-title">
         <div className="method-hero-heading">
-          <p className="eyebrow">Methodology · Version {CALIBRATION.version} · {formatDate(CALIBRATION.effectiveDate)}</p>
+          <p className="eyebrow">Methodology · v{CALIBRATION.version}</p>
           <h1 id="method-title">Show your working.</h1>
           <figure className="method-reference" aria-hidden="true">
             <img src={terminatorPortrait} alt="" width="500" height="500" loading="lazy" decoding="async" />
@@ -236,7 +248,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
             The Skynet Countdown is a transparent editorial index of evidence that AI systems are moving beyond meaningful human control.
           </p>
           <p>
-            Each incident is scored against eight published criteria. Those scores add to a cumulative evidence base, which a diminishing formula converts into symbolic time. The clock is an organising metaphor, not a probability, forecast or predicted date.
+            Each incident is scored against eight published criteria. Those scores add to a cumulative evidence base, which an exponential formula converts into symbolic time. The clock is an organising metaphor, not a probability, forecast or predicted date.
           </p>
         </div>
       </section>
@@ -296,27 +308,34 @@ export default function Methodology({ dataset }: MethodologyProps) {
         <div className="container method-formula-layout">
           <div className="section-heading">
             <p className="eyebrow">02 · Calibration</p>
-            <h2 id="formula-title">Pressure rises. The clock resists saturation.</h2>
-            <p>Each new point moves the display closer to midnight, but by less than the point before it.</p>
+            <h2 id="formula-title">Same effective points. Same share of the gap.</h2>
+            <p>Incident impact stays comparable even as the symbolic clock moves closer to midnight.</p>
           </div>
           <div className="method-formula-card">
-            <p className="method-formula"><i>remaining seconds</i> = <span><b>{CALIBRATION.startingSeconds.toLocaleString('en-GB')}</b><em>1 + B / {CALIBRATION.halfwayPoints}</em></span></p>
+            <p className="method-formula">
+              <i>T(B) =</i>
+              <span><b>{CALIBRATION.startingSeconds.toLocaleString('en-GB')} × 2</b><sup>−B / {CALIBRATION.halfwayPoints}</sup></span>
+            </p>
             <dl>
               <div><dt>B</dt><dd>Cumulative effective points across distinct events</dd></div>
-              <div><dt>{CALIBRATION.halfwayPoints}</dt><dd>The versioned half-scale: at {CALIBRATION.halfwayPoints} points, 30 symbolic minutes remain</dd></div>
-              <div><dt>{CALIBRATION.startingSeconds.toLocaleString('en-GB')}</dt><dd>The full one-hour span, expressed in seconds</dd></div>
+              <div><dt>H</dt><dd>The editorial half-scale, fixed at {CALIBRATION.halfwayPoints} evidence points</dd></div>
+              <div><dt>T(B)</dt><dd>Symbolic seconds remaining after B cumulative points</dd></div>
             </dl>
           </div>
           <div className="method-formula-copy">
             <p>
-              The {CALIBRATION.halfwayPoints}-point parameter is an editorial calibration. It was selected to keep the index legible as the dataset grows; it was not derived scientifically or fitted to a desired current reading.
+              Every {CALIBRATION.halfwayPoints} effective points halves the remaining symbolic time: 60 minutes becomes 30, then 15, then 7½. The half-scale is a fixed editorial constant, chosen to keep the accumulating record legible. It is not a probability or a scientifically estimated risk parameter.
             </p>
             <p>
-              The curve approaches midnight without reaching it. That leaves room for future evidence instead of saturating after a few severe stories. Fractional seconds are retained internally; the display reports less than one second near the limit.
+              An incident worth <strong>s</strong> effective points closes <strong>1 − 2<sup>−s/{CALIBRATION.halfwayPoints}</sup></strong> of whatever gap remains. That share is persistent: a two-point event always closes {formatGapClosedPercent(calculateGapClosedPercent(2))}; a thirteen-point event always closes {formatGapClosedPercent(calculateGapClosedPercent(13))}. The raw number of seconds depends on the clock position, so seconds are context rather than a severity comparison.
             </p>
             <p>
-              There is no passive ticking, decay or recovery model. Historical positions are recomputed when late records or corrections arrive, so they are reconstructions from the current dataset, not archived published readings.
+              The curve approaches midnight without reaching it. Below one symbolic second, the display reads less than one second; evidence points and proportional impact continue to be recorded. There is no passive ticking, decay or recovery model. The historical chart follows CSV record dates; these can be publication or disclosure dates rather than the date an underlying event first occurred.
             </p>
+          </div>
+          <div className="method-impact-comparison" aria-label="Examples of persistent incident impact">
+            <div><span>Effective points</span><strong>2</strong><b>{formatGapClosedPercent(calculateGapClosedPercent(2))}</b><small>of remaining gap</small></div>
+            <div><span>Effective points</span><strong>13</strong><b>{formatGapClosedPercent(calculateGapClosedPercent(13))}</b><small>of remaining gap</small></div>
           </div>
         </div>
       </section>
@@ -325,7 +344,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
         <div className="section-heading">
           <p className="eyebrow">03 · Evidence</p>
           <h2 id="examples-title">Inspect a worked assessment.</h2>
-          <p>Every point has a rationale. Choose any event to see the assessment that produced its movement.</p>
+          <p>Every point has a rationale. Choose any event to see its persistent share of the remaining gap, score and position-dependent clock movement.</p>
         </div>
         <ExampleInspector incidents={dataset.incidents} />
       </section>
@@ -357,12 +376,12 @@ export default function Methodology({ dataset }: MethodologyProps) {
           <article>
             <p className="eyebrow">Current data release</p>
             <strong>{dataset.incidents.length}</strong><span>unique events</span>
-            <p>{dataset.assessmentCount} assessments · {dataset.editorialCount} reports covering {dataset.incidents.filter((item) => item.editorial).length} events · {dataset.incidents.filter((item) => !item.editorial).length} assessment-only events.</p>
+            <p>{dataset.assessmentCount} assessments · {dataset.editorialCount} reports covering {dataset.incidents.filter((item) => item.editorial).length} events · {dataset.incidents.filter((item) => !item.editorial).length} assessment-only events · {dataset.incidents.filter((item) => item.assessment.fullTrifecta).length} full-Trifecta events.</p>
           </article>
           <article>
             <h3>Reconciliation policy</h3>
             <p>
-              Duplicate date-and-source assessments retain their audited historical versions but contribute once. Existing conflicts use the lower score conservatively. New conflicts are held for review rather than silently choosing the lowest value.
+              Duplicate date-and-source assessments retain all audited variants but contribute once. Existing conflicts use the lower score conservatively. New conflicts are held for review rather than silently choosing the lowest value.
             </p>
             <p>
               Date-and-source collisions are reviewed manually. Records with different sources are merged only when a reviewed identity match shows they describe the same event. Legacy CVE labels are references, not reliable unique keys.
@@ -370,7 +389,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
           </article>
           <article>
             <h3>Download the records</h3>
-            <p>The bundled CSV files are the raw inputs used by this build. Publishing appended records requires rebuilding the site.</p>
+            <p>The bundled CSV files are the raw inputs used by this build. Their clock and timing fields are workflow metadata; the app calculates its clock from criterion scores. Publishing appended records requires rebuilding the site.</p>
             <div className="method-downloads">
               <a className="button button-primary" href={assessmentsUrl} download>Assessment CSV</a>
               <a className="button" href={storiesUrl} download>Editorial CSV</a>
@@ -391,7 +410,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
             <p><strong>It cannot determine loss of control.</strong> The clock is a consistent editorial lens on selected evidence. It is not a measurement of actual human control, extinction risk or time remaining.</p>
             <p><strong>The records are automated.</strong> The supplied assessments and reports were produced by an AI workflow and have not been independently fact-checked. Follow the original source before relying on a claim.</p>
             <p><strong>Judgement remains.</strong> Criteria make disagreement inspectable, not impossible. Scores reflect interpretation and the framework tends to underweight early governance signals.</p>
-            <p><strong>Only adverse evidence moves the clock.</strong> This version has no recovery model. That is an editorial boundary, not a claim that improvement is impossible.</p>
+            <p><strong>Only adverse evidence moves the clock.</strong> The index has no recovery model. That is an editorial boundary, not a claim that improvement is impossible.</p>
           </div>
           <p className="method-closing">Transparent methodology does not make a clock objective. It makes the argument available for inspection.</p>
         </div>

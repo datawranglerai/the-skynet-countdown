@@ -7,7 +7,7 @@ const storiesPath = fileURLToPath(new URL('../data/Skynet Countdown Log - storie
 const dataset = loadDataset(readFileSync(assessmentsPath, 'utf8'), readFileSync(storiesPath, 'utf8'));
 
 console.log(
-  `${dataset.incidents.length} events · ${dataset.assessmentCount} assessments · ${dataset.editorialCount} editorials · ${dataset.totalPoints} effective points`,
+  `${dataset.incidents.length} events · ${dataset.assessmentCount} assessments · ${dataset.editorialCount} editorials · ${dataset.incidents.reduce((sum, incident) => sum + incident.assessment.score, 0)} raw / ${dataset.totalPoints} effective points`,
 );
 
 if (dataset.diagnostics.length > 0) {

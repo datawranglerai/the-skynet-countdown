@@ -5,12 +5,16 @@ import {
   assessmentContentFingerprint,
   assessmentFingerprint,
   calculateClock,
+  calculateGapClosedPercent,
+  calculateMovementSeconds,
   CALIBRATION,
   cleanMachineCitations,
   editorialContentFingerprint,
   editorialFingerprint,
   effectivePoints,
   formatTime,
+  formatGapClosedPercent,
+  formatPressure,
   HISTORICAL_MANIFEST,
   loadDataset,
   parseCsv,
@@ -80,23 +84,47 @@ test('removes machine citation markers without rewriting source prose', () => {
   );
 });
 
-test('loads the audited source snapshot and reproduces calibration v2', () => {
+test('loads the audited source snapshot and reproduces exponential calibration v1', () => {
   const dataset = loadDataset(assessmentCsv, storyCsv);
-  assert.equal(dataset.incidents.length, 29);
-  assert.equal(HISTORICAL_MANIFEST.length, 29);
-  assert.equal(HISTORICAL_MANIFEST.reduce((sum, event) => sum + event.assessmentContentFingerprints.length, 0), 33);
-  assert.equal(HISTORICAL_MANIFEST.reduce((sum, event) => sum + event.storyLinks.length, 0), 27);
-  assert.equal(dataset.assessmentCount, 33);
-  assert.equal(dataset.editorialCount, 27);
-  assert.equal(dataset.matchedEditorialCount, 27);
+  assert.equal(dataset.incidents.length, 35);
+  assert.equal(HISTORICAL_MANIFEST.length, 35);
+  assert.equal(HISTORICAL_MANIFEST.reduce((sum, event) => sum + event.assessmentContentFingerprints.length, 0), 39);
+  assert.equal(HISTORICAL_MANIFEST.reduce((sum, event) => sum + event.storyLinks.length, 0), 30);
+  assert.deepEqual(
+    Object.fromEntries(HISTORICAL_MANIFEST.filter((event) => event.id >= '2026-09-21').map((event) => [
+      event.id,
+      {
+        assessments: event.assessmentContentFingerprints,
+        editorials: event.storyLinks.map((link) => link.storyContentFingerprint),
+      },
+    ])),
+    {
+      '2026-09-21-gemini-company-breach': { assessments: ['1683c6093c334865'], editorials: ['82d6755e18b5f702'] },
+      '2026-09-22-frontier-ai-control-call': { assessments: ['275c1564e2ffda90'], editorials: [] },
+      '2026-09-23-superintelligence-ban': { assessments: ['30746824f6bf0900'], editorials: [] },
+      '2026-09-24-openai-medicare-agent': { assessments: ['c3d8e35ff0a013c3'], editorials: ['f55f15ccb1453648'] },
+      '2026-09-24-safa-private-standards': { assessments: ['8fad2cb44d8b0048'], editorials: [] },
+      '2026-09-25-openai-dns-sandbox': { assessments: ['7ddd4bcd705d9141'], editorials: ['be9dd520b2328d6c'] },
+    },
+  );
+  assert.equal(dataset.assessmentCount, 39);
+  assert.equal(dataset.editorialCount, 30);
+  assert.equal(dataset.matchedEditorialCount, 30);
   assert.equal(dataset.duplicateCount, 4);
-  assert.equal(dataset.incidents.reduce((sum, incident) => sum + incident.assessment.score, 0), 68);
-  assert.equal(dataset.totalPoints, 69);
-  assert.equal(dataset.remainingSeconds, 360000 / 169);
-  assert.ok(Math.abs(dataset.pressure - 6900 / 169) < Number.EPSILON * 100);
-  assert.equal(dataset.lastUpdated, '2026-09-18');
+  assert.equal(dataset.incidents.reduce((sum, incident) => sum + incident.assessment.score, 0), 83);
+  assert.equal(dataset.totalPoints, 88);
+  assert.equal(dataset.remainingSeconds, 3600 * 2 ** (-88 / 100));
+  assert.equal(dataset.pressure, calculateGapClosedPercent(88));
+  assert.equal(dataset.lastUpdated, '2026-09-25');
   assert.deepEqual(dataset.diagnostics, []);
-  assert.equal(dataset.incidents.filter((incident) => !incident.editorial).length, 4);
+  assert.equal(dataset.incidents.filter((incident) => !incident.editorial).length, 7);
+  const newIncidents = dataset.incidents.filter((incident) => incident.assessment.date > '2026-09-18');
+  assert.equal(newIncidents.length, 6);
+  assert.equal(newIncidents.filter((incident) => incident.editorial).length, 3);
+  assert.equal(newIncidents.filter((incident) => !incident.editorial).length, 3);
+  assert.deepEqual(newIncidents.map((incident) => incident.assessment.score).sort((a, b) => a - b), [0, 0, 1, 4, 5, 5]);
+  assert.deepEqual(newIncidents.map((incident) => incident.effectivePoints).sort((a, b) => a - b), [0, 0, 1, 4, 7, 7]);
+  assert.equal(dataset.incidents.filter((incident) => incident.assessment.fullTrifecta).length, 3);
   assert.equal(dataset.incidents.find((incident) => incident.id === '2026-04-07-project-glasswing')?.assessments.length, 2);
   assert.equal(dataset.incidents.find((incident) => incident.id === '2026-04-07-project-glasswing')?.editorials.length, 2);
   assert.equal(dataset.incidents.find((incident) => incident.id === '2026-04-07-project-glasswing')?.editorialMatchesAssessment, true);
@@ -146,9 +174,9 @@ test('accepts appended unique events and gives zero-score events exactly zero mo
     updated_clock_position: '12:00',
   };
   const dataset = loadDataset(appended, encodeCsv(storyHeaders, [...storyRows, appendedStory]));
-  assert.equal(dataset.incidents.length, 31);
-  assert.equal(dataset.totalPoints, 71);
-  assert.equal(dataset.matchedEditorialCount, 28);
+  assert.equal(dataset.incidents.length, 37);
+  assert.equal(dataset.totalPoints, 90);
+  assert.equal(dataset.matchedEditorialCount, 31);
   assert.deepEqual(dataset.diagnostics, []);
   assert.equal(dataset.incidents.find((incident) => incident.assessment.cveId === 'SKYNET-2026-9001')?.editorial?.headline, 'A unique appended editorial');
   assert.equal(dataset.incidents.at(-1)?.movementSeconds, 0);
@@ -185,7 +213,7 @@ test('fails closed for unreviewed revisions and ambiguous legacy identifiers', (
   };
   const ambiguous = loadDataset(assessmentCsv, encodeCsv(storyHeaders, [...storyRows, ambiguousStory]));
   assert.ok(ambiguous.diagnostics.some((message) => message.includes('Ambiguous or unmatched story')));
-  assert.equal(ambiguous.matchedEditorialCount, 27);
+  assert.equal(ambiguous.matchedEditorialCount, 30);
 });
 
 test('full-content audits reject in-place assessment and editorial rewrites', () => {
@@ -211,7 +239,7 @@ test('full-content audits reject in-place assessment and editorial rewrites', ()
   const changedEditorial = loadDataset(assessmentCsv, encodeCsv(storyHeaders, storyRows));
   assert.ok(changedEditorial.diagnostics.some((message) => message.includes('unreviewed content')));
   assert.ok(changedEditorial.diagnostics.some((message) => message.includes('requires editorial content')));
-  assert.equal(changedEditorial.matchedEditorialCount, 26);
+  assert.equal(changedEditorial.matchedEditorialCount, 29);
 });
 
 test('a custom manifest can approve and select a same-identity assessment revision', () => {
@@ -424,7 +452,7 @@ test('historical aliases and ids outrank conflicting supplied event ids and corr
     event_id: index === 0 ? 'wrong-historical-id' : '',
   }));
   const conflict = loadDataset(encodeCsv(headers, withConflict), storyCsv);
-  assert.equal(conflict.incidents.length, 29);
+  assert.equal(conflict.incidents.length, 35);
   assert.ok(conflict.diagnostics.some((message) => message.includes('conflicting event_id')));
 
   const withPinnedIdentity = rows.map((row, index) => ({
@@ -443,7 +471,7 @@ test('historical aliases and ids outrank conflicting supplied event ids and corr
     t1_score: '1',
   });
   const corrected = loadDataset(encodeCsv(headers, [...rows, correction]), storyCsv);
-  assert.equal(corrected.incidents.length, 29);
+  assert.equal(corrected.incidents.length, 35);
   assert.equal(corrected.incidents.filter((incident) => incident.id === '2026-04-09-openai-advertising').length, 1);
   assert.ok(corrected.diagnostics.some((message) => message.includes('Unreviewed assessment')));
 });
@@ -493,6 +521,7 @@ test('strict row validation rejects impossible dates and score totals', () => {
 
 test('validates scoring bands and applies the complete-Trifecta floor', () => {
   assert.equal(effectivePoints(6, true), 7);
+  assert.equal(effectivePoints(5, true), 7);
   assert.equal(effectivePoints(9, true), 9);
   assert.equal(effectivePoints(0, false), 0);
   assert.throws(() => effectivePoints(-1, false), /non-negative finite/);
@@ -500,21 +529,73 @@ test('validates scoring bands and applies the complete-Trifecta floor', () => {
   assert.throws(() => calculateClock(Number.NaN), /non-negative finite/);
 });
 
-test('diminishing calibration approaches zero without saturating and formats symbolic time', () => {
+test('exponential calibration halves every 100 points and never reaches zero', () => {
   assert.deepEqual(CALIBRATION, {
-    version: '2.0',
-    effectiveDate: '2026-09-26',
+    version: '1.0',
+    effectiveDate: '2026-09-27',
     halfwayPoints: 100,
     startingSeconds: 3600,
   });
   assert.deepEqual(calculateClock(100), { remainingSeconds: 1800, pressure: 50 });
+  assert.equal(calculateClock(0).remainingSeconds, 3600);
+  assert.equal(calculateClock(200).remainingSeconds, 900);
   assert.ok(calculateClock(1_000_000).remainingSeconds > 0);
   const extreme = calculateClock(Number.MAX_VALUE);
   assert.ok(Number.isFinite(extreme.remainingSeconds));
   assert.ok(extreme.remainingSeconds > 0);
   assert.equal(extreme.pressure, 100);
+  assert.equal(formatTime(extreme.remainingSeconds), '<00:01');
+  assert.equal(calculateGapClosedPercent(0), 0);
+  assert.equal(formatGapClosedPercent(0), '0%');
+  assert.equal(formatGapClosedPercent(calculateGapClosedPercent(2)), '1.38%');
+  assert.equal(formatPressure(45.663256873697094), '45.7');
+  assert.equal(formatPressure(99.95), '<100');
+  assert.equal(formatPressure(100), '<100');
   assert.equal(formatTime(3600), '60:00');
   assert.equal(formatTime(2130.1775), '35:30');
   assert.equal(formatTime(0.99), '<00:01');
   assert.throws(() => formatTime(-0.1), /non-negative finite/);
+});
+
+test('event impact is a constant proportional gap closure independent of prior evidence', () => {
+  for (const points of [2, 13]) {
+    const expectedFraction = calculateGapClosedPercent(points) / 100;
+    for (const priorPoints of [0, 50, 500]) {
+      const before = calculateClock(priorPoints).remainingSeconds;
+      const after = calculateClock(priorPoints + points).remainingSeconds;
+      assert.ok(Math.abs((before - after) / before - expectedFraction) < 1e-14);
+      assert.ok(Math.abs(calculateMovementSeconds(priorPoints, points) / before - expectedFraction) < 1e-14);
+    }
+  }
+  assert.equal(formatGapClosedPercent(calculateGapClosedPercent(2)), '1.38%');
+  assert.equal(formatGapClosedPercent(calculateGapClosedPercent(13)), '8.62%');
+});
+
+test('movement remains positive at the representational floor for every positive event', () => {
+  assert.equal(calculateMovementSeconds(Number.MAX_VALUE, 0), 0);
+  for (const points of [1, 2, 7, 13]) {
+    const movement = calculateMovementSeconds(Number.MAX_VALUE, points);
+    assert.ok(Number.isFinite(movement));
+    assert.ok(movement > 0);
+    assert.equal(movement, Number.MIN_VALUE);
+  }
+  assert.equal(formatGapClosedPercent(calculateGapClosedPercent(13)), '8.62%');
+  assert.throws(() => calculateMovementSeconds(-1, 1), /non-negative finite/);
+  assert.throws(() => calculateMovementSeconds(1, Number.NaN), /non-negative finite/);
+});
+
+test('chronological deltas reconcile to the full clock movement and event gap percentages', () => {
+  const dataset = loadDataset(assessmentCsv, storyCsv);
+  const totalMovement = dataset.incidents.reduce((sum, incident) => sum + incident.movementSeconds, 0);
+  assert.ok(Math.abs(totalMovement - (CALIBRATION.startingSeconds - dataset.remainingSeconds)) < 1e-9);
+  let priorRemaining: number = CALIBRATION.startingSeconds;
+  for (const incident of dataset.incidents) {
+    assert.equal(incident.gapClosedPercent, calculateGapClosedPercent(incident.effectivePoints));
+    if (incident.effectivePoints === 0) {
+      assert.equal(incident.movementSeconds, 0);
+    } else {
+      assert.ok(Math.abs(incident.movementSeconds / priorRemaining - incident.gapClosedPercent / 100) < 1e-14);
+    }
+    priorRemaining = incident.remainingSeconds;
+  }
 });

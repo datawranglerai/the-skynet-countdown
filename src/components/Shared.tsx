@@ -1,5 +1,5 @@
 import type { Incident, Severity } from '../lib/types';
-import { CRITERIA } from '../lib/index';
+import { CRITERIA, formatGapClosedPercent } from '../lib/index';
 
 export function Arrow({ diagonal = false, className = '' }: { diagonal?: boolean; className?: string }) {
   return <svg className={`arrow-icon ${className}`} width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d={diagonal ? 'M6 18 18 6M6 6h12v12' : 'M4 12h16m-6-6 6 6-6 6'} stroke="currentColor" strokeWidth="1.6" /></svg>;
@@ -37,7 +37,7 @@ export function IncidentCard({ incident, index }: { incident: Incident; index: n
     <div className="card-number">FIELD REPORT / {String(index + 1).padStart(2, '0')}</div>
     <h3><a href={`#/incidents/${incident.id}`}>{incident.headline}<span className="card-link-cover" /></a></h3>
     <p>{incident.editorial?.story ?? incident.assessment.title}</p>
-    <div className="card-bottom"><div><ScoreStrip incident={incident} /><span className="mono-label">{incident.assessment.score}/13 RISK SCORE</span></div><span className="card-movement">{movementLabel(incident.movementSeconds)} <Arrow diagonal /></span></div>
+    <div className="card-bottom"><div><ScoreStrip incident={incident} /><span className="mono-label">{incident.assessment.score}/13 RISK SCORE</span></div><span className="card-movement"><span><b>{formatGapClosedPercent(incident.gapClosedPercent)}</b><small>OF REMAINING GAP</small></span><Arrow diagonal /></span></div>
   </article>;
 }
 

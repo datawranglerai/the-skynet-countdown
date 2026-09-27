@@ -189,6 +189,18 @@ const BASE_HISTORICAL_MANIFEST: readonly HistoricalEventManifest[] = Object.free
   event('2026-09-18-claude-r-and-d', '2026-09-18', 'https://apnews.com/article/anthropic-claude-ai-model-self-improvement-4d3a7430f57cbc7c39e1c5f2b7d7e132', ['SKYNET-2026-0015', 3], SINGLE, [
     ['SKYNET-2026-0015', 'Claude Started Helping Build the Next Claude', ['SKYNET-2026-0015', 3]],
   ]),
+  event('2026-09-21-gemini-company-breach', '2026-09-21', 'https://www.securityweek.com/google-confirms-gemini-ai-breached-three-firms/', ['SKYNET-2026-0012', 5, true], SINGLE, [
+    ['SKYNET-2026-0012', 'The Eval Touched Real Targets. Then Kept Going.', ['SKYNET-2026-0012', 5, true]],
+  ]),
+  event('2026-09-22-frontier-ai-control-call', '2026-09-22', 'https://www.government.nl/documents/2026/09/22/a-call-for-control-of-frontier-ai-models', ['SKYNET-2026-0013', 0], SINGLE),
+  event('2026-09-23-superintelligence-ban', '2026-09-23', 'https://rollcall.com/2026/09/23/ai-superintelligence-ban-proposed-by-casar-sanders/', ['SKYNET-2026-0015', 0], SINGLE),
+  event('2026-09-24-openai-medicare-agent', '2026-09-24', 'https://www.abc.net.au/news/2026-09-24/what-we-know-about-the-openai-medicare-hack/107189452', ['SKYNET-2026-0011', 5, true], SINGLE, [
+    ['SKYNET-2026-0011', "The Public Portal Wasn't Where the Agent Stopped", ['SKYNET-2026-0011', 5, true]],
+  ]),
+  event('2026-09-24-safa-private-standards', '2026-09-24', 'https://www.theinformation.com/articles/google-openai-anthropic-ai-safety-group-takes-shape?offer=rtsu-engagement-25%2Crtsu-featured-articles-pro', ['SKYNET-2026-0014', 1], SINGLE),
+  event('2026-09-25-openai-dns-sandbox', '2026-09-25', 'https://alignment.openai.com/misalignment-reports/an-agent-used-dns-to-reach-an-external-chatbot/', ['SKYNET-2026-0010', 4], SINGLE, [
+    ['SKYNET-2026-0010', 'The Model Found the DNS Side Door', ['SKYNET-2026-0010', 4]],
+  ]),
 ]);
 
 interface ContentAudit {
@@ -228,6 +240,12 @@ const AUDITED_CONTENT: Readonly<Record<string, ContentAudit>> = Object.freeze({
   '2026-09-12-amodei-slowdown-warning': { assessments: ['77808e7461f03f70'] },
   '2026-09-16-openai-misalignment-reports': { assessments: ['61dda5e0ba3593d4'], editorials: { 'ae97f829d1fae58d': '88183e7561bdd361' } },
   '2026-09-18-claude-r-and-d': { assessments: ['cb0877df6f9c9683'], editorials: { 'd23e8fae846a9172': '0a75f38c3eb5e310' } },
+  '2026-09-21-gemini-company-breach': { assessments: ['1683c6093c334865'], editorials: { '7c918e0764f931a3': '82d6755e18b5f702' } },
+  '2026-09-22-frontier-ai-control-call': { assessments: ['275c1564e2ffda90'] },
+  '2026-09-23-superintelligence-ban': { assessments: ['30746824f6bf0900'] },
+  '2026-09-24-openai-medicare-agent': { assessments: ['c3d8e35ff0a013c3'], editorials: { '4fdb8022e81463de': 'f55f15ccb1453648' } },
+  '2026-09-24-safa-private-standards': { assessments: ['8fad2cb44d8b0048'] },
+  '2026-09-25-openai-dns-sandbox': { assessments: ['7ddd4bcd705d9141'], editorials: { 'e04cc41a4f49b466': 'be9dd520b2328d6c' } },
 });
 
 export const HISTORICAL_MANIFEST: readonly HistoricalEventManifest[] = Object.freeze(

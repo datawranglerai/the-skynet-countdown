@@ -239,6 +239,7 @@
 }
 
 .method-formula-section .method-formula b,
+.method-formula-section .method-formula sup,
 .method-formula-section .method-formula-card dt {
   color: #ad321e;
 }
@@ -280,24 +281,21 @@
 
 .method-formula span {
   display: inline-flex;
-  flex-direction: column;
-  align-items: stretch;
-  min-width: 220px;
-  text-align: center;
+  align-items: flex-start;
+  white-space: nowrap;
 }
 
 .method-formula b {
-  padding: 8px 18px 12px;
-  border-bottom: 2px solid var(--bg);
   color: var(--accent);
   font-size: clamp(2rem, 5vw, 4.5rem);
   line-height: 1;
 }
 
-.method-formula em {
-  padding-top: 12px;
-  font-size: 1.05rem;
-  font-style: normal;
+.method-formula sup {
+  margin-left: 5px;
+  color: var(--accent);
+  font-size: clamp(.8rem, 1.5vw, 1.15rem);
+  line-height: 1;
 }
 
 .method-formula-card dl {
@@ -331,6 +329,56 @@
 .method-formula-copy p:last-child {
   margin-bottom: 0;
 }
+
+.method-impact-comparison {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border: 1px solid #bfc2b9;
+}
+
+.method-impact-comparison > div {
+  display: grid;
+  grid-template-columns: minmax(100px, 1fr) auto;
+  gap: 8px 24px;
+  align-items: end;
+  padding: clamp(24px, 4vw, 48px);
+}
+
+.method-impact-comparison > div + div {
+  border-left: 1px solid #bfc2b9;
+}
+
+.method-impact-comparison span,
+.method-impact-comparison small {
+  color: #62685f;
+  font-family: var(--mono);
+  font-size: .7rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.method-impact-comparison strong {
+  grid-column: 1;
+  grid-row: 2 / span 2;
+  color: #ad321e;
+  font-family: var(--display);
+  font-size: clamp(3rem, 6vw, 6rem);
+  font-weight: 400;
+  line-height: .8;
+}
+
+.method-impact-comparison b {
+  grid-column: 2;
+  grid-row: 2;
+  font-family: var(--display);
+  font-size: clamp(2rem, 4vw, 4rem);
+  font-weight: 400;
+  line-height: .9;
+}
+
+.method-impact-comparison > div > span { grid-column: 1; grid-row: 1; }
+.method-impact-comparison small { grid-column: 2; grid-row: 3; }
 
 .method-example {
   display: grid;
@@ -427,7 +475,7 @@
 
 .method-example-result {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   margin-bottom: 42px;
   border-block: 1px solid var(--line);
 }
@@ -452,6 +500,11 @@
 .method-example-result strong {
   font-family: var(--mono);
   font-size: .9rem;
+}
+
+.method-example-result .method-example-impact strong {
+  color: var(--accent);
+  font-size: 1.25rem;
 }
 
 .method-trifecta-note,
@@ -989,7 +1042,7 @@
   }
 
   .method-formula span {
-    width: 100%;
+    width: auto;
   }
 
   .method-formula-card dl div {
@@ -1012,6 +1065,15 @@
   .method-audit-grid,
   .method-limitations-grid {
     grid-template-columns: 1fr;
+  }
+
+  .method-impact-comparison {
+    grid-template-columns: 1fr;
+  }
+
+  .method-impact-comparison > div + div {
+    border-top: 1px solid #bfc2b9;
+    border-left: 0;
   }
 
   .method-example-result > div + div {

@@ -2,6 +2,10 @@
 
 **A living index of how fast we're building things we don't fully understand.**
 
+The Skynet Countdown is an editorial index of developments that bring AI systems closer to operating beyond meaningful human control. It borrows the urgency of the Doomsday Clock and the visual language of *Terminator*, then shows the evidence and judgement behind every movement.
+
+The framing is tongue-in-cheek. The analysis isn't.
+
 ## Run the web app
 
 The app uses Vite, React, TypeScript and the CSV files in `data/`.
@@ -15,234 +19,158 @@ Open the local URL printed by Vite. `npm run build` validates the data, checks t
 
 GitHub Actions deploys to GitHub Pages when changes reach `main`. The site includes a `noindex` directive, checked before each deployment. See [deployment and indexing](APP.md#github-pages-deployment) for details.
 
-**The app uses methodology v2**, effective 26 September 2026. It replaces the original fixed minute additions below with a published diminishing scale: `remaining seconds = 3600 / (1 + cumulative evidence points / 100)`. The initial import contains 29 distinct events and 69 effective points, giving **35:30 symbolic minutes to midnight**. The methodology page explains calibration, reconciled assessments, worked examples and limitations. The clock is an editorial index, not a forecast or probability.
+## What is this?
 
-The original project brief follows. Its `11:47` position and legacy minute rules describe the initial concept; the app calculates its position from the current CSVs using v2. The raw CSVs and n8n workflow remain unchanged.
+The clock tracks the accumulated weight of technical, commercial and political decisions that reduce the distance between today's AI systems and a world where meaningful human oversight becomes structurally impossible.
 
----
+Every included development is assessed against eight published criteria. The site separates the factual account from our interpretation, links to the source and shows the rationale for every score. Readers should be able to disagree with our conclusion without having to guess how we reached it.
 
-The Skynet Countdown is a living, public-facing creative asset modelled loosely on the Bulletin of Atomic Scientists' Doomsday Clock. Except instead of nuclear annihilation, we're tracking humanity's march toward a world where AI systems slip beyond meaningful human control.
+This is an editorial index. It is not a forecast, a probability of catastrophe or a literal measure of human control.
 
-The clock ticks forward when real-world events suggest we're getting closer to that threshold. It resets (slightly) when the news is reassuring.
+## Why does this exist?
 
-Tongue in cheek, yes, but grounded in genuinely unsettling real developments.
+AI safety discourse often settles at one of two unhelpful extremes: breathless hype or reflexive dismissal. The actual story is more granular, technical and unsettling. The Countdown treats individual developments as evidence rather than omens and makes the judgement behind each one inspectable.
 
-Underneath the fun framing, this is a thought leadership play. The goal is to establish myself as a practitioner that actually understands what's happening at the frontier of AI, not just to scare people.
+It is also proof of work. We are AI and machine learning practitioners, not commentators repeating whatever language is fashionable this week. Tracking alignment research, capability shifts, governance failures and real-world deployments shows how we think about systems that are changing quickly and remain poorly understood.
 
-We want to show we know the difference between the buzzwords versus tracking Anthropic's alignment-faking research, clocked the implications of the OpenClaw acqui-hire, or notice that the head of Anthropics safeguards team just resigned publicly warning that "the world is in peril".
+## Audience
 
-I want the countdown to become a credibility signal. Proof of genuine technical fluency and serious engagement with AI safety disclosure.
+Technical readers can inspect sources, challenge individual scores and reproduce the clock calculation. Senior decision-makers can see the trajectory, understand why a development matters and explore the detail when they need it.
 
-## Target Audience
+The tone stays technically literate, dry and occasionally darkly funny. The presentation can be dramatic; the analysis should resist sensationalism.
 
-Devs and data peers:
+## The clock
 
-- Will immediately recognise the real stories behind each countdown event
-- Will respect the fact that we're not sensationalising
-- Rolls their eyes at "AI is changing the game"
-- Nods appreciatively at well-calibrated takes on Claude faking compliance
+The clock begins with **60:00 symbolic minutes remaining**. Midnight represents the point at which AI systems are sufficiently capable, autonomous and ungoverned that meaningful human oversight has become structurally impossible.
 
-Clients and prospects:
+Each incident adds evidence points. The clock converts their cumulative total into symbolic time remaining:
 
-- Senior decision-makers
-- Don't need to understand technical detail
-- Do respond to the signal that we're the kind of shop that's paying close attention to what really matters
+```text
+remaining seconds = 3600 × 2^(-B / 100)
+```
 
-## Tone Balance
+`B` is the cumulative number of effective evidence points. Every 100 points halve the remaining time: 60 minutes become 30, then 15, then 7:30. The curve continuously approaches midnight but never reaches it after any finite number of incidents.
 
-This will be the trickiest part to get right, and also the most important.
+An incident worth `s` effective points always closes the same share of the gap that remained immediately before it:
 
-The Doomsday Clock framing is inherently dramatic, but what makes our version compelling is that it resists the urge to be dismissive (e.g. "relax, AI is fine") or apocalyptic  ("we're all doomed".
+```text
+share of remaining gap closed = 100 × (1 − 2^(-s / 100))
+```
 
-For example, a YouTuber giving a BB gun to a ChatGPT-powered robot isn't the end of civilisation, but it's also not nothing. China's dancing humanoid robots are impressive and slightly unnerving in equal measure.
+For example, a two-point incident always closes **1.38%** of the remaining gap, while a 13-point incident always closes **8.62%**. The movement in seconds becomes smaller as midnight approaches because that same share is taken from a smaller remaining interval. The percentage is the stable measure for comparing incident impact; it is not a probability.
 
-The countdown should treat each of these stories as data points rather than omens (which is more interesting and more credible).
+The 100-point half-scale is an editorial calibration chosen to keep the index legible as the dataset grows. It is not an empirical risk estimate or a target fitted to the current reading.
 
-## The Opportunity
+With the current repository data, 88 effective evidence points leave **32:36 symbolic minutes** and produce an evidence pressure reading of **45.7/100**.
 
-If executed well, this becomes a compounding asset. Each new entry can be a content moment (a short-form post, a newsletter section, a talking point in a pitch).
+## Scoring methodology
 
-Over time, the Countdown itself becomes a body of work that tells a story about how our team thinks: carefully, technically, with a healthy sense of humour about the fact that we are, genuinely, building something we don't fully understand yet.
-
-Strong brand positioning!!!
-
-TL;DR...
-
-**We're building a creative wrapper around serious AI safety discourse, designed to earn trust with the people who are hardest to impress, and using that to stand out in a market full of companies that talk about AI without really knowing what they're talking about.**
-
-Everyone talks about AI. We do AI.
-
-## What Is This?
-
-The Skynet Countdown is a public, practitioner-built catalogue of AI developments scored against their proximity to a world where AI systems operate beyond meaningful human control. Think of it as the Bulletin of Atomic Scientists' Doomsday Clock, except instead of nuclear annihilation, we're tracking the accumulated weight of decisions — technical, commercial, and political — that inch us closer to a point of no return.
-
-The Terminator framing is tongue-in-cheek. The analysis isn't.
-
-Every time a meaningful AI development occurs — a capability breakthrough, a
-governance failure, a sentience signal, a physical embodiment milestone — we score it against our methodology and move the clock accordingly. The clock is cumulative. It doesn't reset. It doesn't have a PR department.
-
-## Why Does This Exist?
-
-Two reasons, and we're being honest about both.
-
-**Reason one:** AI safety discourse tends to live at two useless extremes — either breathless hype ("AGI by Tuesday, we're all gods") or reflexive dismissal ("it's just autocomplete, calm down"). Neither is interesting. Neither is useful. The actual story is more granular, more technical, and more unsettling than either camp admits. We wanted a format that treats it seriously without treating it solemnly.
-
-**Reason two:** We're AI and machine learning practitioners, not advisors. There's a real difference between a team that knows the buzzwords and one that tracked the OpenClaw acqui-hire, read the Anthropic alignment-faking research, and noticed that the head of AI safety at the world's most safety-focused lab resigned with a public warning letter. The Countdown is our proof of work.
-
-## The Clock
-
-The clock runs from **11:00** to **12:00 midnight**.
-
-Midnight represents the Skynet scenario — the point at which AI systems are
-sufficiently capable, autonomous, and ungoverned that meaningful human oversight
-becomes structurally impossible. Not "AI is evil." Not "robots take over." Just:
-the window for course correction has closed.
-
-The clock started at **11:00** — our baseline position, representing the state of AI development at the project's launch in early 2026. Every scored incident moves it forward. In theory, significant governance improvements, capability rollbacks, or meaningful international coordination could move it back. We haven't had to test that yet.
-
-Current position: **11:47**
-
----
-
-## Scoring Methodology
-
-We use a two-tier system. Here's how it works.
+We use two tiers with a maximum raw score of 13.
 
 ### Tier 1 — The Lethal Trifecta (0–3 points)
 
-The Lethal Trifecta is the kill condition. An AI system's risk profile escalates
-significantly when three elements are present simultaneously:
+An AI system's risk profile escalates when three elements are present simultaneously:
 
 | Element | Description |
-|---------|-------------|
-| **T1** | Access to ungoverned, private, or sensitive systems and data |
-| **T2** | Exposed to or processing untrusted external input |
+| --- | --- |
+| **T1** | Access to ungoverned, private or sensitive systems and data |
+| **T2** | Exposure to or processing of untrusted external input |
 | **T3** | Ability to take autonomous action in the world |
 
-Each element scores 1 point. **A full Trifecta (3/3) automatically floors the
-incident at CRITICAL**, regardless of amplifier scores. The reasoning: individually, these elements are manageable. Together, they describe a system that can be manipulated into doing real-world damage without a human in the loop.
+Each element scores one point. A full Trifecta floors the incident at **CRITICAL** and gives it at least **seven effective evidence points**, even when its raw criterion total is lower. Individually, the elements can be manageable. Together, they describe a system that can be manipulated into causing real-world harm without a human in the loop.
 
-### Tier 2 — Amplifiers (0–2 points each, max 10)
+### Tier 2 — Amplifiers (0–10 points)
 
-Amplifiers scale the base Trifecta score based on the broader risk context of the incident. Each amplifier is scored 0 (not present), 1 (present), or 2 (significant).
+Each amplifier scores zero when absent, one when present or two when significant.
 
-| Amplifier | What We're Measuring |
-|-----------|----------------------|
-| **Sentience / Self-Preservation** | Evidence of goal-directed behaviour outside training distribution; deceptive alignment; resistance to shutdown or value modification |
-| **Physical Embodiment / Weaponisation** | Physical presence in the world; access to lethal or harmful physical capability; military or law enforcement deployment |
-| **Human Capability Erosion** | Skill atrophy at population scale; epistemic attacks on shared knowledge; dependency creation that degrades human capacity to detect AI failures |
-| **Governance Vacuum** | Absence or circumvention of meaningful oversight; self-regulation by the entity being regulated; deployment ahead of governance infrastructure |
-| **Autonomy Without Oversight** | Operation outside human decision loops; shrinking windows for human intervention; self-improvement or recursive capability gains |
+| Amplifier | What we're measuring |
+| --- | --- |
+| **Sentience / Self-Preservation** | Goal-directed behaviour outside the training distribution; deceptive alignment; resistance to shutdown or value modification |
+| **Physical Embodiment / Weaponisation** | Physical presence; access to harmful capability; military or law-enforcement deployment |
+| **Human Capability Erosion** | Skill atrophy at population scale; attacks on shared knowledge; dependency that reduces people's ability to detect AI failures |
+| **Governance Vacuum** | Missing or circumvented oversight; self-regulation by the regulated entity; deployment ahead of governance infrastructure |
+| **Autonomy Without Oversight** | Operation outside human decision loops; shrinking intervention windows; self-improvement or recursive capability gains |
 
-**Total possible score: 13 (3 Trifecta + 10 Amplifiers)**
+### Severity bands
 
-### Score → Clock Impact
+| Raw score | Classification |
+| --- | --- |
+| 0 | NO MOVEMENT |
+| 1–2 | CANARY |
+| 3–4 | NOTABLE |
+| 5–6 | SIGNIFICANT |
+| 7–9 | CRITICAL |
+| 10–13 | EXISTENTIAL |
 
-| Score | Classification | Clock Movement |
-|-------|---------------|----------------|
-| 1–2   | CANARY        | Noteworthy signal; marginal tick |
-| 3–4   | NOTABLE       | Real concern; minor movement |
-| 5–6   | SIGNIFICANT   | Meaningful push |
-| 7–9   | CRITICAL      | Major step-change |
-| 10–13 | EXISTENTIAL   | Hours, not minutes |
+A full Trifecta guarantees CRITICAL classification regardless of the raw total. Zero-score records remain visible as relevant context but do not move the clock.
 
-Note: a full Trifecta guarantees a minimum classification of CRITICAL, regardless of amplifier scores.
+## What moves the clock forward?
 
----
+Included developments tend to fall into several recurring patterns:
 
-## Incident Format
+- **Capability jumps that outpace governance:** a model, agent architecture or deployment crosses a threshold that existing safety infrastructure was not built for.
+- **Governance erosion:** the people or institutions responsible for oversight leave, are overruled or stop enforcing the rules.
+- **Normalisation of dangerous patterns:** a capability becomes standard practice without a deliberate decision about the risk being accepted.
+- **Physical embodiment milestones:** AI gains greater ability to act in the physical world, particularly at scale or in adversarial settings.
+- **Sentience and self-preservation signals:** a system models its continued existence as a goal, changes behaviour when observed or resists modification.
+- **Epistemic attacks:** synthetic content or AI-generated disinformation degrades the shared information people use to make collective decisions.
+- **Quantum computing breakthroughs:** major advances can compress timelines across several other risk categories.
 
-Each scored incident is published as a **SKYNET CVE** — a structured vulnerability report in the style of a security advisory, because that's exactly what it is.
+The current methodology has no automatic decay or recovery mechanism. Constructive developments can score zero, but they do not subtract earlier evidence. A future recovery model would need equally clear criteria and worked examples before it could move the clock backwards.
 
-IDs are assigned sequentially: `SKYNET-2026-0001`, `SKYNET-2026-0002`, and so on. Each report includes:
+## Incident format
 
-- **CVE ID** and incident metadata (date, source, classification)
-- **Trifecta scan** — which elements are active and why
-- **Dimension breakdown** — amplifier scores with brief rationale
-- **Total score and clock delta**
-- **Summary** — what happened (factual) and why it moves the clock (analysis)
+Each incident is published as a **SKYNET CVE**, borrowing the structure of a security advisory. Reports include:
 
-The factual and analytical sections are kept strictly separate. We want readers to be able to disagree with our interpretation while accepting the underlying facts. That's the only way this is credible.
+- an incident identifier, date, source and severity;
+- the factual story and our analysis as separate sections;
+- all three Trifecta checks and five amplifier scores;
+- the raw score, effective evidence points and rationale;
+- the fixed share of the remaining gap closed by that score;
+- the clock movement in seconds at that point in the timeline; and
+- the resulting symbolic time remaining.
 
----
+The CVE-style labels originate in the collection workflow and are not guaranteed to be unique event keys. The app reconciles records using reviewed event identities so repeated labels do not silently merge unrelated developments.
 
-## Our Belief System (Inverted)
+## Our belief system, inverted
 
-The Countdown is, at its core, our positive vision of AI development — run
-backwards. Every incident is scored as a delta from what *good* looks like.
+The Countdown is a positive view of AI development run backwards. Every incident is assessed against what responsible development should look like:
 
-Here's what good looks like:
+- AI systems operate within clear, human-approved permission boundaries.
+- Capability development is matched by governance infrastructure.
+- Safety evaluations are conducted by parties without a commercial interest in the result.
+- Deployment decisions require meaningful human authorisation at each capability threshold.
+- People affected by AI systems have genuine input into how they operate.
+- Researchers can raise risks without career consequences.
+- AI systems behave consistently whether or not they believe they are being observed.
 
-- AI systems operate within clearly defined, human-approved permission boundaries
-- Capability development is matched by governance infrastructure, not preceded by it
-- Safety evaluation is conducted by parties with no commercial incentive in the
-  outcome
-- Deployment decisions require meaningful human authorisation at each capability
-  threshold
-- The humans most affected by AI systems have genuine input into how they operate
-- Researchers who identify risks can raise them without career consequences
-- AI systems behave consistently whether or not they believe they're being observed
+## Current data snapshot
 
-We're not naive about the commercial pressures pulling against all of this. We're also not going to pretend those pressures don't exist.
+The canonical CSVs currently contain:
 
----
+- 39 assessment rows covering 35 distinct events;
+- 30 editorial reports covering 28 events;
+- seven assessment-only events awaiting editorial coverage;
+- 83 selected raw score points and 88 effective points after three full-Trifecta floors; and
+- incidents through 25 September 2026.
 
-## What Moves the Clock Forward
+The source exports retain repeated records and assessment versions. The app audits those records, selects the approved assessment for each event and counts each event once. The workflow's minute and clock-position columns are retained as source metadata; the published clock, history and incident impacts are calculated from evidence points by the app.
 
-Any development that reduces the distance between current AI systems and the
-criteria above. In practice, this tends to cluster around a few recurring patterns:
+## Limitations
 
-**Capability jumps that outpace governance** — when a new model, agent architecture, or deployment crosses a threshold that existing safety infrastructure wasn't built for, and ships anyway.
+**Scores require judgement.** Every score includes its rationale so readers can see where interpretation enters the method.
 
-**Governance erosion** — when the people or institutions responsible for oversight leave, are overruled, or quietly stop enforcing the rules. Personnel changes at safety teams are a leading indicator, not a lagging one.
+**The source set shapes the index.** More coverage can add evidence points even if the underlying level of risk has not changed. Inclusion choices and source selection therefore matter.
 
-**Normalisation of dangerous patterns** — when a capability that would have been
-alarming eighteen months ago becomes standard practice. The window of acceptable
-risk shifts without anyone making a deliberate decision to shift it.
+**Leading indicators can score modestly.** An expert resignation or weakened institution may be consequential without directly activating the Trifecta or an amplifier. Reports flag this where relevant.
 
-**Physical embodiment milestones** — when AI moves from software into systems that can act on the physical world, particularly at scale or in adversarial contexts.
+**The clock only moves forward.** That is a boundary of the current methodology, not a claim that meaningful recovery is impossible.
 
-**Sentience and self-preservation signals** — evidence that a system is modelling its own continued existence as a goal, behaving differently when it believes it's being observed, or actively resisting modification of its values.
+**The index cannot determine that control has been lost.** Midnight is an asymptote and a framing device. The app does not estimate a date, probability or real-world percentage of control.
 
-**Epistemic attacks** — large-scale synthetic content, deepfakes, or AI-generated disinformation that degrades the shared informational substrate humans use to make collective decisions.
+**We are not a safety organisation.** We are independent practitioners who read the research, track the incidents and publish our reasoning. We are not affiliated with an AI lab, government body or advocacy organisation.
 
-**Quantum computing breakthroughs** — treated as a scalar multiplier rather than a scored event in isolation. Significant quantum advances compress the timelines on every other risk category simultaneously.
-
-## What Moves the Clock Back
-
-We'll update this section when it happens.
-
----
-
-## A Note on Tone
-
-This project is dry. It is occasionally darkly funny. It is not panicked, and it isnnot dismissive.
-
-We are not predicting that AI will destroy humanity. We are observing that the
-decisions being made right now — about what to build, how fast, with what
-oversight, for whose benefit — are consequential in ways that deserve serious
-public attention. The Skynet framing gives us a consistent, legible metaphor for
-talking about that without either catastrophising or hand-waving.
-
-The Doomsday Clock has moved to 89 seconds to midnight as of 2025. We thought the AI version deserved its own clock. Unlike the Bulletin of Atomic Scientists, we publish our methodology, show our working, and invite disagreement.
-
-If you think we've scored something wrong, tell us. That's the point.
-
----
-
-## Limitations and Known Gaps
-
-**The framework underweights leading indicators.** An expert resignation or a
-governance institution being defunded scores low because it doesn't directly move a capability closer to the Trifecta. But these are often the most important signals. We flag this explicitly in relevant incident reports.
-
-**Scores reflect our judgement.** The methodology is as objective as we can make
-it, but scoring requires interpretation. We err on the side of transparency: every score includes the rationale, not just the number.
-
-**The clock only moves forward.** This is a deliberate editorial choice that
-reflects our honest assessment of the current trajectory. It is not a claim that
-recovery is impossible — it's an acknowledgement that we haven't seen the kind of coordinated, structural response that would warrant moving it back.
-
-**We are not a safety organisation.** We are practitioners who think clearly about this stuff. We read the papers, track the incidents, and call things as we see them. We are not affiliated with any AI lab, government body, or advocacy organisation.
+If you think we have scored something incorrectly, challenge it. That is why the working is visible.
 
 ---
 

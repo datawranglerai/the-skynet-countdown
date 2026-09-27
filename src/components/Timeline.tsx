@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Incident } from '../lib/types';
-import { formatTime } from '../lib/index';
+import { formatTime, formatGapClosedPercent } from '../lib/index';
 import { Arrow, dateLabel, movementLabel } from './Shared';
 
 export default function Timeline({ incidents }: { incidents: Incident[] }) {
@@ -15,7 +15,7 @@ export default function Timeline({ incidents }: { incidents: Incident[] }) {
   const monthNames = Array.from({ length: 5 }, (_, index) => dateLabel(new Date(start + (end - start) * index / 4).toISOString().slice(0, 10)));
   return <div className="timeline-layout">
     <div className="timeline-chart-wrap">
-      <div className="chart-key"><span><i /> SYMBOLIC DISTANCE TO MIDNIGHT</span><span>RECOMPUTED WITH METHOD 02</span></div>
+      <div className="chart-key"><span><i /> SYMBOLIC DISTANCE TO MIDNIGHT</span><span>CALCULATED FROM INCIDENT SCORES</span></div>
       <svg className="timeline-chart" viewBox="0 0 930 240" role="img" aria-label={`Clock history from ${dateLabel(incidents[0].assessment.date)} to ${dateLabel(incidents.at(-1)!.assessment.date)}. It moves from 60 minutes to ${formatTime(incidents.at(-1)!.remainingSeconds)}. Use the slider below to inspect each event.`}>
         <defs><linearGradient id="chart-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#f15b40" stopOpacity=".14" /><stop offset="1" stopColor="#f15b40" stopOpacity="0" /></linearGradient></defs>
         {[25, 80, 135, 190].map((gridY, index) => <g key={gridY}><line x1="24" y1={gridY} x2="878" y2={gridY} stroke="#30372f" strokeDasharray="3 6" /><text x="894" y={gridY + 4} className="chart-axis">{index * 20}m</text></g>)}
@@ -27,14 +27,14 @@ export default function Timeline({ incidents }: { incidents: Incident[] }) {
       </svg>
       <label className="timeline-slider-label" htmlFor="history-range">EXPLORE THE RECORD <span>{selected + 1} / {incidents.length}</span></label>
       <input id="history-range" className="history-range" type="range" min="0" max={incidents.length - 1} value={selected} onChange={(event) => setSelected(Number(event.target.value))} aria-valuetext={`${dateLabel(event.assessment.date, true)}: ${event.headline}. ${formatTime(event.remainingSeconds)} remaining.`} />
-      <p className="chart-footnote">Every step is an assessed event. Flat periods mean no new records in this dataset.</p>
+      <p className="chart-footnote">Ordered by assessment date. Every step is a scored event; flat periods add no evidence points.</p>
     </div>
     <div className="timeline-selected" aria-live="polite">
       <div className="eyebrow">{dateLabel(event.assessment.date, true)}</div>
       <span className="timeline-time">{formatTime(event.remainingSeconds)}</span>
       <span className="mono-label">SYMBOLIC MINUTES REMAINING</span>
       <h3><a href={`#/incidents/${event.id}`}>{event.headline}</a></h3>
-      <div className="timeline-event-bottom"><span>{event.effectivePoints} EVIDENCE POINTS <b>{movementLabel(event.movementSeconds)}</b></span><a href={`#/incidents/${event.id}`} aria-label={`Read ${event.headline}`}><Arrow diagonal /></a></div>
+      <div className="timeline-event-bottom"><span><b className="timeline-gap">{formatGapClosedPercent(event.gapClosedPercent)} OF REMAINING GAP</b><small>{event.effectivePoints} POINTS · {movementLabel(event.movementSeconds)} AT THIS POINT</small></span><a href={`#/incidents/${event.id}`} aria-label={`Read ${event.headline}`}><Arrow diagonal /></a></div>
     </div>
   </div>;
 }
