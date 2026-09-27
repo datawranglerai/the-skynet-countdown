@@ -1,12 +1,13 @@
 import type { Incident, RiskSeverity } from '../lib/types';
 import { CRITERIA, MAX_SCORE, formatGapClosedPercent } from '../lib/index';
+import logo from '../../assets/logos/logo-skynet-clock-2.png';
 
 export function Arrow({ diagonal = false, className = '' }: { diagonal?: boolean; className?: string }) {
   return <svg className={`arrow-icon ${className}`} width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d={diagonal ? 'M6 18 18 6M6 6h12v12' : 'M4 12h16m-6-6 6 6-6 6'} stroke="currentColor" strokeWidth="1.6" /></svg>;
 }
 
 export function Logo() {
-  return <a className="brand" href="#/" aria-label="The Skynet Countdown home"><svg width="34" height="34" viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M11 6h27l-6 7H5zm-6 11h27l-6 7H0zm8 11h14l-6 7H7z" fill="currentColor" /></svg><span>SKYNET<span>COUNTDOWN</span></span></a>;
+  return <a className="brand" href="#/" aria-label="The Skynet Countdown home"><img className="brand-mark" src={logo} width="42" height="42" alt="" aria-hidden="true" /><span>SKYNET<span>COUNTDOWN</span></span></a>;
 }
 
 export function SeverityBadge({ severity, score }: { severity: RiskSeverity; score?: number }) {

@@ -42,6 +42,7 @@ svg { flex-shrink: 0; }
 .site-header { height: 94px; border-bottom: 1px solid var(--line); }
 .header-inner { height: 100%; display: flex; align-items: center; justify-content: space-between; gap: 32px; }
 .brand { display: flex; align-items: center; gap: 10px; color: var(--accent); flex-shrink: 0; }
+.brand-mark { display: block; width: 42px; height: 42px; object-fit: contain; flex-shrink: 0; }
 .brand > span { font: 600 23px/.9 var(--display); letter-spacing: .04em; color: var(--ink); }
 .brand > span > span { display: block; font-size: 12px; letter-spacing: .15em; margin-top: 4px; }
 .header-inner nav { align-self: stretch; display: flex; align-items: stretch; gap: 35px; }
@@ -223,7 +224,7 @@ svg { flex-shrink: 0; }
 }
 .site-footer { border-top: 1px solid var(--line); background: #0b0e0b; }
 .footer-main { padding-block: 42px; display: flex; align-items: center; justify-content: space-between; }
-.footer-main .brand > svg { width: 28px; }
+.footer-main .brand-mark { width: 36px; height: 36px; }
 .footer-main .brand > span { font-size: 20px; }
 .footer-main .brand > span > span { font-size: 10px; }
 .footer-main p { color: var(--muted); font-size: 10px; margin: 16px 0 0; }
@@ -436,7 +437,7 @@ summary::-webkit-details-marker { display: none; }
   .container { width: calc(100% - 40px); }
   .site-header { height: 110px; }
   .header-inner { flex-wrap: wrap; justify-content: center; padding-top: 18px; gap: 12px; }
-  .brand > svg { width: 26px; height: 26px; }
+  .brand-mark { width: 34px; height: 34px; }
   .brand > span { font-size: 21px; }
   .brand > span > span { font-size: 10px; }
   .header-inner nav { width: 100%; justify-content: center; gap: 32px; height: 44px; }
