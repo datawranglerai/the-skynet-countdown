@@ -2,7 +2,6 @@ import {
   calculateClock,
   calculateGapClosedPercent,
   calculateMovementSeconds,
-  effectivePoints,
 } from './calibration.ts';
 import { cleanMachineCitations, parseCsv, stableContentFingerprint, type CsvRecord } from './csv.ts';
 import { CRITERIA, SEVERITIES } from './criteria.ts';
@@ -16,6 +15,7 @@ import {
   type HistoricalEventManifest,
 } from './manifest.ts';
 import type { Assessment, Dataset, Editorial, Incident, Severity } from './types.ts';
+import { calculateRiskScore } from './scoring.ts';
 
 const ASSESSMENT_HEADERS = [
   'cve_id', 'incident_title', 'incident_date', 'source_url', 'classification', 'total_score',
@@ -539,7 +539,7 @@ export function loadDataset(
       target.editorials.push({
         editorial: parsed.editorial,
         assessmentFingerprint: linkedAssessment,
-        assessmentScore: linkedVersion?.score,
+        assessmentScore: linkedVersion ? calculateRiskScore(linkedVersion.scores).totalPoints : undefined,
         assessmentContentFingerprint: linkedAssessmentContent,
         preferred,
         fingerprint: parsed.fingerprint,
@@ -551,7 +551,8 @@ export function loadDataset(
   working.sort((left, right) => left.assessment.date.localeCompare(right.assessment.date) || left.id.localeCompare(right.id));
   let cumulativePoints = 0;
   const incidents: Incident[] = working.map((value) => {
-    const points = effectivePoints(value.assessment.score, value.assessment.fullTrifecta);
+    const scoring = calculateRiskScore(value.assessment.scores);
+    const points = scoring.totalPoints;
     const priorPoints = cumulativePoints;
     const nextCumulativePoints = cumulativePoints + points;
     if (!Number.isSafeInteger(nextCumulativePoints)) {
@@ -583,6 +584,7 @@ export function loadDataset(
       editorialAssessmentScore: canonicalEntry?.assessmentScore,
       headline: canonicalEditorial?.headline ?? value.assessment.title,
       selectionRationale: value.selectionRationale,
+      scoring,
       effectivePoints: points,
       gapClosedPercent: calculateGapClosedPercent(points),
       cumulativePoints,

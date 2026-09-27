@@ -5,10 +5,11 @@ import terminatorPortrait from '../../assets/terminator-1-no-bg.png';
 import {
   CALIBRATION,
   CRITERIA,
+  MAX_SCORE,
   calculateClock,
   calculateGapClosedPercent,
   calculateMovementSeconds,
-  effectivePoints as calculateEffectivePoints,
+  calculateRiskScore,
   formatGapClosedPercent,
   formatTime,
 } from '../lib/index';
@@ -26,8 +27,15 @@ const SEVERITY_BANDS = [
   { range: '1–2', label: 'CANARY', note: 'A noteworthy signal.' },
   { range: '3–4', label: 'NOTABLE', note: 'A concrete cause for concern.' },
   { range: '5–6', label: 'SIGNIFICANT', note: 'Meaningful proximity to loss of control.' },
-  { range: '7–9', label: 'CRITICAL', note: 'A major step change.' },
-  { range: '10–13', label: 'EXISTENTIAL', note: 'Several high-risk dimensions coincide.' },
+  { range: '7–12', label: 'CRITICAL', note: 'A major step change; a full Trifecta starts here.' },
+  { range: '13–17', label: 'EXISTENTIAL', note: 'Multiple Trifecta conditions combine with substantial amplifiers.' },
+] as const;
+
+const TRIFECTA_LADDER = [
+  { conditions: 0, points: 0 },
+  { conditions: 1, points: 1 },
+  { conditions: 2, points: 3 },
+  { conditions: 3, points: 7 },
 ] as const;
 
 const formatDate = (date: string) =>
@@ -46,10 +54,10 @@ const formatMovement = (seconds: number) => {
 
 function ExampleInspector({ incidents }: { incidents: Incident[] }) {
   const exampleIds = useMemo(() => {
-    const zero = incidents.find((incident) => incident.assessment.score === 0);
-    const trifecta = incidents.find((incident) => incident.assessment.fullTrifecta);
+    const zero = incidents.find((incident) => incident.scoring.totalPoints === 0);
+    const trifecta = incidents.find((incident) => incident.scoring.trifectaCount === 3);
     const highest = incidents.reduce<Incident | undefined>(
-      (best, incident) => (!best || incident.assessment.score > best.assessment.score ? incident : best),
+      (best, incident) => (!best || incident.scoring.totalPoints > best.scoring.totalPoints ? incident : best),
       undefined,
     );
     return [...new Set([zero?.id, trifecta?.id, highest?.id].filter(Boolean) as string[])];
@@ -72,7 +80,7 @@ function ExampleInspector({ incidents }: { incidents: Incident[] }) {
         >
           {incidents.map((item) => (
             <option key={item.id} value={item.id}>
-              {item.assessment.score}/13 · {item.headline}
+              {item.scoring.totalPoints}/{MAX_SCORE} · {item.headline}
             </option>
           ))}
         </select>
@@ -98,22 +106,23 @@ function ExampleInspector({ incidents }: { incidents: Incident[] }) {
             <p className="eyebrow">Worked example · {formatDate(incident.assessment.date)}</p>
             <h3>{incident.headline}</h3>
           </div>
-          <div className="method-score-stamp" aria-label={`${incident.assessment.score} out of 13, ${incident.assessment.severity}`}>
-            <strong>{incident.assessment.score}</strong><span>/13</span>
-            <small>{incident.assessment.score === 0 ? 'NO MOVEMENT' : incident.assessment.severity}</small>
+          <div className="method-score-stamp" aria-label={`${incident.scoring.totalPoints} out of ${MAX_SCORE}, ${incident.scoring.totalPoints === 0 ? 'no movement' : incident.scoring.severity}`}>
+            <strong>{incident.scoring.totalPoints}</strong><span>/{MAX_SCORE}</span>
+            <small>{incident.scoring.totalPoints === 0 ? 'NO MOVEMENT' : incident.scoring.severity}</small>
           </div>
         </header>
 
         <div className="method-example-result">
           <div className="method-example-impact"><span>Remaining gap to midnight closed</span><strong>{formatGapClosedPercent(incident.gapClosedPercent)}</strong></div>
-          <div><span>Effective points</span><strong>{incident.effectivePoints}</strong></div>
+          <div><span>Trifecta points</span><strong>{incident.scoring.trifectaPoints} / 7</strong></div>
+          <div><span>Amplifier points</span><strong>{incident.scoring.amplifierPoints} / 10</strong></div>
           <div><span>Time change at this position</span><strong>{formatMovement(incident.movementSeconds)}</strong></div>
           <div><span>Position after event</span><strong>{formatTime(incident.remainingSeconds)}</strong></div>
         </div>
 
-        {incident.assessment.fullTrifecta && (
+        {incident.scoring.trifectaCount === 3 && (
           <p className="method-trifecta-note">
-            Full Trifecta: the incident receives the seven-point effective floor and a minimum CRITICAL classification.
+            Full Trifecta: the three conditions contribute seven points before amplifiers. This event adds {incident.scoring.amplifierPoints} amplifier point{incident.scoring.amplifierPoints === 1 ? '' : 's'}, for {incident.scoring.totalPoints}/{MAX_SCORE} overall and a {incident.scoring.severity} classification.
           </p>
         )}
 
@@ -135,7 +144,7 @@ function ExampleInspector({ incidents }: { incidents: Incident[] }) {
 
         {(incident.assessment.notes || incident.assessment.leadingNote) && (
           <div className="method-assessor-note">
-            <strong>Assessment note</strong>
+            <strong>Source assessment note · workflow metadata</strong>
             <p>{incident.assessment.leadingNote || incident.assessment.notes}</p>
           </div>
         )}
@@ -152,12 +161,11 @@ function ExampleInspector({ incidents }: { incidents: Incident[] }) {
 function IncidentCalculator({ dataset }: { dataset: Dataset }) {
   const initialScores = Object.fromEntries(CRITERIA.map(({ key }) => [key, 0]));
   const [scores, setScores] = useState<CalculatorScores>(initialScores);
-  const rawScore = CRITERIA.reduce((total, criterion) => total + (scores[criterion.key] ?? 0), 0);
-  const fullTrifecta = ['t1', 't2', 't3'].every((key) => scores[key] === 1);
-  const effectivePoints = calculateEffectivePoints(rawScore, fullTrifecta);
-  const { remainingSeconds: projectedSeconds } = calculateClock(dataset.totalPoints + effectivePoints);
-  const movementSeconds = calculateMovementSeconds(dataset.totalPoints, effectivePoints);
-  const gapClosedPercent = calculateGapClosedPercent(effectivePoints);
+  const scoring = calculateRiskScore(scores);
+  const { remainingSeconds: projectedSeconds } = calculateClock(dataset.totalPoints + scoring.totalPoints);
+  const movementSeconds = calculateMovementSeconds(dataset.totalPoints, scoring.totalPoints);
+  const gapClosedPercent = calculateGapClosedPercent(scoring.totalPoints);
+  const severityLabel = scoring.totalPoints === 0 ? 'NO MOVEMENT' : scoring.severity;
 
   const updateScore = (key: string, value: number) => {
     setScores((current) => ({ ...current, [key]: value }));
@@ -195,6 +203,7 @@ function IncidentCalculator({ dataset }: { dataset: Dataset }) {
                       type="radio"
                       name={`calculator-${criterion.key}`}
                       value={value}
+                      aria-label={`${criterion.label}: ${criterion.scoreDescriptions?.[value] ?? (value === 0 ? 'absent' : value === 1 ? 'present' : 'significantly present')}`}
                       checked={scores[criterion.key] === value}
                       onChange={() => updateScore(criterion.key, value)}
                     />
@@ -213,17 +222,20 @@ function IncidentCalculator({ dataset }: { dataset: Dataset }) {
         <p className="method-output-label">of the remaining gap to midnight closed</p>
 
         <dl>
-          <div><dt>Raw score</dt><dd>{rawScore} / 13</dd></div>
-          <div><dt>Effective points</dt><dd>{effectivePoints}</dd></div>
+          <div><dt>Trifecta conditions</dt><dd>{scoring.trifectaCount} / 3</dd></div>
+          <div><dt>Trifecta points</dt><dd>{scoring.trifectaPoints} / 7</dd></div>
+          <div><dt>Amplifier points</dt><dd>{scoring.amplifierPoints} / 10</dd></div>
+          <div><dt>Total score</dt><dd>{scoring.totalPoints} / {MAX_SCORE}</dd></div>
+          <div className="method-calculator-severity"><dt>Classification</dt><dd>{severityLabel}</dd></div>
           <div><dt>Current evidence base</dt><dd>{dataset.totalPoints} pts</dd></div>
           <div><dt>Projected clock</dt><dd>{formatTime(projectedSeconds)}</dd></div>
           <div><dt>Time change here</dt><dd>{formatMovement(movementSeconds)}</dd></div>
         </dl>
 
-        {fullTrifecta && rawScore < 7 && (
-          <p className="method-output-alert">The full Trifecta raises this incident to the seven-point effective floor.</p>
+        {scoring.trifectaCount === 3 && (
+          <p className="method-output-alert">The full Trifecta contributes seven points and guarantees at least CRITICAL. Amplifier points remain additive and can raise the result to EXISTENTIAL.</p>
         )}
-        {rawScore === 0 && (
+        {scoring.totalPoints === 0 && (
           <p className="method-output-zero">Zero-score incident: recorded, with no clock movement.</p>
         )}
         <button type="button" className="button" onClick={() => setScores(initialScores)}>Reset controls</button>
@@ -262,9 +274,9 @@ export default function Methodology({ dataset }: MethodologyProps) {
 
         <div className="method-tiers">
           <section className="method-tier method-tier-trifecta">
-            <header><span>Tier 01</span><strong>0–3 points</strong></header>
+            <header><span>Tier 01</span><strong>0–7 points</strong></header>
             <h3>The Lethal Trifecta</h3>
-            <p>One point for each condition that is demonstrably present. Each is manageable in isolation. Together, they create a route from hostile input to consequential action.</p>
+            <p>Each condition is binary and needs direct evidence. Their combination is weighted because access, hostile input and permission to act externally create more risk together than their simple sum suggests.</p>
             <div className="method-criteria-list">
               {CRITERIA.filter(({ tier }) => tier === 'trifecta').map((criterion) => (
                 <article key={criterion.key}>
@@ -274,24 +286,38 @@ export default function Methodology({ dataset }: MethodologyProps) {
                 </article>
               ))}
             </div>
-            <p className="method-rule"><strong>Override:</strong> all three present means at least CRITICAL and a seven-point effective floor.</p>
+            <div className="method-trifecta-ladder" aria-label="Trifecta scoring ladder">
+              {TRIFECTA_LADDER.map((step) => (
+                <div key={step.conditions}><span>{step.conditions} condition{step.conditions === 1 ? '' : 's'}</span><strong>{step.points} point{step.points === 1 ? '' : 's'}</strong></div>
+              ))}
+            </div>
+            <p className="method-rule"><strong>Combination rule:</strong> all three conditions contribute seven points and guarantee at least CRITICAL. Amplifiers are then added on top.</p>
           </section>
 
           <section className="method-tier method-tier-amplifiers">
             <header><span>Tier 02</span><strong>0–10 points</strong></header>
             <h3>Risk amplifiers</h3>
-            <p>Broader conditions that increase the significance of the incident: 0 absent, 1 present, 2 significantly present.</p>
+            <p>Broader conditions that increase the significance of the incident: 0 absent, 1 present, 2 significantly present. Each point is added to the Trifecta score.</p>
             <div className="method-criteria-list">
               {CRITERIA.filter(({ tier }) => tier === 'amplifier').map((criterion) => (
                 <article key={criterion.key}>
                   <b>{criterion.shortLabel}</b>
-                  <div><h4>{criterion.label}</h4><p>{criterion.description}</p></div>
+                  <div>
+                    <h4>{criterion.label}</h4><p>{criterion.description}</p>
+                    {criterion.scoreDescriptions && (
+                      <ol className="method-score-rubric" aria-label={`${criterion.label} scoring rubric`}>
+                        {criterion.scoreDescriptions.map((description, value) => <li key={description}><strong>{value}</strong><span>{description}</span></li>)}
+                      </ol>
+                    )}
+                  </div>
                   <span>0 / 2</span>
                 </article>
               ))}
             </div>
           </section>
         </div>
+
+        <p className="method-score-total"><span>Maximum published score</span><strong>{MAX_SCORE}</strong><span>7 Trifecta + 10 amplifier points</span></p>
 
         <div className="method-bands" aria-label="Score classification bands">
           {SEVERITY_BANDS.map((band) => (
@@ -308,7 +334,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
         <div className="container method-formula-layout">
           <div className="section-heading">
             <p className="eyebrow">02 · Calibration</p>
-            <h2 id="formula-title">Same effective points. Same share of the gap.</h2>
+            <h2 id="formula-title">Same score. Same share of the gap.</h2>
             <p>Incident impact stays comparable even as the symbolic clock moves closer to midnight.</p>
           </div>
           <div className="method-formula-card">
@@ -317,25 +343,25 @@ export default function Methodology({ dataset }: MethodologyProps) {
               <span><b>{CALIBRATION.startingSeconds.toLocaleString('en-GB')} × 2</b><sup>−B / {CALIBRATION.halfwayPoints}</sup></span>
             </p>
             <dl>
-              <div><dt>B</dt><dd>Cumulative effective points across distinct events</dd></div>
+              <div><dt>B</dt><dd>Cumulative evidence points across distinct events</dd></div>
               <div><dt>H</dt><dd>The editorial half-scale, fixed at {CALIBRATION.halfwayPoints} evidence points</dd></div>
               <div><dt>T(B)</dt><dd>Symbolic seconds remaining after B cumulative points</dd></div>
             </dl>
           </div>
           <div className="method-formula-copy">
             <p>
-              Every {CALIBRATION.halfwayPoints} effective points halves the remaining symbolic time: 60 minutes becomes 30, then 15, then 7½. The half-scale is a fixed editorial constant, chosen to keep the accumulating record legible. It is not a probability or a scientifically estimated risk parameter.
+              Every {CALIBRATION.halfwayPoints} evidence points halves the remaining symbolic time: 60 minutes becomes 30, then 15, then 7½. The half-scale is a fixed editorial constant, chosen to keep the accumulating record legible. It is not a probability or a scientifically estimated risk parameter.
             </p>
             <p>
-              An incident worth <strong>s</strong> effective points closes <strong>1 − 2<sup>−s/{CALIBRATION.halfwayPoints}</sup></strong> of whatever gap remains. That share is persistent: a two-point event always closes {formatGapClosedPercent(calculateGapClosedPercent(2))}; a thirteen-point event always closes {formatGapClosedPercent(calculateGapClosedPercent(13))}. The raw number of seconds depends on the clock position, so seconds are context rather than a severity comparison.
+              An incident with score <strong>s</strong> closes <strong>1 − 2<sup>−s/{CALIBRATION.halfwayPoints}</sup></strong> of whatever gap remains. That share is persistent: a two-point event always closes {formatGapClosedPercent(calculateGapClosedPercent(2))}; a {MAX_SCORE}-point event always closes {formatGapClosedPercent(calculateGapClosedPercent(MAX_SCORE))}. The raw number of seconds depends on the clock position, so seconds are context rather than a severity comparison.
             </p>
             <p>
               The curve approaches midnight without reaching it. Below one symbolic second, the display reads less than one second; evidence points and proportional impact continue to be recorded. There is no passive ticking, decay or recovery model. The historical chart follows CSV record dates; these can be publication or disclosure dates rather than the date an underlying event first occurred.
             </p>
           </div>
           <div className="method-impact-comparison" aria-label="Examples of persistent incident impact">
-            <div><span>Effective points</span><strong>2</strong><b>{formatGapClosedPercent(calculateGapClosedPercent(2))}</b><small>of remaining gap</small></div>
-            <div><span>Effective points</span><strong>13</strong><b>{formatGapClosedPercent(calculateGapClosedPercent(13))}</b><small>of remaining gap</small></div>
+            <div><span>Total score</span><strong>2</strong><b>{formatGapClosedPercent(calculateGapClosedPercent(2))}</b><small>of remaining gap</small></div>
+            <div><span>Total score</span><strong>{MAX_SCORE}</strong><b>{formatGapClosedPercent(calculateGapClosedPercent(MAX_SCORE))}</b><small>of remaining gap</small></div>
           </div>
         </div>
       </section>
@@ -376,7 +402,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
           <article>
             <p className="eyebrow">Current data release</p>
             <strong>{dataset.incidents.length}</strong><span>unique events</span>
-            <p>{dataset.assessmentCount} assessments · {dataset.editorialCount} reports covering {dataset.incidents.filter((item) => item.editorial).length} events · {dataset.incidents.filter((item) => !item.editorial).length} assessment-only events · {dataset.incidents.filter((item) => item.assessment.fullTrifecta).length} full-Trifecta events.</p>
+            <p>{dataset.assessmentCount} assessments · {dataset.editorialCount} reports covering {dataset.incidents.filter((item) => item.editorial).length} events · {dataset.incidents.filter((item) => !item.editorial).length} assessment-only events · {dataset.incidents.filter((item) => item.scoring.trifectaCount === 3).length} full-Trifecta events.</p>
           </article>
           <article>
             <h3>Reconciliation policy</h3>
@@ -389,7 +415,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
           </article>
           <article>
             <h3>Download the records</h3>
-            <p>The bundled CSV files are the raw inputs used by this build. Their clock and timing fields are workflow metadata; the app calculates its clock from criterion scores. Publishing appended records requires rebuilding the site.</p>
+            <p>The bundled CSV files are the raw inputs used by this build. Their exported total-score, classification, clock and timing fields are workflow audit metadata; the app calculates its published 0–{MAX_SCORE} score and clock from the individual criterion values. Publishing appended records requires rebuilding the site.</p>
             <div className="method-downloads">
               <a className="button button-primary" href={assessmentsUrl} download>Assessment CSV</a>
               <a className="button" href={storiesUrl} download>Editorial CSV</a>

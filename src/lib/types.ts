@@ -7,6 +7,17 @@ export interface Criterion {
   description: string;
   max: number;
   tier: 'trifecta' | 'amplifier';
+  scoreDescriptions?: readonly string[];
+}
+
+export type RiskSeverity = 'NO_MOVEMENT' | Severity;
+
+export interface RiskScore {
+  trifectaCount: number;
+  trifectaPoints: number;
+  amplifierPoints: number;
+  totalPoints: number;
+  severity: RiskSeverity;
 }
 
 export interface Assessment {
@@ -47,6 +58,7 @@ export interface Incident {
   editorialAssessmentScore?: number;
   headline: string;
   selectionRationale: string;
+  scoring: RiskScore;
   effectivePoints: number;
   gapClosedPercent: number;
   cumulativePoints: number;

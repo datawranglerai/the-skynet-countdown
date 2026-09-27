@@ -65,9 +65,32 @@ The supplied n8n JSON is preserved. Before relying on unattended publishing, upd
 
 ## Methodology
 
-The eight original criteria remain: three binary Trifecta checks and five amplifiers worth zero to two points each. Raw scores range from 0 to 13. A full Trifecta sets a minimum CRITICAL severity and a minimum of seven effective evidence points. Zero-score events remain visible and add nothing.
+The method uses three binary Trifecta checks and five amplifiers worth zero to two points each. Count the active Trifecta checks and assign a combined base of 0, 1, 3 or 7 points for zero, one, two or three active checks. Add every amplifier point to that base. Published scores therefore range from 0 to 17. A complete Trifecta contributes seven points and is naturally at least CRITICAL; no separate floor or aggregate clamp is applied. Zero-score events remain visible and add nothing.
 
-For cumulative effective points `B`:
+The published severity bands are:
+
+| Published score | Severity |
+| ---: | --- |
+| 0 | NO MOVEMENT |
+| 1–2 | CANARY |
+| 3–4 | NOTABLE |
+| 5–6 | SIGNIFICANT |
+| 7–12 | CRITICAL |
+| 13–17 | EXISTENTIAL |
+
+T3 records permission and capability to affect external digital or physical systems without mandatory approval for each action. It does not automatically earn an autonomy amplifier point. Autonomy measures the extent, duration and scale of operation beyond meaningful human checkpoints:
+
+| Autonomy score | Evidence anchor |
+| ---: | --- |
+| 0 | Bounded operation with effective human checkpoints, or insufficient evidence of extended autonomy |
+| 1 | Extended multi-step or large-scale work with reactive or delayed oversight |
+| 2 | Sustained self-directed operation or recursive improvement without meaningful review |
+
+Future assessments must cite separate evidence and rationale for T3 and autonomy. The selected criterion values in the current dataset remain assessor judgements; the app applies the deterministic weighting to those recorded values.
+
+The saved `n8n/Skynet Countdown.json` includes this distinction in the research and scoring prompts. It continues to collect binary checks, amplifier ratings and raw summary metadata in the existing export format; the website calculates the published score and severity. Import the saved workflow into n8n to apply its guidance to future collection runs.
+
+For cumulative published evidence points `B`:
 
 ```text
 symbolic seconds remaining = 3600 × 2^(-B / 100)
@@ -76,28 +99,28 @@ evidence pressure = 100 × (1 − 2^(-B / 100))
 
 The fixed 100-point parameter halves the remaining symbolic time after every 100 evidence points. It is an editorial normalisation, not an empirically estimated risk parameter or a fit to a desired current reading. The curve approaches midnight without reaching it and cannot declare that human control has been lost. More coverage can increase the index even if underlying risk has not changed, so the selected sources and inclusion decisions matter.
 
-The cumulative point total defines the clock position. The interface shows `<00:01` below one second. At extreme totals, stored seconds are limited to JavaScript's smallest positive number; this is a numeric representation limit. Per-event movement is calculated from effective points and proportional impact, so a positive event is still shown as moving less than one second, rather than as a zero-score event.
+The cumulative point total defines the clock position. The interface shows `<00:01` below one second. At extreme totals, stored seconds are limited to JavaScript's smallest positive number; this is a numeric representation limit. Per-event movement is calculated from the published score and proportional impact, so a positive event is still shown as moving less than one second, rather than as a zero-score event.
 
-For an incident worth `s` effective points:
+For an incident with a published score of `s`:
 
 ```text
 share of remaining gap closed = 100 × (1 − 2^(-s / 100))
 ```
 
-The same point score always closes the same proportion of the remaining gap. A two-point incident closes 1.38%; a 13-point incident closes 8.62%. Its movement in seconds depends on the clock position when it occurs because the remaining interval gets smaller over time. Incident impact should therefore be compared by score and share of gap closed, with seconds shown as the movement in historical context.
+The same point score always closes the same proportion of the remaining gap. A two-point incident closes 1.38%; a 17-point incident closes 11.12%. Its movement in seconds depends on the clock position when it occurs because the remaining interval gets smaller over time. Incident impact should therefore be compared by score and share of gap closed, with seconds shown as the movement in historical context.
 
 The clock changes with records, not wall time. There is no passive decay or positive-event recovery model. Published improvements can score zero; they do not subtract previous evidence. Formal corrective or recovery events would require a defined extension to the methodology.
 
 History sorts events by incident date, then stable ID. Each displayed movement is the difference between the positions before and after that event. Late discoveries and explicit assessment changes recompute the history. The methodology version and dataset's latest incident date are visible in the app; the CSV export does not provide a collection timestamp.
 
-The `clock_delta_minutes`, `clock_delta_label` and `updated_clock_position` values in the source CSVs are automation metadata. The app does not use them to calculate or display the published position.
+The `total_score` and `classification` values reflect the workflow's unweighted export format. They, along with `clock_delta_minutes`, `severity_label`, `clock_delta_label` and `updated_clock_position`, are retained as automation metadata. The app derives published scores and severities from the eight criterion columns, then calculates the clock from those published scores.
 
 ## Current data snapshot
 
 - 39 assessment rows, grouped into 35 distinct events.
 - 30 editorial reports cover 28 events; seven events have no editorial copy.
-- 83 raw score points, 88 effective points after three full-Trifecta floors.
-- 32:36 symbolic minutes remaining; 45.7/100 evidence pressure.
+- 99 published evidence points derived from the selected criterion values.
+- 30:13 symbolic minutes remaining; 49.7/100 evidence pressure.
 - Latest recorded event: 25 September 2026.
 
 Historical conflicting assessments use explicitly reviewed, conservative selections. Original editorial text remains available and is labelled when written for a different assessment version. Machine citation markers are removed from display; original source links and raw downloadable CSVs are preserved.

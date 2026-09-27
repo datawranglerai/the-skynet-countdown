@@ -318,6 +318,10 @@ input::placeholder { color: var(--muted); }
 .assessment-panel > p { font-size: 12px; color: var(--muted); }
 .criterion-group { margin-top: 30px; }
 .criterion-group h3 { font: 8px var(--mono); color: var(--muted); margin-bottom: 14px; }
+.criterion-group h3 > span { display: block; margin-top: 8px; font: 9px/1.5 var(--mono); color: var(--ink); }
+.criterion-rubric { margin: 0 0 18px; padding-left: 20px; color: var(--muted); font-size: 10px; line-height: 1.7; }
+.criterion-rubric li + li { margin-top: 7px; }
+.criterion-detail .criterion-definition { color: var(--ink); }
 .criterion-detail { border-top: 1px solid var(--line); }
 .criterion-detail:last-child { border-bottom: 1px solid var(--line); }
 .criterion-detail summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; cursor: pointer; font-size: 11px; list-style: none; }

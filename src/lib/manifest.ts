@@ -108,11 +108,11 @@ function event(
 const SINGLE = 'The source snapshot contains one assessment for this event; that authored version is authoritative.';
 
 const BASE_HISTORICAL_MANIFEST: readonly HistoricalEventManifest[] = Object.freeze([
-  event('2026-04-07-project-glasswing', '2026-04-07', 'https://www.anthropic.com/glasswing', ['SKYNET-2026-0016', 4], 'Two assessments cover the same source event. The lower four-point version is the deliberately conservative canonical assessment; both versions remain visible.', [
+  event('2026-04-07-project-glasswing', '2026-04-07', 'https://www.anthropic.com/glasswing', ['SKYNET-2026-0016', 4], 'Two assessments cover the same source event. The selected version contributes five weighted points rather than six, preserving the conservative reviewed choice; both versions remain visible.', [
     ['SKYNET-2026-0016', 'Anthropic Put an Exploit-Hunter Behind a Velvet Rope', ['SKYNET-2026-0016', 4]],
     ['SKYNET-2026-0021', 'The Defensive Preview Already Knows the Offensive Playbook', ['SKYNET-2026-0021', 5]],
   ]),
-  event('2026-04-08-turbotax-claude', '2026-04-08', 'https://blog.turbotax.intuit.com/tax-help/turbotax-on-claude-chatgpt-for-ai-tax-help-144205/', ['SKYNET-2026-0026', 1], 'Two assessments cover the same connector launch. The later one-point version is the deliberately conservative canonical assessment; both versions remain visible.', [
+  event('2026-04-08-turbotax-claude', '2026-04-08', 'https://blog.turbotax.intuit.com/tax-help/turbotax-on-claude-chatgpt-for-ai-tax-help-144205/', ['SKYNET-2026-0026', 1], 'Two assessments cover the same connector launch. The selected version contributes one weighted point rather than three, preserving the conservative reviewed choice; both versions remain visible.', [
     ['SKYNET-2026-0017', 'Claude Now Has a Tax Desk', ['SKYNET-2026-0017', 2]],
   ]),
   event('2026-04-08-safetensors-foundation', '2026-04-08', 'https://pytorch.org/blog/pytorch-foundation-announces-safetensors-as-newest-contributed-project-to-secure-ai-model-execution/', ['SKYNET-2026-0015', 0], SINGLE, [
@@ -128,11 +128,11 @@ const BASE_HISTORICAL_MANIFEST: readonly HistoricalEventManifest[] = Object.free
   event('2026-04-11-amazon-ai-capex', '2026-04-11', 'https://www.aboutamazon.com/news/company-news/amazon-ceo-andy-jassy-2025-letter-to-shareholders', ['SKYNET-2026-0014', 0], SINGLE, [
     ['SKYNET-2026-0014', 'Amazon Put a $200 Billion Price Tag on AI Capacity', ['SKYNET-2026-0014', 0]],
   ]),
-  event('2026-04-11-code-review-backlog', '2026-04-11', 'https://futurism.com/artificial-intelligence/ai-code-tearing-through-corporations', ['SKYNET-2026-0018', 3], 'The two assessments tie at three points. The first authored assessment is canonical; the later reassessment and both editorial versions remain visible.', [
+  event('2026-04-11-code-review-backlog', '2026-04-11', 'https://futurism.com/artificial-intelligence/ai-code-tearing-through-corporations', ['SKYNET-2026-0018', 3], 'The two assessments tie at three weighted points. The first authored assessment remains the reviewed selection; the later reassessment and both editorial versions remain visible.', [
     ['SKYNET-2026-0018', 'The Merge Queue Is Losing to the Autocomplete', ['SKYNET-2026-0018', 3]],
     ['SKYNET-2026-0012', 'A Million Lines Waiting for a Human', ['SKYNET-2026-0012', 3]],
   ]),
-  event('2026-04-13-meta-ceo-agent', '2026-04-13', 'https://www.theguardian.com/technology/2026/apr/13/meta-ai-mark-zuckerberg-staff-talk-to-the-boss', ['SKYNET-2026-0025', 1], 'Two assessments cover the same reported product. The later one-point version is the deliberately conservative canonical assessment; both versions remain visible.', [
+  event('2026-04-13-meta-ceo-agent', '2026-04-13', 'https://www.theguardian.com/technology/2026/apr/13/meta-ai-mark-zuckerberg-staff-talk-to-the-boss', ['SKYNET-2026-0025', 1], 'Two assessments cover the same reported product. The selected version contributes one weighted point rather than two, preserving the conservative reviewed choice; both versions remain visible.', [
     ['SKYNET-2026-0019', 'Meta Wants a CEO You Can Prompt', ['SKYNET-2026-0019', 2]],
   ]),
   event('2026-04-13-humanoid-half-marathon', '2026-04-13', 'https://www.euronews.com/next/2026/04/13/more-than-70-robot-teams-gear-up-for-chinas-second-humanoid-half-marathon', ['SKYNET-2026-0020', 3], SINGLE, [

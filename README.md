@@ -49,25 +49,25 @@ Each incident adds evidence points. The clock converts their cumulative total in
 remaining seconds = 3600 × 2^(-B / 100)
 ```
 
-`B` is the cumulative number of effective evidence points. Every 100 points halve the remaining time: 60 minutes become 30, then 15, then 7:30. The curve continuously approaches midnight but never reaches it after any finite number of incidents.
+`B` is the cumulative number of published evidence points. Every 100 points halve the remaining time: 60 minutes become 30, then 15, then 7:30. The curve continuously approaches midnight but never reaches it after any finite number of incidents.
 
-An incident worth `s` effective points always closes the same share of the gap that remained immediately before it:
+An incident with a published score of `s` always closes the same share of the gap that remained immediately before it:
 
 ```text
 share of remaining gap closed = 100 × (1 − 2^(-s / 100))
 ```
 
-For example, a two-point incident always closes **1.38%** of the remaining gap, while a 13-point incident always closes **8.62%**. The movement in seconds becomes smaller as midnight approaches because that same share is taken from a smaller remaining interval. The percentage is the stable measure for comparing incident impact; it is not a probability.
+For example, a two-point incident always closes **1.38%** of the remaining gap, while a 17-point incident always closes **11.12%**. The movement in seconds becomes smaller as midnight approaches because that same share is taken from a smaller remaining interval. The percentage is the stable measure for comparing incident impact; it is not a probability.
 
 The 100-point half-scale is an editorial calibration chosen to keep the index legible as the dataset grows. It is not an empirical risk estimate or a target fitted to the current reading.
 
-With the current repository data, 88 effective evidence points leave **32:36 symbolic minutes** and produce an evidence pressure reading of **45.7/100**.
+With the current repository data, 99 evidence points leave **30:13 symbolic minutes** and produce an evidence pressure reading of **49.7/100**.
 
 ## Scoring methodology
 
-We use two tiers with a maximum raw score of 13.
+We use two tiers with a maximum published score of 17. The app derives that score directly from the eight criterion values recorded for each selected assessment.
 
-### Tier 1 — The Lethal Trifecta (0–3 points)
+### Tier 1 — The Lethal Trifecta (0–7 points)
 
 An AI system's risk profile escalates when three elements are present simultaneously:
 
@@ -75,9 +75,18 @@ An AI system's risk profile escalates when three elements are present simultaneo
 | --- | --- |
 | **T1** | Access to ungoverned, private or sensitive systems and data |
 | **T2** | Exposure to or processing of untrusted external input |
-| **T3** | Ability to take autonomous action in the world |
+| **T3** | Permission and capability to affect external digital or physical systems without mandatory human approval for each action |
 
-Each element scores one point. A full Trifecta floors the incident at **CRITICAL** and gives it at least **seven effective evidence points**, even when its raw criterion total is lower. Individually, the elements can be manageable. Together, they describe a system that can be manipulated into causing real-world harm without a human in the loop.
+Each check is either active or inactive. Their combined contribution increases as the elements converge:
+
+| Active Trifecta checks | Trifecta points |
+| ---: | ---: |
+| 0 | 0 |
+| 1 | 1 |
+| 2 | 3 |
+| 3 | 7 |
+
+A complete Trifecta therefore begins at seven points and is naturally at least **CRITICAL** before any amplifiers are added. This is part of the score calculation, rather than a separate minimum applied afterwards. Individually, the elements can be manageable. Together, they describe a system exposed to untrusted input, able to reach sensitive systems and permitted to act without approval for each action.
 
 ### Tier 2 — Amplifiers (0–10 points)
 
@@ -89,20 +98,30 @@ Each amplifier scores zero when absent, one when present or two when significant
 | **Physical Embodiment / Weaponisation** | Physical presence; access to harmful capability; military or law-enforcement deployment |
 | **Human Capability Erosion** | Skill atrophy at population scale; attacks on shared knowledge; dependency that reduces people's ability to detect AI failures |
 | **Governance Vacuum** | Missing or circumvented oversight; self-regulation by the regulated entity; deployment ahead of governance infrastructure |
-| **Autonomy Without Oversight** | Operation outside human decision loops; shrinking intervention windows; self-improvement or recursive capability gains |
+| **Autonomy Without Oversight** | The extent, duration and scale of operation beyond meaningful human checkpoints |
+
+Every amplifier point is added to the Trifecta contribution. The autonomy amplifier uses these anchors:
+
+| Score | Autonomy evidence |
+| ---: | --- |
+| 0 | Bounded operation with effective human checkpoints, or insufficient evidence of extended autonomy |
+| 1 | Extended multi-step or large-scale work with reactive or delayed oversight |
+| 2 | Sustained self-directed operation or recursive improvement without meaningful review |
+
+T3 and the autonomy amplifier answer different questions. T3 asks whether the system can and may act externally without approval for each action. The amplifier asks how far, how long and at what scale it operates beyond meaningful review. The ability to act does not earn an autonomy amplifier point by itself; each score requires separate evidence and rationale.
 
 ### Severity bands
 
-| Raw score | Classification |
+| Published score | Classification |
 | --- | --- |
 | 0 | NO MOVEMENT |
 | 1–2 | CANARY |
 | 3–4 | NOTABLE |
 | 5–6 | SIGNIFICANT |
-| 7–9 | CRITICAL |
-| 10–13 | EXISTENTIAL |
+| 7–12 | CRITICAL |
+| 13–17 | EXISTENTIAL |
 
-A full Trifecta guarantees CRITICAL classification regardless of the raw total. Zero-score records remain visible as relevant context but do not move the clock.
+A complete Trifecta contributes seven points, so it always reaches CRITICAL before amplifiers. Zero-score records remain visible as relevant context but do not move the clock.
 
 ## What moves the clock forward?
 
@@ -125,7 +144,7 @@ Each incident is published as a **SKYNET CVE**, borrowing the structure of a sec
 - an incident identifier, date, source and severity;
 - the factual story and our analysis as separate sections;
 - all three Trifecta checks and five amplifier scores;
-- the raw score, effective evidence points and rationale;
+- the published score out of 17, its components and rationale;
 - the fixed share of the remaining gap closed by that score;
 - the clock movement in seconds at that point in the timeline; and
 - the resulting symbolic time remaining.
@@ -151,14 +170,14 @@ The canonical CSVs currently contain:
 - 39 assessment rows covering 35 distinct events;
 - 30 editorial reports covering 28 events;
 - seven assessment-only events awaiting editorial coverage;
-- 83 selected raw score points and 88 effective points after three full-Trifecta floors; and
+- 99 published evidence points derived from the selected criterion values; and
 - incidents through 25 September 2026.
 
-The source exports retain repeated records and assessment versions. The app audits those records, selects the approved assessment for each event and counts each event once. The workflow's minute and clock-position columns are retained as source metadata; the published clock, history and incident impacts are calculated from evidence points by the app.
+The source exports retain repeated records and assessment versions. The app audits those records, selects the approved assessment for each event and counts each event once. The workflow's total-score and classification columns reflect its unweighted export format; those fields, along with its minute and clock-position columns, are retained as source metadata. Published scores, severities, clock history and incident impacts are derived by the app from the eight recorded criterion values.
 
 ## Limitations
 
-**Scores require judgement.** Every score includes its rationale so readers can see where interpretation enters the method.
+**Criterion ratings require judgement.** The current component values are assessor judgements based on the evidence recorded with each assessment. Every criterion includes a rationale so readers can see where interpretation enters the method.
 
 **The source set shapes the index.** More coverage can add evidence points even if the underlying level of risk has not changed. Inclusion choices and source selection therefore matter.
 

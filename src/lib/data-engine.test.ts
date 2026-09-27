@@ -7,18 +7,22 @@ import {
   calculateClock,
   calculateGapClosedPercent,
   calculateMovementSeconds,
+  calculateRiskScore,
   CALIBRATION,
   cleanMachineCitations,
+  CRITERIA,
   editorialContentFingerprint,
   editorialFingerprint,
-  effectivePoints,
   formatTime,
   formatGapClosedPercent,
   formatPressure,
   HISTORICAL_MANIFEST,
   loadDataset,
+  MAX_SCORE,
   parseCsv,
   sourceDateAlias,
+  SEVERITY_DESCRIPTORS,
+  TRIFECTA_WEIGHTS,
   type HistoricalEventManifest,
   type CsvRecord,
 } from './index.ts';
@@ -112,9 +116,9 @@ test('loads the audited source snapshot and reproduces exponential calibration v
   assert.equal(dataset.matchedEditorialCount, 30);
   assert.equal(dataset.duplicateCount, 4);
   assert.equal(dataset.incidents.reduce((sum, incident) => sum + incident.assessment.score, 0), 83);
-  assert.equal(dataset.totalPoints, 88);
-  assert.equal(dataset.remainingSeconds, 3600 * 2 ** (-88 / 100));
-  assert.equal(dataset.pressure, calculateGapClosedPercent(88));
+  assert.equal(dataset.totalPoints, 99);
+  assert.equal(dataset.remainingSeconds, calculateClock(99).remainingSeconds);
+  assert.equal(dataset.pressure, calculateGapClosedPercent(99));
   assert.equal(dataset.lastUpdated, '2026-09-25');
   assert.deepEqual(dataset.diagnostics, []);
   assert.equal(dataset.incidents.filter((incident) => !incident.editorial).length, 7);
@@ -123,13 +127,20 @@ test('loads the audited source snapshot and reproduces exponential calibration v
   assert.equal(newIncidents.filter((incident) => incident.editorial).length, 3);
   assert.equal(newIncidents.filter((incident) => !incident.editorial).length, 3);
   assert.deepEqual(newIncidents.map((incident) => incident.assessment.score).sort((a, b) => a - b), [0, 0, 1, 4, 5, 5]);
-  assert.deepEqual(newIncidents.map((incident) => incident.effectivePoints).sort((a, b) => a - b), [0, 0, 1, 4, 7, 7]);
+  assert.deepEqual(newIncidents.map((incident) => incident.effectivePoints).sort((a, b) => a - b), [0, 0, 1, 5, 9, 9]);
+  assert.equal(newIncidents[0].gapClosedPercent, newIncidents[3].gapClosedPercent);
   assert.equal(dataset.incidents.filter((incident) => incident.assessment.fullTrifecta).length, 3);
+  assert.deepEqual(
+    Object.fromEntries(['NO_MOVEMENT', 'CANARY', 'NOTABLE', 'SIGNIFICANT', 'CRITICAL', 'EXISTENTIAL'].map(
+      (severity) => [severity, dataset.incidents.filter((incident) => incident.scoring.severity === severity).length],
+    )),
+    { NO_MOVEMENT: 7, CANARY: 12, NOTABLE: 9, SIGNIFICANT: 2, CRITICAL: 5, EXISTENTIAL: 0 },
+  );
   assert.equal(dataset.incidents.find((incident) => incident.id === '2026-04-07-project-glasswing')?.assessments.length, 2);
   assert.equal(dataset.incidents.find((incident) => incident.id === '2026-04-07-project-glasswing')?.editorials.length, 2);
   assert.equal(dataset.incidents.find((incident) => incident.id === '2026-04-07-project-glasswing')?.editorialMatchesAssessment, true);
   assert.equal(dataset.incidents.find((incident) => incident.id === '2026-04-08-turbotax-claude')?.editorialMatchesAssessment, false);
-  assert.equal(dataset.incidents.find((incident) => incident.id === '2026-04-08-turbotax-claude')?.editorialAssessmentScore, 2);
+  assert.equal(dataset.incidents.find((incident) => incident.id === '2026-04-08-turbotax-claude')?.editorialAssessmentScore, 3);
   assert.ok(dataset.incidents.every((incident) => !incident.assessment.title.includes('cite')));
 });
 
@@ -175,7 +186,7 @@ test('accepts appended unique events and gives zero-score events exactly zero mo
   };
   const dataset = loadDataset(appended, encodeCsv(storyHeaders, [...storyRows, appendedStory]));
   assert.equal(dataset.incidents.length, 37);
-  assert.equal(dataset.totalPoints, 90);
+  assert.equal(dataset.totalPoints, 101);
   assert.equal(dataset.matchedEditorialCount, 31);
   assert.deepEqual(dataset.diagnostics, []);
   assert.equal(dataset.incidents.find((incident) => incident.assessment.cveId === 'SKYNET-2026-9001')?.editorial?.headline, 'A unique appended editorial');
@@ -304,7 +315,7 @@ test('a custom manifest can approve and select a same-identity assessment revisi
   assert.equal(approved.incidents[0].assessment.scores.governance, 1);
   assert.equal(approved.incidents[0].effectivePoints, 2);
   assert.equal(approved.incidents[0].editorialMatchesAssessment, false);
-  assert.equal(approved.incidents[0].editorialAssessmentScore, 2);
+  assert.equal(approved.incidents[0].editorialAssessmentScore, 3);
 });
 
 test('a custom manifest can approve and prefer an editorial revision with the same headline', () => {
@@ -519,14 +530,93 @@ test('strict row validation rejects impossible dates and score totals', () => {
   );
 });
 
-test('validates scoring bands and applies the complete-Trifecta floor', () => {
-  assert.equal(effectivePoints(6, true), 7);
-  assert.equal(effectivePoints(5, true), 7);
-  assert.equal(effectivePoints(9, true), 9);
-  assert.equal(effectivePoints(0, false), 0);
-  assert.throws(() => effectivePoints(-1, false), /non-negative finite/);
-  assert.throws(() => effectivePoints(Number.MAX_SAFE_INTEGER + 1, false), /safe integer/);
+test('weights the Trifecta ladder and severity bands without a post-amplifier clamp', () => {
+  assert.equal(MAX_SCORE, 17);
+  assert.deepEqual(TRIFECTA_WEIGHTS, [0, 1, 3, 7]);
+  assert.deepEqual(
+    Object.fromEntries(Object.entries(SEVERITY_DESCRIPTORS).map(([key, descriptor]) => [key, [descriptor.min, descriptor.max]])),
+    { NO_MOVEMENT: [0, 0], CANARY: [1, 2], NOTABLE: [3, 4], SIGNIFICANT: [5, 6], CRITICAL: [7, 12], EXISTENTIAL: [13, 17] },
+  );
+  assert.match(CRITERIA.find(({ key }) => key === 't3')!.description, /Permission and capability/);
+  assert.equal(CRITERIA.find(({ key }) => key === 'autonomy')!.scoreDescriptions?.length, 3);
+  const score = (values: Partial<Record<string, number>>) => calculateRiskScore({
+    t1: 0, t2: 0, t3: 0, governance: 0, autonomy: 0, erosion: 0, sentience: 0, physical: 0,
+    ...values,
+  });
+  assert.deepEqual([0, 1, 2, 3].map((count) => score({
+    t1: count >= 1 ? 1 : 0,
+    t2: count >= 2 ? 1 : 0,
+    t3: count >= 3 ? 1 : 0,
+  }).trifectaPoints), [0, 1, 3, 7]);
+  assert.equal(score({}).severity, 'NO_MOVEMENT');
+  assert.equal(score({ t1: 1 }).severity, 'CANARY');
+  assert.equal(score({ governance: 2 }).severity, 'CANARY');
+  assert.equal(score({ t1: 1, governance: 2 }).severity, 'NOTABLE');
+  assert.equal(score({ t1: 1, t2: 1, governance: 1 }).severity, 'NOTABLE');
+  assert.equal(score({ t1: 1, governance: 2, autonomy: 2 }).severity, 'SIGNIFICANT');
+  assert.equal(score({ t1: 1, t2: 1, governance: 2, autonomy: 1 }).severity, 'SIGNIFICANT');
+  assert.equal(score({ t1: 1, t2: 1, t3: 1 }).severity, 'CRITICAL');
+  assert.equal(score({ t1: 1, t2: 1, t3: 1, governance: 2, autonomy: 2, erosion: 1 }).severity, 'CRITICAL');
+  assert.equal(score({ t1: 1, t2: 1, t3: 1, governance: 2, autonomy: 2, erosion: 2 }).severity, 'EXISTENTIAL');
+  const maximum = score({ t1: 1, t2: 1, t3: 1, governance: 2, autonomy: 2, erosion: 2, sentience: 2, physical: 2 });
+  assert.equal(maximum.totalPoints, 17);
+  assert.equal(maximum.severity, 'EXISTENTIAL');
+});
+
+test('validates every scoring component strictly', () => {
+  const valid = { t1: 0, t2: 0, t3: 0, governance: 0, autonomy: 0, erosion: 0, sentience: 0, physical: 0 };
+  assert.throws(() => calculateRiskScore({ ...valid, t1: 0.5 }), /t1 must be an integer/);
+  assert.throws(() => calculateRiskScore({ ...valid, t2: 2 }), /t2 must be an integer/);
+  assert.throws(() => calculateRiskScore({ ...valid, autonomy: 3 }), /autonomy must be an integer/);
+  assert.throws(() => calculateRiskScore({ ...valid, erosion: -1 }), /erosion must be an integer/);
+  const missing = { ...valid };
+  delete (missing as Partial<typeof valid>).physical;
+  assert.throws(() => calculateRiskScore(missing), /physical must be an integer/);
+  assert.throws(() => calculateRiskScore({ ...valid, unexpected: 0 }), /Unknown scoring component/);
   assert.throws(() => calculateClock(Number.NaN), /non-negative finite/);
+});
+
+test('scores all 1,944 valid configurations and all 6,480 amplifier increments', () => {
+  const amplifierKeys = ['governance', 'autonomy', 'erosion', 'sentience', 'physical'] as const;
+  let configurations = 0;
+  let transitions = 0;
+  for (let trifectaMask = 0; trifectaMask < 8; trifectaMask += 1) {
+    for (let encodedAmplifiers = 0; encodedAmplifiers < 3 ** 5; encodedAmplifiers += 1) {
+      let value = encodedAmplifiers;
+      const scores: Record<string, number> = {
+        t1: trifectaMask & 1 ? 1 : 0,
+        t2: trifectaMask & 2 ? 1 : 0,
+        t3: trifectaMask & 4 ? 1 : 0,
+        governance: 0,
+        autonomy: 0,
+        erosion: 0,
+        sentience: 0,
+        physical: 0,
+      };
+      for (const key of amplifierKeys) {
+        scores[key] = value % 3;
+        value = Math.floor(value / 3);
+      }
+      const result = calculateRiskScore(scores);
+      const trifectaCount = scores.t1 + scores.t2 + scores.t3;
+      const amplifierPoints = amplifierKeys.reduce((sum, key) => sum + scores[key], 0);
+      assert.equal(result.trifectaCount, trifectaCount);
+      assert.equal(result.trifectaPoints, TRIFECTA_WEIGHTS[trifectaCount]);
+      assert.equal(result.amplifierPoints, amplifierPoints);
+      assert.equal(result.totalPoints, result.trifectaPoints + amplifierPoints);
+      assert.ok(result.totalPoints >= 0 && result.totalPoints <= MAX_SCORE);
+      configurations += 1;
+      for (const key of amplifierKeys) {
+        if (scores[key] < 2) {
+          const incremented = calculateRiskScore({ ...scores, [key]: scores[key] + 1 });
+          assert.equal(incremented.totalPoints, result.totalPoints + 1);
+          transitions += 1;
+        }
+      }
+    }
+  }
+  assert.equal(configurations, 1944);
+  assert.equal(transitions, 6480);
 });
 
 test('exponential calibration halves every 100 points and never reaches zero', () => {

@@ -11,14 +11,6 @@ function requireNonNegativeFinite(value: number, label: string): void {
   }
 }
 
-export function effectivePoints(score: number, fullTrifecta: boolean): number {
-  requireNonNegativeFinite(score, 'Score');
-  if (!Number.isSafeInteger(score)) {
-    throw new RangeError('Score must be a non-negative safe integer');
-  }
-  return fullTrifecta ? Math.max(7, score) : score;
-}
-
 export function calculateClock(points: number): { remainingSeconds: number; pressure: number } {
   requireNonNegativeFinite(points, 'Points');
   const exponent = (-Math.LN2 * points) / CALIBRATION.halfwayPoints;
