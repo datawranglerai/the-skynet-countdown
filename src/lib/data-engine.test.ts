@@ -88,53 +88,133 @@ test('removes machine citation markers without rewriting source prose', () => {
   );
 });
 
+test('identical assessment copies count once while changed content still needs review', () => {
+  const row = parseCsv(assessmentCsv)[0];
+  const story = parseCsv(storyCsv)[0];
+  const manifest = HISTORICAL_MANIFEST.filter((entry) => entry.aliases.includes(sourceDateAlias(row.incident_date, row.source_url)));
+  const input = (rows: CsvRecord[]) => loadDataset(
+    encodeCsv(Object.keys(row), rows),
+    encodeCsv(Object.keys(story), [story]),
+    { manifest },
+  );
+  const single = input([row]);
+  const repeated = input([row, { ...row }, { ...row }]);
+  assert.deepEqual(repeated.diagnostics, []);
+  assert.equal(repeated.assessmentCount, 3);
+  assert.equal(repeated.incidents.length, 1);
+  assert.equal(repeated.incidents[0].assessments.length, 1);
+  assert.equal(repeated.totalPoints, single.totalPoints);
+  assert.equal(repeated.incidents[0].editorialMatchesAssessment, true);
+
+  const changed = input([row, row, { ...row, scoring_notes: 'This is a different assessment, not another copy.' }]);
+  assert.ok(changed.diagnostics.some((message) => message.includes('Unreviewed assessment content')));
+});
+
+test('audited alternate assessments need no editorial and retain every source alias', () => {
+  const original = parseCsv(assessmentCsv)[0];
+  const story = parseCsv(storyCsv)[0];
+  const alternate = {
+    ...original,
+    cve_id: 'SKYNET-2026-9009',
+    incident_date: '2026-10-02',
+    source_url: 'https://example.com/another-report-of-the-same-event',
+  };
+  const alternateOnly = loadDataset(
+    encodeCsv(Object.keys(original), [alternate]),
+    encodeCsv(Object.keys(story), [story]),
+    { manifest: [] },
+  );
+  const originalManifest = HISTORICAL_MANIFEST.find((entry) => entry.aliases.includes(sourceDateAlias(original.incident_date, original.source_url)))!;
+  const manifest: HistoricalEventManifest = {
+    ...originalManifest,
+    aliases: [...originalManifest.aliases, sourceDateAlias(alternate.incident_date, alternate.source_url)],
+    assessmentContentFingerprints: [...originalManifest.assessmentContentFingerprints, assessmentContentFingerprint(alternateOnly.incidents[0].assessment)],
+  };
+  const assessmentInput = encodeCsv(Object.keys(original), [original, alternate]);
+  const withoutEditorial = loadDataset(assessmentInput, encodeCsv(Object.keys(story), [story]), { manifest: [manifest] });
+  assert.deepEqual(withoutEditorial.diagnostics, []);
+  assert.equal(withoutEditorial.incidents.length, 1);
+  assert.equal(withoutEditorial.incidents[0].assessments.length, 2);
+
+  const alternateStory = {
+    ...story,
+    cve_id: alternate.cve_id,
+    headline: 'Another report with an explicit source and date',
+    incident_date: alternate.incident_date,
+    source_url: alternate.source_url,
+  };
+  const joined = loadDataset(
+    assessmentInput,
+    encodeCsv([...Object.keys(story), 'incident_date', 'source_url'], [story, alternateStory]),
+    { manifest: [manifest] },
+  );
+  assert.deepEqual(joined.diagnostics, []);
+  assert.equal(joined.matchedEditorialCount, 2);
+  assert.equal(joined.incidents[0].editorials.length, 2);
+  assert.equal(joined.incidents[0].assessment.sourceUrl, original.source_url);
+});
+
+test('assessment content approval belongs to exactly one reviewed event', () => {
+  const original = parseCsv(assessmentCsv)[0];
+  const story = parseCsv(storyCsv)[0];
+  const unrelated = makeAssessment({ cve_id: 'SKYNET-2026-9010' });
+  const unrelatedOnly = loadDataset(
+    encodeCsv(Object.keys(original), [unrelated]),
+    encodeCsv(Object.keys(story), [story]),
+    { manifest: [] },
+  );
+  const originalManifest = HISTORICAL_MANIFEST.find((entry) => entry.aliases.includes(sourceDateAlias(original.incident_date, original.source_url)))!;
+  const misplaced = {
+    ...originalManifest,
+    assessmentContentFingerprints: [...originalManifest.assessmentContentFingerprints, assessmentContentFingerprint(unrelatedOnly.incidents[0].assessment)],
+  };
+  const wrongEvent = loadDataset(
+    encodeCsv(Object.keys(original), [original, unrelated]),
+    encodeCsv(Object.keys(story), [story]),
+    { manifest: [misplaced] },
+  );
+  assert.ok(wrongEvent.diagnostics.some((message) => message.includes('does not contain its audited assessment content')));
+
+  const otherEvent = HISTORICAL_MANIFEST.find((entry) => entry.id !== originalManifest.id)!;
+  const shared = HISTORICAL_MANIFEST.map((entry) => entry.id === otherEvent.id ? {
+    ...entry,
+    assessmentContentFingerprints: [...entry.assessmentContentFingerprints, originalManifest.selectedAssessmentContentFingerprint],
+  } : entry);
+  const doubleApproval = loadDataset(assessmentCsv, storyCsv, { manifest: shared });
+  assert.ok(doubleApproval.diagnostics.some((message) => message.includes('assigned to multiple historical events')));
+});
+
 test('loads the audited source snapshot and reproduces exponential calibration v1', () => {
   const dataset = loadDataset(assessmentCsv, storyCsv);
-  assert.equal(dataset.incidents.length, 35);
-  assert.equal(HISTORICAL_MANIFEST.length, 35);
-  assert.equal(HISTORICAL_MANIFEST.reduce((sum, event) => sum + event.assessmentContentFingerprints.length, 0), 39);
-  assert.equal(HISTORICAL_MANIFEST.reduce((sum, event) => sum + event.storyLinks.length, 0), 30);
-  assert.deepEqual(
-    Object.fromEntries(HISTORICAL_MANIFEST.filter((event) => event.id >= '2026-09-21').map((event) => [
-      event.id,
-      {
-        assessments: event.assessmentContentFingerprints,
-        editorials: event.storyLinks.map((link) => link.storyContentFingerprint),
-      },
-    ])),
-    {
-      '2026-09-21-gemini-company-breach': { assessments: ['1683c6093c334865'], editorials: ['82d6755e18b5f702'] },
-      '2026-09-22-frontier-ai-control-call': { assessments: ['275c1564e2ffda90'], editorials: [] },
-      '2026-09-23-superintelligence-ban': { assessments: ['30746824f6bf0900'], editorials: [] },
-      '2026-09-24-openai-medicare-agent': { assessments: ['c3d8e35ff0a013c3'], editorials: ['f55f15ccb1453648'] },
-      '2026-09-24-safa-private-standards': { assessments: ['8fad2cb44d8b0048'], editorials: [] },
-      '2026-09-25-openai-dns-sandbox': { assessments: ['7ddd4bcd705d9141'], editorials: ['be9dd520b2328d6c'] },
-    },
-  );
-  assert.equal(dataset.assessmentCount, 39);
-  assert.equal(dataset.editorialCount, 30);
-  assert.equal(dataset.matchedEditorialCount, 30);
-  assert.equal(dataset.duplicateCount, 4);
-  assert.equal(dataset.incidents.reduce((sum, incident) => sum + incident.assessment.score, 0), 83);
-  assert.equal(dataset.totalPoints, 99);
-  assert.equal(dataset.remainingSeconds, calculateClock(99).remainingSeconds);
-  assert.equal(dataset.pressure, calculateGapClosedPercent(99));
-  assert.equal(dataset.lastUpdated, '2026-09-25');
+  assert.equal(dataset.incidents.length, 40);
+  assert.equal(HISTORICAL_MANIFEST.length, 40);
+  assert.equal(HISTORICAL_MANIFEST.reduce((sum, event) => sum + event.assessmentContentFingerprints.length, 0), 51);
+  assert.equal(HISTORICAL_MANIFEST.reduce((sum, event) => sum + event.storyLinks.length, 0), 38);
+  assert.equal(dataset.assessmentCount, 63);
+  assert.equal(dataset.incidents.reduce((sum, incident) => sum + incident.assessments.length, 0), 51);
+  assert.equal(dataset.editorialCount, 38);
+  assert.equal(dataset.matchedEditorialCount, 38);
+  assert.equal(dataset.duplicateCount, 23);
+  assert.equal(dataset.incidents.reduce((sum, incident) => sum + incident.assessment.score, 0), 96);
+  assert.equal(dataset.totalPoints, 113);
+  assert.equal(dataset.remainingSeconds, calculateClock(113).remainingSeconds);
+  assert.equal(dataset.pressure, calculateGapClosedPercent(113));
+  assert.equal(dataset.lastUpdated, '2026-09-28');
   assert.deepEqual(dataset.diagnostics, []);
-  assert.equal(dataset.incidents.filter((incident) => !incident.editorial).length, 7);
+  assert.equal(dataset.incidents.filter((incident) => !incident.editorial).length, 8);
   const newIncidents = dataset.incidents.filter((incident) => incident.assessment.date > '2026-09-18');
-  assert.equal(newIncidents.length, 6);
-  assert.equal(newIncidents.filter((incident) => incident.editorial).length, 3);
-  assert.equal(newIncidents.filter((incident) => !incident.editorial).length, 3);
-  assert.deepEqual(newIncidents.map((incident) => incident.assessment.score).sort((a, b) => a - b), [0, 0, 1, 4, 5, 5]);
-  assert.deepEqual(newIncidents.map((incident) => incident.effectivePoints).sort((a, b) => a - b), [0, 0, 1, 5, 9, 9]);
+  assert.equal(newIncidents.length, 11);
+  assert.equal(newIncidents.filter((incident) => incident.editorial).length, 7);
+  assert.equal(newIncidents.filter((incident) => !incident.editorial).length, 4);
+  assert.deepEqual(newIncidents.map((incident) => incident.assessment.score).sort((a, b) => a - b), [0, 0, 1, 1, 2, 3, 3, 4, 4, 5, 5]);
+  assert.deepEqual(newIncidents.map((incident) => incident.effectivePoints).sort((a, b) => a - b), [0, 0, 1, 1, 2, 3, 4, 4, 5, 9, 9]);
   assert.equal(newIncidents[0].gapClosedPercent, newIncidents[3].gapClosedPercent);
   assert.equal(dataset.incidents.filter((incident) => incident.assessment.fullTrifecta).length, 3);
   assert.deepEqual(
     Object.fromEntries(['NO_MOVEMENT', 'CANARY', 'NOTABLE', 'SIGNIFICANT', 'CRITICAL', 'EXISTENTIAL'].map(
       (severity) => [severity, dataset.incidents.filter((incident) => incident.scoring.severity === severity).length],
     )),
-    { NO_MOVEMENT: 7, CANARY: 12, NOTABLE: 9, SIGNIFICANT: 2, CRITICAL: 5, EXISTENTIAL: 0 },
+    { NO_MOVEMENT: 7, CANARY: 14, NOTABLE: 12, SIGNIFICANT: 2, CRITICAL: 5, EXISTENTIAL: 0 },
   );
   assert.equal(dataset.incidents.find((incident) => incident.id === '2026-04-07-project-glasswing')?.assessments.length, 2);
   assert.equal(dataset.incidents.find((incident) => incident.id === '2026-04-07-project-glasswing')?.editorials.length, 2);
@@ -142,6 +222,34 @@ test('loads the audited source snapshot and reproduces exponential calibration v
   assert.equal(dataset.incidents.find((incident) => incident.id === '2026-04-08-turbotax-claude')?.editorialMatchesAssessment, false);
   assert.equal(dataset.incidents.find((incident) => incident.id === '2026-04-08-turbotax-claude')?.editorialAssessmentScore, 3);
   assert.ok(dataset.incidents.every((incident) => !incident.assessment.title.includes('cite')));
+});
+
+test('September coverage is grouped by event while reports retain their assessment versions', () => {
+  const dataset = loadDataset(assessmentCsv, storyCsv);
+  const medicare = dataset.incidents.find((incident) => incident.id === '2026-09-24-openai-medicare-agent')!;
+  assert.equal(medicare.effectivePoints, 9);
+  assert.equal(medicare.assessment.cveId, 'SKYNET-2026-0011');
+  assert.deepEqual(medicare.assessments.map((assessment) => calculateRiskScore(assessment.scores).totalPoints).sort((a, b) => a - b), [9, 9, 10]);
+  assert.deepEqual(medicare.editorials.map((editorial) => editorial.cveId).sort(), ['SKYNET-2026-0011', 'SKYNET-2026-0016', 'SKYNET-2026-0024']);
+  const originalLinks = HISTORICAL_MANIFEST.find((entry) => entry.id === medicare.id)!.storyLinks;
+  for (const link of originalLinks) {
+    const report = medicare.editorials.find((editorial) => editorialContentFingerprint(editorial) === link.storyContentFingerprint)!;
+    const assessment = medicare.assessments.find((version) => assessmentContentFingerprint(version) === link.assessmentContentFingerprint)!;
+    assert.equal(report.cveId, assessment.cveId);
+  }
+  const dns = dataset.incidents.find((incident) => incident.id === '2026-09-25-openai-dns-sandbox')!;
+  assert.equal(dns.effectivePoints, 4);
+  assert.equal(dns.assessments.length, 2);
+  assert.equal(dns.editorials.length, 2);
+  assert.equal(dns.headline, 'The Sandbox Blocked the Web. DNS Had Other Ideas.');
+  assert.equal(dns.editorialMatchesAssessment, true);
+  const safa = dataset.incidents.find((incident) => incident.id === '2026-09-24-safa-private-standards')!;
+  assert.equal(safa.assessments.length, 2);
+  assert.equal(safa.effectivePoints, 1);
+  const withoutCopies = withRows(assessmentCsv, (rows) => [...new Map(rows.map((row) => [JSON.stringify(row), row])).values()]);
+  const distinct = loadDataset(withoutCopies, storyCsv);
+  assert.deepEqual(distinct.diagnostics, []);
+  assert.deepEqual(distinct.incidents, dataset.incidents);
 });
 
 test('audited selection and chronology do not depend on CSV row order', () => {
@@ -156,6 +264,7 @@ test('audited selection and chronology do not depend on CSV row order', () => {
 });
 
 test('accepts appended unique events and gives zero-score events exactly zero movement', () => {
+  const baseline = loadDataset(assessmentCsv, storyCsv);
   const rows = parseCsv(assessmentCsv);
   const headers = Object.keys(rows[0]);
   const appended = encodeCsv(headers, [
@@ -185,9 +294,9 @@ test('accepts appended unique events and gives zero-score events exactly zero mo
     updated_clock_position: '12:00',
   };
   const dataset = loadDataset(appended, encodeCsv(storyHeaders, [...storyRows, appendedStory]));
-  assert.equal(dataset.incidents.length, 37);
-  assert.equal(dataset.totalPoints, 101);
-  assert.equal(dataset.matchedEditorialCount, 31);
+  assert.equal(dataset.incidents.length, baseline.incidents.length + 2);
+  assert.equal(dataset.totalPoints, baseline.totalPoints + 2);
+  assert.equal(dataset.matchedEditorialCount, baseline.matchedEditorialCount + 1);
   assert.deepEqual(dataset.diagnostics, []);
   assert.equal(dataset.incidents.find((incident) => incident.assessment.cveId === 'SKYNET-2026-9001')?.editorial?.headline, 'A unique appended editorial');
   assert.equal(dataset.incidents.at(-1)?.movementSeconds, 0);
@@ -206,7 +315,7 @@ test('fails closed for unreviewed revisions and ambiguous legacy identifiers', (
   };
   const revisedCsv = encodeCsv(assessmentHeaders, [...assessmentRows, revision]);
   const revised = loadDataset(revisedCsv, storyCsv);
-  assert.ok(revised.diagnostics.some((message) => message.includes('Unreviewed assessment revision')));
+  assert.ok(revised.diagnostics.some((message) => message.includes('Unreviewed assessment content')));
 
   const sameIdentityRevision = { ...assessmentRows[0], scoring_notes: 'A changed assessment rationale.' };
   const sameIdentity = loadDataset(
@@ -224,7 +333,7 @@ test('fails closed for unreviewed revisions and ambiguous legacy identifiers', (
   };
   const ambiguous = loadDataset(assessmentCsv, encodeCsv(storyHeaders, [...storyRows, ambiguousStory]));
   assert.ok(ambiguous.diagnostics.some((message) => message.includes('Ambiguous or unmatched story')));
-  assert.equal(ambiguous.matchedEditorialCount, 30);
+  assert.equal(ambiguous.matchedEditorialCount, storyRows.length);
 });
 
 test('full-content audits reject in-place assessment and editorial rewrites', () => {
@@ -250,7 +359,7 @@ test('full-content audits reject in-place assessment and editorial rewrites', ()
   const changedEditorial = loadDataset(assessmentCsv, encodeCsv(storyHeaders, storyRows));
   assert.ok(changedEditorial.diagnostics.some((message) => message.includes('unreviewed content')));
   assert.ok(changedEditorial.diagnostics.some((message) => message.includes('requires editorial content')));
-  assert.equal(changedEditorial.matchedEditorialCount, 29);
+  assert.equal(changedEditorial.matchedEditorialCount, storyRows.length - 1);
 });
 
 test('a custom manifest can approve and select a same-identity assessment revision', () => {
@@ -456,6 +565,7 @@ test('future story event_id columns provide an explicit join independent of lega
 });
 
 test('historical aliases and ids outrank conflicting supplied event ids and corrections count once', () => {
+  const baseline = loadDataset(assessmentCsv, storyCsv);
   const rows = parseCsv(assessmentCsv);
   const headers = [...Object.keys(rows[0]), 'event_id'];
   const withConflict = rows.map((row, index) => ({
@@ -463,7 +573,7 @@ test('historical aliases and ids outrank conflicting supplied event ids and corr
     event_id: index === 0 ? 'wrong-historical-id' : '',
   }));
   const conflict = loadDataset(encodeCsv(headers, withConflict), storyCsv);
-  assert.equal(conflict.incidents.length, 35);
+  assert.equal(conflict.incidents.length, baseline.incidents.length);
   assert.ok(conflict.diagnostics.some((message) => message.includes('conflicting event_id')));
 
   const withPinnedIdentity = rows.map((row, index) => ({
@@ -482,7 +592,7 @@ test('historical aliases and ids outrank conflicting supplied event ids and corr
     t1_score: '1',
   });
   const corrected = loadDataset(encodeCsv(headers, [...rows, correction]), storyCsv);
-  assert.equal(corrected.incidents.length, 35);
+  assert.equal(corrected.incidents.length, baseline.incidents.length);
   assert.equal(corrected.incidents.filter((incident) => incident.id === '2026-04-09-openai-advertising').length, 1);
   assert.ok(corrected.diagnostics.some((message) => message.includes('Unreviewed assessment')));
 });

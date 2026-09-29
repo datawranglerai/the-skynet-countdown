@@ -61,7 +61,7 @@ For example, a two-point incident always closes **1.38%** of the remaining gap, 
 
 The 100-point half-scale is an editorial calibration chosen to keep the index legible as the dataset grows. It is not an empirical risk estimate or a target fitted to the current reading.
 
-With the current repository data, 99 evidence points leave **30:13 symbolic minutes** and produce an evidence pressure reading of **49.7/100**.
+With the current repository data, 113 evidence points leave **27:25 symbolic minutes** and produce an evidence pressure reading of **54.3/100**.
 
 ## Scoring methodology
 
@@ -167,13 +167,13 @@ The Countdown is a positive view of AI development run backwards. Every incident
 
 The canonical CSVs currently contain:
 
-- 39 assessment rows covering 35 distinct events;
-- 30 editorial reports covering 28 events;
-- seven assessment-only events awaiting editorial coverage;
-- 99 published evidence points derived from the selected criterion values; and
-- incidents through 25 September 2026.
+- 63 assessment rows containing 51 distinct assessments, covering 40 events;
+- 38 editorial reports covering 32 events;
+- eight assessment-only events awaiting editorial coverage;
+- 113 published evidence points derived from the selected criterion values; and
+- incidents through 28 September 2026.
 
-The source exports retain repeated records and assessment versions. The app audits those records, selects the approved assessment for each event and counts each event once. The workflow's total-score and classification columns reflect its unweighted export format; those fields, along with its minute and clock-position columns, are retained as source metadata. Published scores, severities, clock history and incident impacts are derived by the app from the eight recorded criterion values.
+The source exports retain repeated records and assessment versions. The app validates every row and collapses identical assessment copies, then audits the distinct records, selects the approved assessment for each event and counts each event once. Different sources covering the same event are grouped through explicit reviewed links. The workflow's total-score and classification columns reflect its unweighted export format; those fields, along with its minute and clock-position columns, are retained as source metadata. Published scores, severities, clock history and incident impacts are derived by the app from the eight recorded criterion values.
 
 ## Limitations
 

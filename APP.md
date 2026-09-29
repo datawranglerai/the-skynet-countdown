@@ -44,12 +44,14 @@ This requests exclusion from search results; it does not make the site or downlo
 
 ## Append new records
 
-1. Append rows to the existing CSVs, preserving their headers and quoted CSV format. The app reads these files directly at build time.
+1. Append rows to the existing CSVs, or replace them with complete exports containing the existing history plus new records. Preserve their filenames, headers and quoted CSV format. The app reads these files directly at build time.
 2. Prefer a stable `event_id` in both exports. The stories CSV may also include `incident_date` and `source_url` together. With the original schema, a new globally unique CVE can join a report to an assessment only when the match is unambiguous.
 3. Run `npm run validate:data`. Resolve every reported ambiguity or unexpected change before publishing.
 4. Commit and push to `main`, or merge the update into `main`. GitHub Actions rebuilds and deploys the updated bundle. Local edits are not visible on the published site until deployed.
 
 The existing exports reuse CVE IDs for unrelated stories. The audited import manifest in `src/lib/manifest.ts` assigns stable incident IDs, records explicit source/date aliases, selects assessment versions, and links original editorial reports. It retains all original variants while counting an event once. A new conflicting assessment requires an explicit review and manifest update; it never silently replaces or adds to the old score. Missing or changed audited content must be reviewed too.
+
+Identical assessment copies are validated and then collapsed for reconciliation and display. The original rows remain in the downloadable CSV, and the validator reports both raw and distinct assessment counts. Changed scores, rationales or identity fields remain separate versions that require review. Each approved assessment content hash belongs to one reviewed event; an assessment can be approved without an accompanying editorial. Multiple URLs or publication dates for the same underlying event need explicit aliases in that event's manifest entry.
 
 When explicit unique `event_id` values are supplied, legacy CVE labels may repeat: identity comes from `event_id`, not the old label. Without explicit IDs, a reused CVE on a new unrelated event stops validation.
 
@@ -117,11 +119,11 @@ The `total_score` and `classification` values reflect the workflow's unweighted 
 
 ## Current data snapshot
 
-- 39 assessment rows, grouped into 35 distinct events.
-- 30 editorial reports cover 28 events; seven events have no editorial copy.
-- 99 published evidence points derived from the selected criterion values.
-- 30:13 symbolic minutes remaining; 49.7/100 evidence pressure.
-- Latest recorded event: 25 September 2026.
+- 63 assessment rows, containing 51 distinct assessments grouped into 40 events.
+- 38 editorial reports cover 32 events; eight events have no editorial copy.
+- 113 published evidence points derived from the selected criterion values.
+- 27:25 symbolic minutes remaining; 54.3/100 evidence pressure.
+- Latest recorded event: 28 September 2026.
 
 Historical conflicting assessments use explicitly reviewed, conservative selections. Original editorial text remains available and is labelled when written for a different assessment version. Machine citation markers are removed from display; original source links and raw downloadable CSVs are preserved.
 

@@ -298,12 +298,17 @@ export function loadDataset(
   requireHeaders(assessmentRows, ASSESSMENT_HEADERS, 'Assessment');
   requireHeaders(storyRows, STORY_HEADERS, 'Story');
 
-  const parsedAssessments = assessmentRows.map(parseAssessmentRow);
+  // Repeated export rows are copies, not new assessment versions. Validate every
+  // row, then reconcile each distinct full-content record once.
+  const parsedAssessments = [...new Map(
+    assessmentRows.map(parseAssessmentRow).map((value) => [value.contentFingerprint, value]),
+  ).values()];
   const parsedEditorials = storyRows.map(parseEditorialRow);
   const diagnostics: string[] = [];
   const activeManifest = options.manifest ?? HISTORICAL_MANIFEST;
   const manifestByAlias = new Map<string, HistoricalEventManifest>();
   const manifestById = new Map<string, HistoricalEventManifest>();
+  const assessmentContentOwners = new Map<string, string>();
   for (const entry of activeManifest) {
     if (manifestById.has(entry.id)) throw new Error(`Historical manifest repeats id ${entry.id}`);
     manifestById.set(entry.id, entry);
@@ -312,6 +317,13 @@ export function loadDataset(
     }
     if (new Set(entry.assessmentContentFingerprints).size !== entry.assessmentContentFingerprints.length) {
       diagnostics.push(`Historical manifest ${entry.id} repeats an assessment content fingerprint.`);
+    }
+    for (const fingerprint of entry.assessmentContentFingerprints) {
+      const owner = assessmentContentOwners.get(fingerprint);
+      if (owner && owner !== entry.id) {
+        diagnostics.push(`Assessment content ${fingerprint} is assigned to multiple historical events: ${owner}, ${entry.id}.`);
+      }
+      assessmentContentOwners.set(fingerprint, entry.id);
     }
     for (const alias of entry.aliases) {
       if (manifestByAlias.has(alias)) throw new Error(`Historical manifest repeats alias ${alias}`);
@@ -343,16 +355,15 @@ export function loadDataset(
     let selected = group.values[0];
     let selectionRationale = 'A newly appended, unique source/date event has one assessment.';
     if (group.manifest) {
-      const allowed = new Set([
-        group.manifest.selectedAssessmentFingerprint,
-        ...group.manifest.storyLinks.map((link) => link.assessmentFingerprint),
-      ]);
-      for (const fingerprint of distinctFingerprints) {
-        if (!allowed.has(fingerprint)) {
-          diagnostics.push(`Unreviewed assessment revision for ${group.manifest.id} (${fingerprint}); update the audited manifest.`);
+      // Full-content approval includes identity, scores and rationales. An
+      // approved alternate assessment does not need its own editorial report.
+      const allowedContent = new Set(group.manifest.assessmentContentFingerprints);
+      const presentContent = new Set(group.values.map((value) => value.contentFingerprint));
+      for (const fingerprint of allowedContent) {
+        if (!presentContent.has(fingerprint)) {
+          diagnostics.push(`Historical event ${group.manifest.id} does not contain its audited assessment content ${fingerprint}.`);
         }
       }
-      const allowedContent = new Set(group.manifest.assessmentContentFingerprints);
       for (const value of group.values) {
         if (!allowedContent.has(value.contentFingerprint)) {
           diagnostics.push(`Unreviewed assessment content for ${group.manifest.id} (${value.contentFingerprint}); update the audited manifest.`);
@@ -423,7 +434,10 @@ export function loadDataset(
   }
 
   const incidentById = new Map(working.map((incident) => [incident.id, incident]));
-  const incidentByAlias = new Map(working.map((incident) => [sourceDateAlias(incident.assessment.date, incident.assessment.sourceUrl), incident]));
+  const incidentByAlias = new Map(working.flatMap((incident) => [
+    ...(incident.manifest?.aliases ?? []),
+    ...incident.assessments.map((assessment) => sourceDateAlias(assessment.date, assessment.sourceUrl)),
+  ].map((alias) => [alias, incident] as const)));
   const storyLinks = new Map<string, Array<{ event: HistoricalEventManifest; link: HistoricalEventManifest['storyLinks'][number] }>>();
   for (const entry of activeManifest) {
     for (const link of entry.storyLinks) {
@@ -597,9 +611,9 @@ export function loadDataset(
 
   return {
     incidents,
-    assessmentCount: parsedAssessments.length,
+    assessmentCount: assessmentRows.length,
     editorialCount: parsedEditorials.length,
-    duplicateCount: parsedAssessments.length - incidents.length,
+    duplicateCount: assessmentRows.length - incidents.length,
     matchedEditorialCount,
     diagnostics,
     totalPoints: cumulativePoints,

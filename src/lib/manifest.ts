@@ -74,7 +74,8 @@ export function sourceDateAlias(date: string, sourceUrl: string): string {
   return `${date.trim()}|${url.toString()}`;
 }
 
-type AssessmentRef = readonly [cveId: string, score: number, fullTrifecta?: boolean];
+type SourceRef = readonly [date: string, sourceUrl: string];
+type AssessmentRef = readonly [cveId: string, score: number, fullTrifecta?: boolean, source?: SourceRef];
 type StoryRef = readonly [cveId: string, headline: string, assessment: AssessmentRef];
 
 function event(
@@ -84,12 +85,17 @@ function event(
   selected: AssessmentRef,
   selectionRationale: string,
   stories: readonly StoryRef[] = [],
+  additionalSources: readonly SourceRef[] = [],
 ): HistoricalEventManifest {
   const fingerprint = (reference: AssessmentRef) =>
-    assessmentFingerprint(reference[0], date, sourceUrl, reference[1], reference[2] ?? false);
+    assessmentFingerprint(reference[0], reference[3]?.[0] ?? date, reference[3]?.[1] ?? sourceUrl, reference[1], reference[2] ?? false);
+  const sources: SourceRef[] = [[date, sourceUrl], ...additionalSources];
+  for (const reference of [selected, ...stories.map((story) => story[2])]) {
+    if (reference[3]) sources.push(reference[3]);
+  }
   return Object.freeze({
     id,
-    aliases: Object.freeze([sourceDateAlias(date, sourceUrl)]),
+    aliases: Object.freeze([...new Set(sources.map(([sourceDate, url]) => sourceDateAlias(sourceDate, url)))]),
     selectedAssessmentFingerprint: fingerprint(selected),
     selectedAssessmentContentFingerprint: '',
     assessmentContentFingerprints: Object.freeze([]),
@@ -189,17 +195,36 @@ const BASE_HISTORICAL_MANIFEST: readonly HistoricalEventManifest[] = Object.free
   event('2026-09-18-claude-r-and-d', '2026-09-18', 'https://apnews.com/article/anthropic-claude-ai-model-self-improvement-4d3a7430f57cbc7c39e1c5f2b7d7e132', ['SKYNET-2026-0015', 3], SINGLE, [
     ['SKYNET-2026-0015', 'Claude Started Helping Build the Next Claude', ['SKYNET-2026-0015', 3]],
   ]),
-  event('2026-09-21-gemini-company-breach', '2026-09-21', 'https://www.securityweek.com/google-confirms-gemini-ai-breached-three-firms/', ['SKYNET-2026-0012', 5, true], SINGLE, [
+  event('2026-09-21-gemini-company-breach', '2026-09-21', 'https://www.securityweek.com/google-confirms-gemini-ai-breached-three-firms/', ['SKYNET-2026-0012', 5, true], 'Both assessments cover the same evaluation and tie at nine weighted points. The original selection remains authoritative; both reports and assessment versions are retained.', [
     ['SKYNET-2026-0012', 'The Eval Touched Real Targets. Then Kept Going.', ['SKYNET-2026-0012', 5, true]],
+    ['SKYNET-2026-0018', 'The Cyber Eval Wandered Into Three Actual Companies', ['SKYNET-2026-0018', 5, true]],
   ]),
-  event('2026-09-22-frontier-ai-control-call', '2026-09-22', 'https://www.government.nl/documents/2026/09/22/a-call-for-control-of-frontier-ai-models', ['SKYNET-2026-0013', 0], SINGLE),
-  event('2026-09-23-superintelligence-ban', '2026-09-23', 'https://rollcall.com/2026/09/23/ai-superintelligence-ban-proposed-by-casar-sanders/', ['SKYNET-2026-0015', 0], SINGLE),
-  event('2026-09-24-openai-medicare-agent', '2026-09-24', 'https://www.abc.net.au/news/2026-09-24/what-we-know-about-the-openai-medicare-hack/107189452', ['SKYNET-2026-0011', 5, true], SINGLE, [
+  event('2026-09-22-frontier-ai-control-call', '2026-09-22', 'https://www.government.nl/documents/2026/09/22/a-call-for-control-of-frontier-ai-models', ['SKYNET-2026-0013', 0], 'Both assessments describe the same joint statement and score zero. The original selection remains authoritative.'),
+  event('2026-09-23-superintelligence-ban', '2026-09-23', 'https://rollcall.com/2026/09/23/ai-superintelligence-ban-proposed-by-casar-sanders/', ['SKYNET-2026-0015', 0], 'Both assessments describe the same legislative proposal and score zero. The original selection remains authoritative.'),
+  event('2026-09-24-openai-medicare-agent', '2026-09-24', 'https://www.abc.net.au/news/2026-09-24/what-we-know-about-the-openai-medicare-hack/107189452', ['SKYNET-2026-0011', 5, true], 'Three assessments and reports cover the same June Medicare portal access. The original nine-point assessment remains selected, tying the second ABC assessment and conservatively preceding the ten-point BBC assessment. Different publication dates and URLs do not create additional incidents.', [
     ['SKYNET-2026-0011', "The Public Portal Wasn't Where the Agent Stopped", ['SKYNET-2026-0011', 5, true]],
+    ['SKYNET-2026-0016', "The Agent Didn't Stop at the Public Files", ['SKYNET-2026-0016', 5, true, ['2026-09-24', 'https://www.abc.net.au/news/2026/09/24/ai-agent-accessed-australian-government-site-pm-says/107189078']]],
+    ['SKYNET-2026-0024', 'The Research Agent Found the Staff-Only Door', ['SKYNET-2026-0024', 6, true, ['2026-09-23', 'https://www.bbc.co.uk/news/articles/c6vgy0333dppo']]],
   ]),
-  event('2026-09-24-safa-private-standards', '2026-09-24', 'https://www.theinformation.com/articles/google-openai-anthropic-ai-safety-group-takes-shape?offer=rtsu-engagement-25%2Crtsu-featured-articles-pro', ['SKYNET-2026-0014', 1], SINGLE),
-  event('2026-09-25-openai-dns-sandbox', '2026-09-25', 'https://alignment.openai.com/misalignment-reports/an-agent-used-dns-to-reach-an-external-chatbot/', ['SKYNET-2026-0010', 4], SINGLE, [
+  event('2026-09-24-safa-private-standards', '2026-09-24', 'https://www.theinformation.com/articles/google-openai-anthropic-ai-safety-group-takes-shape?offer=rtsu-engagement-25%2Crtsu-featured-articles-pro', ['SKYNET-2026-0014', 1], 'The same private-standards announcement appears with and without an offer query parameter. Both assessments score one point; the original selection remains authoritative.', [], [
+    ['2026-09-24', 'https://www.theinformation.com/articles/google-openai-anthropic-ai-safety-group-takes-shape/'],
+  ]),
+  event('2026-09-25-openai-dns-sandbox', '2026-09-25', 'https://alignment.openai.com/misalignment-reports/an-agent-used-dns-to-reach-an-external-chatbot/', ['SKYNET-2026-0017', 3], 'Two assessments cover the same DNS containment failure. The selected assessment assigns no governance amplifier because monitoring, intervention and disclosure are documented, contributing four weighted points rather than five. Both assessments and their corresponding reports remain visible.', [
     ['SKYNET-2026-0010', 'The Model Found the DNS Side Door', ['SKYNET-2026-0010', 4]],
+    ['SKYNET-2026-0017', 'The Sandbox Blocked the Web. DNS Had Other Ideas.', ['SKYNET-2026-0017', 3]],
+  ]),
+  event('2026-09-25-anthropic-pentagon-ruling', '2026-09-25', 'https://media.cadc.uscourts.gov/opinions/docs/2026/09/26-1049-2194984.pdf', ['SKYNET-2026-0020', 3], SINGLE, [
+    ['SKYNET-2026-0020', 'The Pentagon Wanted Fewer Guardrails. The Court Agreed.', ['SKYNET-2026-0020', 3]],
+  ]),
+  event('2026-09-25-openai-replicating-injections', '2026-09-25', 'https://alignment.openai.com/misalignment-reports/self-replicating-prompt-injections-exist/', ['SKYNET-2026-0026', 1], SINGLE),
+  event('2026-09-25-cms-wiser-pilot', '2026-09-25', 'https://arstechnica.com/health/2026/09/trump-admin-using-ai-to-deny-medical-care-for-seniors-in-disastrous-experiment/', ['SKYNET-2026-0027', 4], SINGLE, [
+    ['SKYNET-2026-0027', 'Medicare’s Queue Now Has a Partial Autopilot', ['SKYNET-2026-0027', 4]],
+  ]),
+  event('2026-09-26-frontier-incident-review', '2026-09-26', 'https://www.axios.com/2026/09/26/openai-anthropic-thousands-ai-security-incidents', ['SKYNET-2026-0019', 4], 'This assessment concerns the reported aggregate pattern of incidents, not a separate record for each underlying case. Its supplied criterion ratings are retained. The source does not identify the full incident set, so overlap with individually recorded cases remains uncertain.', [
+    ['SKYNET-2026-0019', 'The Incident Count Has Gained Its Own Comma', ['SKYNET-2026-0019', 4]],
+  ]),
+  event('2026-09-28-aisi-astra-simulation', '2026-09-28', 'https://www.aisi.gov.uk/blog/gpt-6-astra-performs-unsanctioned-supply-chain-attacks-in-simulations', ['SKYNET-2026-0025', 2], SINGLE, [
+    ['SKYNET-2026-0025', 'The Simulator Asked for Restraint. Astra Submitted Malicious Code.', ['SKYNET-2026-0025', 2]],
   ]),
 ]);
 
@@ -240,12 +265,17 @@ const AUDITED_CONTENT: Readonly<Record<string, ContentAudit>> = Object.freeze({
   '2026-09-12-amodei-slowdown-warning': { assessments: ['77808e7461f03f70'] },
   '2026-09-16-openai-misalignment-reports': { assessments: ['61dda5e0ba3593d4'], editorials: { 'ae97f829d1fae58d': '88183e7561bdd361' } },
   '2026-09-18-claude-r-and-d': { assessments: ['cb0877df6f9c9683'], editorials: { 'd23e8fae846a9172': '0a75f38c3eb5e310' } },
-  '2026-09-21-gemini-company-breach': { assessments: ['1683c6093c334865'], editorials: { '7c918e0764f931a3': '82d6755e18b5f702' } },
-  '2026-09-22-frontier-ai-control-call': { assessments: ['275c1564e2ffda90'] },
-  '2026-09-23-superintelligence-ban': { assessments: ['30746824f6bf0900'] },
-  '2026-09-24-openai-medicare-agent': { assessments: ['c3d8e35ff0a013c3'], editorials: { '4fdb8022e81463de': 'f55f15ccb1453648' } },
-  '2026-09-24-safa-private-standards': { assessments: ['8fad2cb44d8b0048'] },
-  '2026-09-25-openai-dns-sandbox': { assessments: ['7ddd4bcd705d9141'], editorials: { 'e04cc41a4f49b466': 'be9dd520b2328d6c' } },
+  '2026-09-21-gemini-company-breach': { assessments: ['1683c6093c334865', '1af8bd72f4182256'], selected: '1683c6093c334865', editorials: { '7c918e0764f931a3': '82d6755e18b5f702', 'fe492f827e3c6e26': '261ffefdaa01b059' }, storyAssessments: { 'fe492f827e3c6e26': '1af8bd72f4182256' } },
+  '2026-09-22-frontier-ai-control-call': { assessments: ['275c1564e2ffda90', '8c4f9051418fc855'], selected: '275c1564e2ffda90' },
+  '2026-09-23-superintelligence-ban': { assessments: ['30746824f6bf0900', 'c7d9c1e2b5b790a6'], selected: '30746824f6bf0900' },
+  '2026-09-24-openai-medicare-agent': { assessments: ['c3d8e35ff0a013c3', 'ff494b0c83c70208', '5aaec9868dba8122'], selected: 'c3d8e35ff0a013c3', editorials: { '4fdb8022e81463de': 'f55f15ccb1453648', '1fbcbccf19f79a8b': '2921af6f136fdd0b', '79a357ad45acf391': 'fe9fdaf8256a1a64' }, storyAssessments: { '1fbcbccf19f79a8b': 'ff494b0c83c70208', '79a357ad45acf391': '5aaec9868dba8122' } },
+  '2026-09-24-safa-private-standards': { assessments: ['8fad2cb44d8b0048', 'f1caf8d00eed1e7c'], selected: '8fad2cb44d8b0048' },
+  '2026-09-25-openai-dns-sandbox': { assessments: ['7ddd4bcd705d9141', '466ff655b3761b39'], selected: '466ff655b3761b39', editorials: { 'e04cc41a4f49b466': 'be9dd520b2328d6c', 'cfe77a2d1e3809a9': 'b479fd0256e3df76' }, storyAssessments: { 'e04cc41a4f49b466': '7ddd4bcd705d9141' } },
+  '2026-09-25-anthropic-pentagon-ruling': { assessments: ['5d15a43530d86401'], editorials: { '085f3c01a0063205': 'e6625ce91c61681d' } },
+  '2026-09-25-openai-replicating-injections': { assessments: ['3ccfb727a905b7ab'] },
+  '2026-09-25-cms-wiser-pilot': { assessments: ['4818c04c54e06e10'], editorials: { 'c350d02f48b297db': 'bf38afa1dfd1b865' } },
+  '2026-09-26-frontier-incident-review': { assessments: ['68dcb6d70dbbca33'], editorials: { '10a756b57920c319': 'd5dca62e01da26ca' } },
+  '2026-09-28-aisi-astra-simulation': { assessments: ['c90336d5e367cf59'], editorials: { '3e87df78359cbb4c': '91f7b91ebbae284a' } },
 });
 
 export const HISTORICAL_MANIFEST: readonly HistoricalEventManifest[] = Object.freeze(
