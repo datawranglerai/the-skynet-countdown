@@ -1,15 +1,31 @@
 # Running The Skynet Countdown
 
+## Architecture
+
+The Vite/React frontend runs on GitHub Pages. It fetches `https://api.skynetcountdown.org/dataset` from a small Node.js API on Railway. The API reads Neon PostgreSQL and applies the same scoring and clock calculation used in the tests. Data updates appear on page load, window focus and every 60 seconds while the tab is visible. API snapshots are cached in memory for up to 30 seconds.
+
+`assessments` and `stories` remain the current n8n records. `events` stores their reviewed grouping, stable route slugs, public SKYNET IDs and canonical selections. `record_history` preserves previous versions and the assessment version each report describes. New source records receive an event automatically; updates to a selected source advance its published assessment while retaining history. Different articles about one incident still require an explicit shared event identity.
+
+The files in `data/` and `src/lib/manifest.ts` are migration evidence and test fixtures. The production browser bundle does not import them or fall back to them when the API is unavailable.
+
 ## Local development
 
-Use a current Node.js LTS release (22.13+ or 24+) and npm.
+Use Node.js 24 LTS and npm:
 
 ```sh
 npm ci
-npm run dev
+npm run dev:api
 ```
 
-The site has a clock and history explorer, a searchable archive, individual incident reports and an interactive methodology page. Navigation uses hash URLs so direct links work on static hosts without server rewrite rules. Fonts are bundled locally; their OFL licences are in `public/fonts/`.
+In another terminal:
+
+```sh
+VITE_API_URL=http://127.0.0.1:3000/dataset npm run dev
+```
+
+The API reads `DATABASE_URL` from the local ignored `.env` file. The browser receives only the public API URL. `.env.example` documents the settings without credentials. For normal API use, prefer a SELECT-only database account; database migration needs a separate owner connection.
+
+The app keeps its last successfully loaded dataset if a refresh fails and displays a stale-data notice. An initial failure shows a retry screen. It never invents a clock reading from bundled fallback data.
 
 ## Verify and build
 
@@ -22,48 +38,75 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-`build` runs data validation before producing `dist/`. `test:e2e` starts a local production preview and exercises desktop/mobile navigation, archive filters, evidence details, history, the calculator, downloads and page widths. Browser screenshots and failure traces appear under `test-results/` (ignored by Git). If a compatible Chromium is already installed, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to its executable path.
+Unit and browser tests use local fixtures and mocked API responses. They require no production database or secrets. `build` checks TypeScript and produces the static frontend in `dist/`. `npm run validate:data` remains available to validate the archived CSV migration inputs.
 
-`npm run preview` is for local review. No account, database, API key or active n8n connection is needed to run the site.
+Browser screenshots and failure traces appear under `test-results/` (ignored by Git). If a compatible Chromium is already installed, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to its executable path.
+
+## Railway API deployment
+
+Create a Railway service from this repository and connect its deployment branch. For the first rollout, a feature branch lets you verify the API before merging the frontend into `main`; subsequent deployments can follow `main`. Keep the service root at the repository root. Railway detects the `Dockerfile`, which installs production dependencies and runs `node server/index.ts` on Node.js 24. The server listens on `0.0.0.0` and Railway's `PORT`. No build-time database connection is needed.
+
+Configure the service:
+
+| Setting | Value |
+| --- | --- |
+| `DATABASE_URL` | Neon connection for a SELECT-only API account; store it as a sealed Railway variable |
+| `CORS_ORIGINS` | `https://skynetcountdown.org,https://www.skynetcountdown.org` |
+| Healthcheck path | `/health` |
+| Healthcheck timeout | 60 seconds |
+| Custom domain | `api.skynetcountdown.org` |
+
+The Dockerfile supplies the start command. Leave the pre-deploy command empty: migrations are deliberate one-off operations and are never run by API startup or a frontend deployment. Use Railway's dashboard settings; its older `railway.toml`/`railway.json` config is deprecated. [Railway configuration documentation](https://docs.railway.com/config-as-code/reference)
+
+After migration, `npm run db:create-api-role` creates a SELECT-only `skynet_api_reader` account and writes its private connection settings to `.env.railway.local` with owner-only file permissions. Copy those values into the Railway service variables. This file is ignored by Git and excluded from the Docker image. Keep the owner connection in the local `.env` for deliberate migration operations. The command refuses to overwrite an existing role or credential file; reuse the existing settings on subsequent deployments.
+
+Add the CNAME and ownership-verification records Railway displays for `api.skynetcountdown.org`. Railway provisions HTTPS. Verify `/health` returns `{"status":"ok"}` and `/dataset` returns the incident dataset before publishing the frontend change. Code changes redeploy the service through Railway's GitHub integration; new database rows need no deployment.
+
+API routes:
+
+- `GET /dataset`: complete, validated public dataset with calculated clock values.
+- `GET /exports/assessments.csv`: assessment history and provenance references.
+- `GET /exports/stories.csv`: story history and exact assessment-version links.
+- `GET /health`: readiness, including the ability to read a valid dataset.
+
+The API supports GET/HEAD and CORS preflight only. It has no write endpoints. Database credentials and errors are never returned to the browser. Remote PostgreSQL connections verify TLS certificates and enable channel binding.
 
 ## GitHub Pages deployment
 
 `.github/workflows/deploy-pages.yml` builds and deploys on every push to `main`, including merged pull requests. It also supports **Actions → Deploy GitHub Pages → Run workflow** on `main`.
 
-The build uses Node.js 24 and `npm ci`, then runs lint and `npm run build` (data validation, TypeScript checks and the Vite production build). A final check blocks deployment if `dist/index.html` is missing its `noindex` directive. Only `dist/` is uploaded to Pages. Deployment uses the built-in `GITHUB_TOKEN`; no additional secret is required. The build job has read permissions, and the deployment job has Pages write and OpenID Connect permissions.
-
-The repository is already configured with **Settings → Pages → Build and deployment → Source: GitHub Actions** and the custom domain `skynetcountdown.org`. Once this workflow is committed and pushed to `main`, the first run publishes the site. Subsequent commits redeploy automatically. Deployment runs share a concurrency group so they cannot overlap. If copying this setup to a different repository, enable the GitHub Actions Pages source there first.
-
-Vite's relative asset paths and the existing hash routes work on both the custom domain and the default repository Pages URL. Keep the domain configured in GitHub's Pages settings; this workflow does not hard-code it into the build.
+The workflow uses Node.js 24, installs dependencies, runs lint and tests, and builds the static frontend with `VITE_API_URL=https://api.skynetcountdown.org/dataset`. It never receives `DATABASE_URL` or accesses production PostgreSQL. Only `dist/` is uploaded to Pages. The existing custom domain remains `skynetcountdown.org` and navigation retains hash URLs.
 
 ### Search indexing
 
-The shared `index.html` includes `<meta name="robots" content="noindex, nofollow">`, so crawlers receive the directive before JavaScript runs, including when following archive and methodology links. No blocking `robots.txt` is added: search engines must be able to crawl the page to see `noindex`. See [Google's robots meta tag guidance](https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag).
+`index.html` includes `<meta name="robots" content="noindex, nofollow">`. A deployment check verifies the directive is present in the built HTML. API responses also include `X-Robots-Tag: noindex, nofollow`. These directives request exclusion from search results; they do not make the site or records private.
 
-This requests exclusion from search results; it does not make the site or downloadable files private. Search engines need to recrawl any previously indexed page before removing it.
+## Migrating the archived CSV records
 
-## Append new records
+The importer uses the reviewed manifest to preserve incident grouping, selected assessments and old report URLs. It retains existing PostgreSQL row identities and database-authored story rewrites. Exact source URLs determine current assessment rows; `stories.assessment_id` determines their parent. Upstream `cve_id` values are retained as metadata and never used as database join keys.
 
-1. Append rows to the existing CSVs, or replace them with complete exports containing the existing history plus new records. Preserve their filenames, headers and quoted CSV format. The app reads these files directly at build time.
-2. Prefer a stable `event_id` in both exports. The stories CSV may also include `incident_date` and `source_url` together. With the original schema, a new globally unique CVE can join a report to an assessment only when the match is unambiguous.
-3. Run `npm run validate:data`. Resolve every reported ambiguity or unexpected change before publishing.
-4. Commit and push to `main`, or merge the update into `main`. GitHub Actions rebuilds and deploys the updated bundle. Local edits are not visible on the published site until deployed.
+```sh
+# Inspect the planned migration without writing.
+npm run db:migrate
 
-The existing exports reuse CVE IDs for unrelated stories. The audited import manifest in `src/lib/manifest.ts` assigns stable incident IDs, records explicit source/date aliases, selects assessment versions, and links original editorial reports. It retains all original variants while counting an event once. A new conflicting assessment requires an explicit review and manifest update; it never silently replaces or adds to the old score. Missing or changed audited content must be reviewed too.
+# Apply the reviewed migration with the owner connection in .env.
+npm run db:migrate -- --apply
 
-Identical assessment copies are validated and then collapsed for reconciliation and display. The original rows remain in the downloadable CSV, and the validator reports both raw and distinct assessment counts. Changed scores, rationales or identity fields remain separate versions that require review. Each approved assessment content hash belongs to one reviewed event; an assessment can be approved without an accompanying editorial. Multiple URLs or publication dates for the same underlying event need explicit aliases in that event's manifest entry.
+# Independently read and validate the resulting database.
+npm run db:check
+```
 
-When explicit unique `event_id` values are supplied, legacy CVE labels may repeat: identity comes from `event_id`, not the old label. Without explicit IDs, a reused CVE on a new unrelated event stops validation.
+Back up the database before applying a migration. Schema and data changes run transactionally, preserve historical versions and are checked before commit. Re-running the same import must preserve later live updates and must not reset event selections. CSV imports are a bootstrap operation; the normal publishing path is n8n → PostgreSQL → API.
 
-### Review a correction without deleting history
+For the initial migration, verify all 63 CSV assessment rows are accounted for, all 38 CSV stories and eight database rewrites remain recoverable, and all current source rows have an event. The reviewed historical clock baseline is 40 events, 113 points and 27:25. Preserve the existing event slugs when assigning permanent `SKYNET-YYYY-NNNN` display IDs.
 
-For a revised assessment, retain the old row and append the correction. Add its full content hash to the manifest event's `assessmentContentFingerprints`, then set `selectedAssessmentContentFingerprint` to the approved version. This works even when the CVE, date, URL and total score are unchanged. `selectedAssessmentFingerprint` keeps the shared record identity.
+For the PostgreSQL checks, set `TEST_DATABASE_URL` to a migrated local copy named `skynet_test` and run `npm run test:postgres`. The separate migration integration test creates and drops its own temporary database, verifies a forced rollback, imports representative existing records, checks all historical version links and tests reruns after new live data. To run just that self-contained rehearsal against an empty local `skynet_test` database, use `node --experimental-strip-types --test server/migration.integration.test.ts`. These tests refuse remote database hosts.
 
-Each editorial link specifies the exact `assessmentContentFingerprint` that the report describes. A rewritten report may retain the same CVE and headline: preserve both rows and add separate `storyContentFingerprint` entries, marking one link `preferred: true`. Executable examples of both review operations are in `src/lib/data-engine.test.ts`. The manifest is a reviewed record, so hashes are never refreshed automatically during a build.
+## Updating live data
 
-Source/date matching detects repeated records; it cannot understand that two different articles cover the same development. Assign a shared reviewed event identity for those cases. Treat an intentionally new development reported at the same URL/date as an explicit identity decision.
+Continue writing the existing `assessments` and `stories` tables from n8n, omitting identity `id` on inserts. Upsert assessments by `source_url`, use their returned database `id` for `stories.assessment_id`, and upsert stories by that foreign key. Database triggers update timestamps, preserve previous versions and maintain event selections. Prefer writing an assessment and its corresponding story in one transaction.
 
-The supplied n8n JSON is preserved. Before relying on unattended publishing, update that workflow to generate persistent unique event IDs, include them on both exports, and stop generating the authoritative clock position in the writer prompt. The app owns the calculation.
+For another article about an existing event, supply its existing `event_id` on the assessment. Event grouping remains an editorial decision; a new URL alone cannot prove that an incident is new. Published scores and clock positions are computed from the eight criteria. Writer-supplied score labels and clock text remain source metadata.
 
 ## Methodology
 
@@ -90,7 +133,7 @@ T3 records permission and capability to affect external digital or physical syst
 
 Future assessments must cite separate evidence and rationale for T3 and autonomy. The selected criterion values in the current dataset remain assessor judgements; the app applies the deterministic weighting to those recorded values.
 
-The saved `n8n/Skynet Countdown.json` includes this distinction in the research and scoring prompts. It continues to collect binary checks, amplifier ratings and raw summary metadata in the existing export format; the website calculates the published score and severity. Import the saved workflow into n8n to apply its guidance to future collection runs.
+The saved n8n workflow exports include this distinction in the research and scoring prompts. `n8n/Skynet Countdown v1.1.json` contains the PostgreSQL upserts; its approved T3/autonomy guidance is aligned with the original export. The workflow collects binary checks, amplifier ratings and raw summary metadata; the API calculates the published score and severity. Import the chosen saved workflow into n8n to apply its guidance to future collection runs.
 
 For cumulative published evidence points `B`:
 
@@ -113,11 +156,11 @@ The same point score always closes the same proportion of the remaining gap. A t
 
 The clock changes with records, not wall time. There is no passive decay or positive-event recovery model. Published improvements can score zero; they do not subtract previous evidence. Formal corrective or recovery events would require a defined extension to the methodology.
 
-History sorts events by incident date, then stable ID. Each displayed movement is the difference between the positions before and after that event. Late discoveries and explicit assessment changes recompute the history. The methodology version and dataset's latest incident date are visible in the app; the CSV export does not provide a collection timestamp.
+History sorts events by incident date, then stable ID. Each displayed movement is the difference between the positions before and after that event. Late discoveries and explicit assessment changes recompute the history. The methodology version, latest incident date and database update timestamp are visible in the app.
 
 The `total_score` and `classification` values reflect the workflow's unweighted export format. They, along with `clock_delta_minutes`, `severity_label`, `clock_delta_label` and `updated_clock_position`, are retained as automation metadata. The app derives published scores and severities from the eight criterion columns, then calculates the clock from those published scores.
 
-## Current data snapshot
+## CSV migration baseline
 
 - 63 assessment rows, containing 51 distinct assessments grouped into 40 events.
 - 38 editorial reports cover 32 events; eight events have no editorial copy.
@@ -131,8 +174,11 @@ The supplied stories are automated workflow outputs, not independently verified 
 
 ## Main files
 
-- `src/lib/`: CSV validation, identity reconciliation, scoring, calibration and regression tests.
-- `src/data.ts`: imports the two source files.
+- `src/lib/`: shared scoring/calibration, API response validation and archived CSV import tests.
+- `src/data.ts`: fetches the live API dataset.
+- `server/`: Railway HTTP API, PostgreSQL snapshot reader and data adapter.
+- `db/`, `scripts/migrate-postgres.ts`: ingress schema, history/grouping migration and CSV import.
+- `scripts/check-postgres.ts`: read-only database validation.
 - `src/components/`: shared clock, history and editorial components.
 - `src/pages/`: home, archive, report and methodology views.
 - `src/styles.css`, `src/pages/methodology.css`: the visual system documented in `DESIGN.md`.

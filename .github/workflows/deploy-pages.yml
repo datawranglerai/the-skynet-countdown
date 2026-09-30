@@ -41,8 +41,13 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Validate data, check types, and build
+      - name: Test data processing and API
+        run: npm test
+
+      - name: Check types and build static frontend
         run: npm run build
+        env:
+          VITE_API_URL: https://api.skynetcountdown.org/dataset
 
       - name: Verify search indexing is disabled
         run: |

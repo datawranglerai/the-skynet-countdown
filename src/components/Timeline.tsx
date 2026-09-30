@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import type { Incident } from '../lib/types';
-import { formatTime, formatGapClosedPercent } from '../lib/index';
+import { formatTime, formatGapClosedPercent } from '../lib/calibration';
 import { Arrow, dateLabel, movementLabel } from './Shared';
 
 export default function Timeline({ incidents }: { incidents: Incident[] }) {
-  const [selected, setSelected] = useState(incidents.length - 1);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selectedIndex = selectedId ? incidents.findIndex((incident) => incident.id === selectedId) : -1;
+  const selected = selectedIndex >= 0 ? selectedIndex : incidents.length - 1;
+  const select = (index: number) => setSelectedId(index === incidents.length - 1 ? null : incidents[index]?.id ?? null);
   const event = incidents[selected];
   if (!event) return <p>No evidence has been recorded yet.</p>;
   const start = new Date(`${incidents[0].assessment.date}T00:00:00Z`).getTime() - 86400000;
@@ -22,11 +25,11 @@ export default function Timeline({ incidents }: { incidents: Incident[] }) {
         <path d={`${path} V207H24Z`} fill="url(#chart-fill)" />
         <path d={path} fill="none" stroke="var(--accent)" strokeWidth="2" />
         <line x1={x(event)} y1="18" x2={x(event)} y2="205" stroke="#939b90" strokeDasharray="4 4" />
-        {incidents.map((incident, index) => <circle key={incident.id} cx={x(incident)} cy={y(incident)} r={index === selected ? 5 : 2.5} fill={index === selected ? '#eeeee7' : '#f15b40'} onMouseEnter={() => setSelected(index)} />)}
+        {incidents.map((incident, index) => <circle key={incident.id} cx={x(incident)} cy={y(incident)} r={index === selected ? 5 : 2.5} fill={index === selected ? '#eeeee7' : '#f15b40'} onMouseEnter={() => select(index)} />)}
         {monthNames.map((name, index) => <text key={index} x={24 + index * 213} y="231" className="chart-axis" textAnchor={index === 4 ? 'end' : 'start'}>{name.toUpperCase()}</text>)}
       </svg>
       <label className="timeline-slider-label" htmlFor="history-range">EXPLORE THE RECORD <span>{selected + 1} / {incidents.length}</span></label>
-      <input id="history-range" className="history-range" type="range" min="0" max={incidents.length - 1} value={selected} onChange={(event) => setSelected(Number(event.target.value))} aria-valuetext={`${dateLabel(event.assessment.date, true)}: ${event.headline}. ${formatTime(event.remainingSeconds)} remaining.`} />
+      <input id="history-range" className="history-range" type="range" min="0" max={incidents.length - 1} value={selected} onChange={(event) => select(Number(event.target.value))} aria-valuetext={`${dateLabel(event.assessment.date, true)}: ${event.headline}. ${formatTime(event.remainingSeconds)} remaining.`} />
       <p className="chart-footnote">Ordered by assessment date. Every step is a scored event; flat periods add no evidence points.</p>
     </div>
     <div className="timeline-selected" aria-live="polite">

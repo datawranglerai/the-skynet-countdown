@@ -8,14 +8,14 @@ The framing is tongue-in-cheek. The analysis isn't.
 
 ## Run the web app
 
-The app uses Vite, React, TypeScript and the CSV files in `data/`.
+The app uses Vite, React and TypeScript, with a Railway API reading live PostgreSQL data from Neon. The CSV files in `data/` are retained as migration evidence and test fixtures. See [APP.md](APP.md) for development, migration and deployment instructions.
 
 ```sh
 npm install
 npm run dev
 ```
 
-Open the local URL printed by Vite. `npm run build` validates the data, checks types and produces `dist/`; `npm run preview` serves that build locally. Full startup, data-update and verification instructions are in [APP.md](APP.md).
+Open the local URL printed by Vite. `npm run build` checks types, produces `dist/` and verifies the bundle excludes database credentials and archived data; `npm run preview` serves that build locally. Full startup, data-update and verification instructions are in [APP.md](APP.md).
 
 GitHub Actions deploys to GitHub Pages when changes reach `main`. The site includes a `noindex` directive, checked before each deployment. See [deployment and indexing](APP.md#github-pages-deployment) for details.
 
@@ -61,7 +61,7 @@ For example, a two-point incident always closes **1.38%** of the remaining gap, 
 
 The 100-point half-scale is an editorial calibration chosen to keep the index legible as the dataset grows. It is not an empirical risk estimate or a target fitted to the current reading.
 
-With the current repository data, 113 evidence points leave **27:25 symbolic minutes** and produce an evidence pressure reading of **54.3/100**.
+At 113 evidence points, the calibration leaves **27:25 symbolic minutes** and produce an evidence pressure reading of **54.3/100**.
 
 ## Scoring methodology
 
@@ -163,9 +163,9 @@ The Countdown is a positive view of AI development run backwards. Every incident
 - Researchers can raise risks without career consequences.
 - AI systems behave consistently whether or not they believe they are being observed.
 
-## Current data snapshot
+## CSV migration baseline
 
-The canonical CSVs currently contain:
+The archived CSVs used to verify the database migration contain:
 
 - 63 assessment rows containing 51 distinct assessments, covering 40 events;
 - 38 editorial reports covering 32 events;

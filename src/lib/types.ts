@@ -21,6 +21,7 @@ export interface RiskScore {
 }
 
 export interface Assessment {
+  versionId?: string;
   cveId: string;
   title: string;
   date: string;
@@ -37,6 +38,7 @@ export interface Assessment {
 }
 
 export interface Editorial {
+  versionId?: string;
   cveId: string;
   headline: string;
   severity: Severity;
@@ -49,6 +51,7 @@ export interface Editorial {
 
 export interface Incident {
   id: string;
+  publicId?: string;
   eventKey: string;
   assessment: Assessment;
   assessments: Assessment[];
@@ -67,6 +70,9 @@ export interface Incident {
 }
 
 export interface Dataset {
+  source?: 'postgresql' | 'fixture';
+  generatedAt?: string;
+  dataUpdatedAt?: string;
   incidents: Incident[];
   assessmentCount: number;
   editorialCount: number;

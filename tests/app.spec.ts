@@ -1,4 +1,28 @@
 import { expect, test } from '@playwright/test';
+import { assessmentCsvFixture, makeApiDatasetFixture, storyCsvFixture } from './fixtures/api-dataset';
+import { calculateClock, calculateGapClosedPercent, calculateMovementSeconds, formatTime } from '../src/lib/calibration';
+
+const DATASET_URL = 'https://api.skynetcountdown.org/dataset';
+const fixture = makeApiDatasetFixture();
+
+test.beforeEach(async ({ page }) => {
+  await page.route('https://api.skynetcountdown.org/**', async (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname === '/dataset') {
+      await route.fulfill({ json: fixture, headers: { 'access-control-allow-origin': '*' } });
+      return;
+    }
+    if (url.pathname === '/exports/assessments.csv') {
+      await route.fulfill({ body: assessmentCsvFixture, contentType: 'text/csv', headers: { 'access-control-allow-origin': '*' } });
+      return;
+    }
+    if (url.pathname === '/exports/stories.csv') {
+      await route.fulfill({ body: storyCsvFixture, contentType: 'text/csv', headers: { 'access-control-allow-origin': '*' } });
+      return;
+    }
+    await route.abort();
+  });
+});
 
 test('clock, archive filters, direct report links, and scoring evidence', async ({ page }) => {
   const errors: string[] = [];
@@ -19,6 +43,10 @@ test('clock, archive filters, direct report links, and scoring evidence', async 
   await expect(page.locator('.timeline-selected .eyebrow')).toContainText('07 Apr 2026');
   await page.getByRole('link', { name: 'Incident archive', exact: true }).click();
   await expect(page.locator('.archive-row')).toHaveCount(40);
+  const firstPublicId = fixture.incidents.at(-1)?.publicId;
+  await page.getByRole('searchbox', { name: 'Search incidents' }).fill(firstPublicId!);
+  await expect(page.locator('.archive-row')).toHaveCount(1);
+  await page.getByRole('searchbox', { name: 'Search incidents' }).fill('');
   await page.getByRole('button', { name: 'NO MOVEMENT', exact: true }).click();
   await expect(page.locator('.archive-row')).toHaveCount(7);
   await page.getByRole('button', { name: 'CRITICAL', exact: true }).click();
@@ -114,14 +142,107 @@ test('methodology calculator, worked examples, downloads, and responsive layout'
   await expect(downloads).toHaveCount(2);
   for (const link of await downloads.all()) {
     const href = await link.getAttribute('href');
-    const response = await page.request.get(href!);
-    expect(response.ok()).toBe(true);
-    const csv = await response.text();
+    expect(href).toBe(`https://api.skynetcountdown.org/exports/${(await link.textContent())?.includes('Assessment') ? 'assessments' : 'stories'}.csv`);
+    const csv = await page.evaluate(async (url) => (await fetch(url)).text(), href!);
     expect(csv).toContain('cve_id');
     expect(csv).toContain((await link.textContent())?.includes('Assessment') ? 'Sanders and Casar' : 'The Model Found the DNS Side Door');
   }
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
   expect(overflow).toBe(false);
+});
+
+test('live dataset failures can recover without inventing a fallback record', async ({ page }) => {
+  let available = false;
+  await page.unroute('https://api.skynetcountdown.org/**');
+  await page.route(DATASET_URL, async (route) => {
+    if (!available) await route.fulfill({ status: 503, body: 'Unavailable' });
+    else await route.fulfill({ json: fixture, headers: { 'access-control-allow-origin': '*' } });
+  });
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'The record is temporarily out of reach.' })).toBeVisible();
+  await expect(page.locator('.clock-digits')).toHaveCount(0);
+  available = true;
+  await page.getByRole('button', { name: 'Retry connection' }).click();
+  await expect(page.locator('.clock-digits')).toHaveText('27:25');
+});
+
+test('an empty live dataset is reported without rendering a clock', async ({ page }) => {
+  await page.unroute('https://api.skynetcountdown.org/**');
+  await page.route(DATASET_URL, async (route) => {
+    await route.fulfill({ json: { ...fixture, incidents: [] }, headers: { 'access-control-allow-origin': '*' } });
+  });
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'No incidents are on the record yet.' })).toBeVisible();
+  await expect(page.locator('.clock-digits')).toHaveCount(0);
+});
+
+test('a failed refresh retains the last good dataset and reports staleness', async ({ page }) => {
+  let requests = 0;
+  await page.unroute('https://api.skynetcountdown.org/**');
+  await page.route(DATASET_URL, async (route) => {
+    requests += 1;
+    if (requests === 1 || requests >= 3) await route.fulfill({ json: fixture, headers: { 'access-control-allow-origin': '*' } });
+    else await route.fulfill({ status: 503, body: 'Unavailable' });
+  });
+  await page.goto('/');
+  await expect(page.locator('.clock-digits')).toHaveText('27:25');
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await expect(page.getByRole('alert')).toContainText('Showing the last successfully loaded record');
+  await expect(page.locator('.clock-digits')).toHaveText('27:25');
+  await page.getByRole('button', { name: 'Retry now' }).click();
+  await expect(page.getByRole('alert')).toHaveCount(0);
+});
+
+test('a successful visible refresh publishes new records without a page reload', async ({ page }) => {
+  const updated = structuredClone(fixture);
+  const previous = updated.incidents.at(-1)!;
+  const added = structuredClone(previous);
+  const nextTotal = fixture.totalPoints + 1;
+  const nextClock = calculateClock(nextTotal);
+  added.id = '2026-09-29-live-refresh-event';
+  added.eventKey = added.id;
+  added.publicId = 'SKYNET-2026-0041';
+  added.headline = 'A New Signal Reached the Live Record';
+  added.assessment.versionId = 'assessment-live-refresh';
+  added.assessment.date = '2026-09-29';
+  added.assessment.title = added.headline;
+  added.assessment.sourceUrl = 'https://example.com/live-refresh-event';
+  added.assessments = [added.assessment];
+  if (added.editorial) {
+    added.editorial.versionId = 'editorial-live-refresh';
+    added.editorial.headline = added.headline;
+    added.editorials = [added.editorial];
+  }
+  added.scoring = { trifectaCount: 1, trifectaPoints: 1, amplifierPoints: 0, totalPoints: 1, severity: 'CANARY' };
+  added.effectivePoints = 1;
+  added.gapClosedPercent = calculateGapClosedPercent(1);
+  added.cumulativePoints = nextTotal;
+  added.remainingSeconds = nextClock.remainingSeconds;
+  added.movementSeconds = calculateMovementSeconds(fixture.totalPoints, 1);
+  updated.incidents.push(added);
+  updated.assessmentCount += 1;
+  updated.editorialCount += 1;
+  updated.matchedEditorialCount += 1;
+  updated.totalPoints = nextTotal;
+  updated.remainingSeconds = nextClock.remainingSeconds;
+  updated.pressure = nextClock.pressure;
+  updated.lastUpdated = '2026-09-29';
+  updated.dataUpdatedAt = '2026-09-29T13:00:00.000Z';
+
+  let requests = 0;
+  await page.unroute('https://api.skynetcountdown.org/**');
+  await page.route(DATASET_URL, async (route) => {
+    requests += 1;
+    await route.fulfill({ json: requests === 1 ? fixture : updated, headers: { 'access-control-allow-origin': '*' } });
+  });
+  await page.goto('/');
+  await expect(page.locator('.clock-digits')).toHaveText('27:25');
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await expect(page.locator('.clock-digits')).toHaveText(formatTime(nextClock.remainingSeconds));
+  await page.getByRole('link', { name: 'Incident archive', exact: true }).click();
+  await page.getByRole('searchbox', { name: 'Search incidents' }).fill('SKYNET-2026-0041');
+  await expect(page.locator('.archive-row')).toHaveCount(1);
+  await expect(page.locator('.archive-row')).toContainText('A New Signal Reached the Live Record');
 });
 
 test('main pages render with local assets and unknown links recover', async ({ page }, testInfo) => {

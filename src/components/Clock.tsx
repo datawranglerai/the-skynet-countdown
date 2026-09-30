@@ -1,4 +1,4 @@
-import { formatTime, formatPressure } from '../lib/index';
+import { formatTime, formatPressure } from '../lib/calibration';
 import type { Dataset } from '../lib/types';
 
 export default function Clock({ dataset }: { dataset: Dataset }) {

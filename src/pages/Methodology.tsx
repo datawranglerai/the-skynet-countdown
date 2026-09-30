@@ -1,18 +1,16 @@
 import { useMemo, useState } from 'react';
-import assessmentsUrl from '../../data/Skynet Countdown Log - assessments.csv?url';
-import storiesUrl from '../../data/Skynet Countdown Log - stories.csv?url';
 import terminatorPortrait from '../../assets/terminator-1-no-bg.png';
+import { getDatasetExportUrl } from '../data';
 import {
   CALIBRATION,
-  CRITERIA,
-  MAX_SCORE,
   calculateClock,
   calculateGapClosedPercent,
   calculateMovementSeconds,
-  calculateRiskScore,
   formatGapClosedPercent,
   formatTime,
-} from '../lib/index';
+} from '../lib/calibration';
+import { CRITERIA } from '../lib/criteria';
+import { MAX_SCORE, calculateRiskScore } from '../lib/scoring';
 import type { Dataset, Incident } from '../lib/types';
 import './methodology.css';
 
@@ -44,7 +42,7 @@ const formatDate = (date: string) =>
     month: 'short',
     year: 'numeric',
     timeZone: 'UTC',
-  }).format(new Date(`${date}T00:00:00Z`));
+  }).format(new Date(date.includes('T') ? date : `${date}T00:00:00Z`));
 
 const formatMovement = (seconds: number) => {
   if (seconds <= 0) return 'No movement';
@@ -245,6 +243,8 @@ function IncidentCalculator({ dataset }: { dataset: Dataset }) {
 }
 
 export default function Methodology({ dataset }: MethodologyProps) {
+  const assessmentsUrl = getDatasetExportUrl('assessments');
+  const storiesUrl = getDatasetExportUrl('stories');
   return (
     <div className="method-page">
       <section className="method-hero container" aria-labelledby="method-title">
@@ -356,7 +356,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
               An incident with score <strong>s</strong> closes <strong>1 − 2<sup>−s/{CALIBRATION.halfwayPoints}</sup></strong> of whatever gap remains. That share is persistent: a two-point event always closes {formatGapClosedPercent(calculateGapClosedPercent(2))}; a {MAX_SCORE}-point event always closes {formatGapClosedPercent(calculateGapClosedPercent(MAX_SCORE))}. The raw number of seconds depends on the clock position, so seconds are context rather than a severity comparison.
             </p>
             <p>
-              The curve approaches midnight without reaching it. Below one symbolic second, the display reads less than one second; evidence points and proportional impact continue to be recorded. There is no passive ticking, decay or recovery model. The historical chart follows CSV record dates; these can be publication or disclosure dates rather than the date an underlying event first occurred.
+              The curve approaches midnight without reaching it. Below one symbolic second, the display reads less than one second; evidence points and proportional impact continue to be recorded. There is no passive ticking, decay or recovery model. The historical chart follows database record dates; these can be publication or disclosure dates rather than the date an underlying event first occurred.
             </p>
           </div>
           <div className="method-impact-comparison" aria-label="Examples of persistent incident impact">
@@ -407,20 +407,20 @@ export default function Methodology({ dataset }: MethodologyProps) {
           <article>
             <h3>Reconciliation policy</h3>
             <p>
-              Duplicate date-and-source assessments retain all audited variants but contribute once. Existing conflicts use the lower score conservatively. New conflicts are held for review rather than silently choosing the lowest value.
+              Assessment revisions and repeated coverage remain auditable, while each reviewed event contributes to the clock once. A canonical assessment version supplies the published score.
             </p>
             <p>
-              Date-and-source collisions are reviewed manually. Records with different sources are merged only when a reviewed identity match shows they describe the same event. Legacy CVE labels are references, not reliable unique keys.
+              Records with different sources are grouped only when a reviewed identity match shows they describe the same event. Permanent event IDs drive the public record; legacy CVE labels remain upstream references rather than unique keys.
             </p>
           </article>
           <article>
             <h3>Download the records</h3>
-            <p>The bundled CSV files are the raw inputs used by this build. Their exported total-score, classification, clock and timing fields are workflow audit metadata; the app calculates its published 0–{MAX_SCORE} score and clock from the individual criterion values. Publishing appended records requires rebuilding the site.</p>
+            <p>These exports contain the current database records. Their total-score, classification, clock and timing fields are workflow audit metadata; the app calculates its published 0–{MAX_SCORE} score and clock from the individual criterion values. New records appear here as the live dataset updates.</p>
             <div className="method-downloads">
               <a className="button button-primary" href={assessmentsUrl} download>Assessment CSV</a>
               <a className="button" href={storiesUrl} download>Editorial CSV</a>
             </div>
-            <p className="method-updated">Dataset current to {formatDate(dataset.lastUpdated)}.</p>
+            <p className="method-updated">Dataset current to {formatDate(dataset.dataUpdatedAt ?? dataset.lastUpdated)}.</p>
           </article>
         </div>
       </section>

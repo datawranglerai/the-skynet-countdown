@@ -1,5 +1,7 @@
 import type { Incident, RiskSeverity } from '../lib/types';
-import { CRITERIA, MAX_SCORE, formatGapClosedPercent } from '../lib/index';
+import { formatGapClosedPercent } from '../lib/calibration';
+import { CRITERIA } from '../lib/criteria';
+import { MAX_SCORE } from '../lib/scoring';
 import logo from '../../assets/logos/logo-skynet-clock-2.png';
 
 export function Arrow({ diagonal = false, className = '' }: { diagonal?: boolean; className?: string }) {
