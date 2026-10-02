@@ -344,13 +344,13 @@ export default function Methodology({ dataset }: MethodologyProps) {
             </p>
             <dl>
               <div><dt>B</dt><dd>Cumulative evidence points across distinct events</dd></div>
-              <div><dt>H</dt><dd>The editorial half-scale, fixed at {CALIBRATION.halfwayPoints} evidence points</dd></div>
+              <div><dt>H</dt><dd>The editorial half-scale, fixed at {CALIBRATION.halfwayPoints.toLocaleString('en-GB')} evidence points</dd></div>
               <div><dt>T(B)</dt><dd>Symbolic seconds remaining after B cumulative points</dd></div>
             </dl>
           </div>
           <div className="method-formula-copy">
             <p>
-              Every {CALIBRATION.halfwayPoints} evidence points halves the remaining symbolic time: 60 minutes becomes 30, then 15, then 7½. The half-scale is a fixed editorial constant, chosen to keep the accumulating record legible. It is not a probability or a scientifically estimated risk parameter.
+              Every {CALIBRATION.halfwayPoints.toLocaleString('en-GB')} evidence points halves the remaining symbolic time: 60 minutes becomes 30, then 15, then 7½. This fixed editorial constant sets the clock’s sensitivity. The same scale applies to every historical and future event, and stays fixed as the record grows. It is not a probability or a scientifically estimated risk parameter.
             </p>
             <p>
               An incident with score <strong>s</strong> closes <strong>1 − 2<sup>−s/{CALIBRATION.halfwayPoints}</sup></strong> of whatever gap remains. That share is persistent: a two-point event always closes {formatGapClosedPercent(calculateGapClosedPercent(2))}; a {MAX_SCORE}-point event always closes {formatGapClosedPercent(calculateGapClosedPercent(MAX_SCORE))}. The raw number of seconds depends on the clock position, so seconds are context rather than a severity comparison.
