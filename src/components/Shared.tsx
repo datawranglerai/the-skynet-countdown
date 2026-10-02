@@ -12,6 +12,25 @@ export function Logo() {
   return <a className="brand" href="#/" aria-label="The Skynet Countdown home"><img className="brand-mark" src={logo} width="42" height="42" alt="" aria-hidden="true" /><span>SKYNET<span>COUNTDOWN</span></span></a>;
 }
 
+export function SupportLink() {
+  return (
+    <a
+      className="footer-support"
+      href="https://buymeacoffee.com/datawranglerai"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Fuel the resistance — support The Skynet Countdown on Buy Me a Coffee (opens in a new tab)"
+    >
+      <svg className="footer-support-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M5 8h10v6a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4V8Z" />
+        <path d="M15 9h2a3 3 0 1 1 0 6h-2M8 3v2m4-2v2M3 21h15" />
+      </svg>
+      <span><strong>Fuel the resistance</strong><small>Support via Buy Me a Coffee</small></span>
+      <Arrow diagonal />
+    </a>
+  );
+}
+
 export function SeverityBadge({ severity, score }: { severity: RiskSeverity; score?: number }) {
   const noMovement = severity === 'NO_MOVEMENT' || score === 0;
   return <span className={`severity severity-${noMovement ? 'zero' : severity.toLowerCase()}`}><span />{noMovement ? 'NO MOVEMENT' : severity}</span>;
