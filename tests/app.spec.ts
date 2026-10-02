@@ -28,14 +28,14 @@ test('clock, archive filters, direct report links, and scoring evidence', async 
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
-  await expect(page.locator('.clock-digits')).toHaveText('27:25');
+  await expect(page.locator('.clock-digits')).toHaveText('55:29');
   await expect(page.getByRole('heading', { name: 'THE FUTURE IS NOT SET.' })).toBeVisible();
   await expect(page.locator('.incident-card').first()).toContainText('The Simulator Asked for Restraint. Astra Submitted Malicious Code.');
-  await expect(page.locator('.incident-card').first().locator('.card-movement')).toContainText('1.38%');
+  await expect(page.locator('.incident-card').first().locator('.card-movement')).toContainText('0.14%');
   await expect(page.locator('.incident-card').first()).toContainText('2/17');
   await expect(page.locator('.incident-card').first().locator('.severity')).toHaveText('CANARY');
-  await expect(page.locator('.incident-card').nth(1).locator('.card-movement')).toContainText('2.73%');
-  await expect(page.locator('.incident-card').nth(2).locator('.card-movement')).toContainText('2.73%');
+  await expect(page.locator('.incident-card').nth(1).locator('.card-movement')).toContainText('0.28%');
+  await expect(page.locator('.incident-card').nth(2).locator('.card-movement')).toContainText('0.28%');
   const range = page.getByLabel('EXPLORE THE RECORD', { exact: false });
   await range.focus();
   await range.press('Home');
@@ -64,7 +64,7 @@ test('clock, archive filters, direct report links, and scoring evidence', async 
   await expect(page.getByRole('heading', { name: 'Why it matters.' })).toBeVisible();
   await expect(page.locator('.criterion-detail')).toHaveCount(8);
   await expect(page.locator('.trifecta-alert')).toContainText('ALL THREE CONDITIONS PRESENT');
-  await expect(page.locator('.report-metrics')).toContainText('6.70%');
+  await expect(page.locator('.report-metrics')).toContainText('0.69%');
   await expect(page.locator('.report-metrics')).toContainText('10/17');
   await expect(page.locator('.report-metrics')).toContainText('7 + 3');
   await expect(page.locator('.impact-explainer')).toContainText('same share');
@@ -100,11 +100,13 @@ test('clock, archive filters, direct report links, and scoring evidence', async 
 test('methodology calculator, worked examples, downloads, and responsive layout', async ({ page }) => {
   await page.goto('/#/methodology');
   await expect(page.locator('h1')).toBeVisible();
+  await expect(page.locator('.method-page')).toContainText('fixed at 1,000 evidence points');
+  await expect(page.locator('.method-page')).toContainText('same scale applies to every historical and future event');
   await expect(page.locator('.method-projected-time')).toHaveText('0%');
-  await expect(page.locator('.method-calculator-output')).toContainText('27:25');
+  await expect(page.locator('.method-calculator-output')).toContainText('55:29');
   const trifecta = page.locator('.method-toggle input');
   await expect(trifecta).toHaveCount(3);
-  const expectedShares = ['0.69%', '2.06%', '4.74%'];
+  const expectedShares = ['0.07%', '0.21%', '0.48%'];
   const labels = await page.locator('.method-toggle').all();
   for (let index = 0; index < labels.length; index++) {
     await labels[index].click();
@@ -112,18 +114,18 @@ test('methodology calculator, worked examples, downloads, and responsive layout'
   }
   for (const input of await trifecta.all()) await expect(input).toBeChecked();
   await expect(page.locator('.method-output-alert')).toBeVisible();
-  await expect(page.locator('.method-projected-time')).toHaveText('4.74%');
+  await expect(page.locator('.method-projected-time')).toHaveText('0.48%');
   await expect(page.locator('.method-calculator-severity dd')).toHaveText('CRITICAL');
   await expect(page.locator('.method-calculator-output')).toContainText('7 / 17');
   const autonomy = page.locator('.method-stepper').nth(1);
   await autonomy.locator('label').nth(1).click();
-  await expect(page.locator('.method-projected-time')).toHaveText('5.39%');
+  await expect(page.locator('.method-projected-time')).toHaveText('0.55%');
   await expect(page.locator('.method-calculator-output')).toContainText('8 / 17');
   await autonomy.locator('label').nth(2).click();
-  await expect(page.locator('.method-projected-time')).toHaveText('6.05%');
+  await expect(page.locator('.method-projected-time')).toHaveText('0.62%');
   await expect(page.locator('.method-calculator-output')).toContainText('9 / 17');
   for (const stepper of await page.locator('.method-stepper').all()) await stepper.locator('label').nth(2).click();
-  await expect(page.locator('.method-projected-time')).toHaveText('11.12%');
+  await expect(page.locator('.method-projected-time')).toHaveText('1.17%');
   await expect(page.locator('.method-calculator-output')).toContainText('17 / 17');
   await expect(page.locator('.method-calculator-severity dd')).toHaveText('EXISTENTIAL');
   await page.locator('.method-toggle').last().click();
@@ -132,12 +134,12 @@ test('methodology calculator, worked examples, downloads, and responsive layout'
   await page.getByRole('button', { name: /Reset/i }).click();
   await expect(page.locator('.method-projected-time')).toHaveText('0%');
   await page.locator('.method-stepper').first().locator('label').nth(2).click();
-  await expect(page.locator('.method-projected-time')).toHaveText('1.38%');
+  await expect(page.locator('.method-projected-time')).toHaveText('0.14%');
   await page.getByRole('button', { name: /Reset/i }).click();
   await page.getByRole('button', { name: 'Example 02' }).click();
   await expect(page.locator('.method-trifecta-note')).toBeVisible();
   await expect(page.locator('.method-example-report')).toContainText('10/17');
-  await expect(page.locator('.method-example-impact')).toContainText('6.70%');
+  await expect(page.locator('.method-example-impact')).toContainText('0.69%');
   const downloads = page.locator('.method-downloads a[download]');
   await expect(downloads).toHaveCount(2);
   for (const link of await downloads.all()) {
@@ -163,7 +165,7 @@ test('live dataset failures can recover without inventing a fallback record', as
   await expect(page.locator('.clock-digits')).toHaveCount(0);
   available = true;
   await page.getByRole('button', { name: 'Retry connection' }).click();
-  await expect(page.locator('.clock-digits')).toHaveText('27:25');
+  await expect(page.locator('.clock-digits')).toHaveText('55:29');
 });
 
 test('an empty live dataset is reported without rendering a clock', async ({ page }) => {
@@ -185,10 +187,10 @@ test('a failed refresh retains the last good dataset and reports staleness', asy
     else await route.fulfill({ status: 503, body: 'Unavailable' });
   });
   await page.goto('/');
-  await expect(page.locator('.clock-digits')).toHaveText('27:25');
+  await expect(page.locator('.clock-digits')).toHaveText('55:29');
   await page.evaluate(() => window.dispatchEvent(new Event('focus')));
   await expect(page.getByRole('alert')).toContainText('Showing the last successfully loaded record');
-  await expect(page.locator('.clock-digits')).toHaveText('27:25');
+  await expect(page.locator('.clock-digits')).toHaveText('55:29');
   await page.getByRole('button', { name: 'Retry now' }).click();
   await expect(page.getByRole('alert')).toHaveCount(0);
 });
@@ -236,7 +238,7 @@ test('a successful visible refresh publishes new records without a page reload',
     await route.fulfill({ json: requests === 1 ? fixture : updated, headers: { 'access-control-allow-origin': '*' } });
   });
   await page.goto('/');
-  await expect(page.locator('.clock-digits')).toHaveText('27:25');
+  await expect(page.locator('.clock-digits')).toHaveText('55:29');
   await page.evaluate(() => window.dispatchEvent(new Event('focus')));
   await expect(page.locator('.clock-digits')).toHaveText(formatTime(nextClock.remainingSeconds));
   await page.getByRole('link', { name: 'Incident archive', exact: true }).click();

@@ -36,6 +36,11 @@ test('reads the migrated PostgreSQL dataset and exports its audit history', {
     const dataset = buildDatabaseDataset(snapshot, '2026-09-29T00:00:00.000Z');
     assert.equal(dataset.incidents.length, 40);
     assert.equal(dataset.totalPoints, 113);
+    assert.ok(Math.abs(dataset.remainingSeconds - 3600 * 2 ** (-113 / 1000)) < 1e-9);
+    for (const incident of dataset.incidents) {
+      assert.ok(Math.abs(incident.remainingSeconds - 3600 * 2 ** (-incident.cumulativePoints / 1000)) < 1e-9);
+      assert.ok(Math.abs(incident.gapClosedPercent - 100 * (1 - 2 ** (-incident.effectivePoints / 1000))) < 1e-12);
+    }
     assert.deepEqual(dataset.diagnostics, []);
     assert.match(exportDatabaseCsv(snapshot, 'assessments'), /^cve_id,/);
     assert.match(exportDatabaseCsv(snapshot, 'stories'), /^cve_id,/);

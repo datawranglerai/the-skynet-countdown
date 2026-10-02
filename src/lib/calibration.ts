@@ -1,7 +1,8 @@
 export const CALIBRATION = Object.freeze({
   version: '1.0' as const,
-  effectiveDate: '2026-09-27' as const,
-  halfwayPoints: 100,
+  effectiveDate: '2026-10-02' as const,
+  // One fixed scale for the entire history and every future event.
+  halfwayPoints: 1_000,
   startingSeconds: 3600,
 });
 

@@ -46,22 +46,22 @@ The clock begins with **60:00 symbolic minutes remaining**. Midnight represents 
 Each incident adds evidence points. The clock converts their cumulative total into symbolic time remaining:
 
 ```text
-remaining seconds = 3600 × 2^(-B / 100)
+remaining seconds = 3600 × 2^(-B / 1000)
 ```
 
-`B` is the cumulative number of published evidence points. Every 100 points halve the remaining time: 60 minutes become 30, then 15, then 7:30. The curve continuously approaches midnight but never reaches it after any finite number of incidents.
+`B` is the cumulative number of published evidence points. Every 1,000 points halve the remaining time: 60 minutes become 30, then 15, then 7:30. The curve continuously approaches midnight but never reaches it after any finite number of incidents.
 
 An incident with a published score of `s` always closes the same share of the gap that remained immediately before it:
 
 ```text
-share of remaining gap closed = 100 × (1 − 2^(-s / 100))
+share of remaining gap closed = 100 × (1 − 2^(-s / 1000))
 ```
 
-For example, a two-point incident always closes **1.38%** of the remaining gap, while a 17-point incident always closes **11.12%**. The movement in seconds becomes smaller as midnight approaches because that same share is taken from a smaller remaining interval. The percentage is the stable measure for comparing incident impact; it is not a probability.
+For example, a two-point incident always closes **0.14%** of the remaining gap, while a 17-point incident always closes **1.17%**. The movement in seconds becomes smaller as midnight approaches because that same share is taken from a smaller remaining interval. The percentage is the stable measure for comparing incident impact; it is not a probability.
 
-The 100-point half-scale is an editorial calibration chosen to keep the index legible as the dataset grows. It is not an empirical risk estimate or a target fitted to the current reading.
+The 1,000-point half-scale is a fixed editorial calibration chosen for gradual accumulation over months of ordinary coverage. It applies uniformly to the entire history and all future events, and does not change as the dataset grows. The calendar pace depends on how many evidence points are added. It is not an empirical risk estimate or a target fitted to the current reading.
 
-At 113 evidence points, the calibration leaves **27:25 symbolic minutes** and produce an evidence pressure reading of **54.3/100**.
+At 113 evidence points, the calibration leaves **55:29 symbolic minutes** and produces an evidence pressure reading of **7.5/100**.
 
 ## Scoring methodology
 

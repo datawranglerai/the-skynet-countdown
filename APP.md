@@ -98,7 +98,7 @@ npm run db:check
 
 Back up the database before applying a migration. Schema and data changes run transactionally, preserve historical versions and are checked before commit. Re-running the same import must preserve later live updates and must not reset event selections. CSV imports are a bootstrap operation; the normal publishing path is n8n → PostgreSQL → API.
 
-For the initial migration, verify all 63 CSV assessment rows are accounted for, all 38 CSV stories and eight database rewrites remain recoverable, and all current source rows have an event. The reviewed historical clock baseline is 40 events, 113 points and 27:25. Preserve the existing event slugs when assigning permanent `SKYNET-YYYY-NNNN` display IDs.
+For the initial migration, verify all 63 CSV assessment rows are accounted for, all 38 CSV stories and eight database rewrites remain recoverable, and all current source rows have an event. The reviewed historical clock baseline is 40 events, 113 points and 55:29 under the current fixed calibration. Preserve the existing event slugs when assigning permanent `SKYNET-YYYY-NNNN` display IDs.
 
 For the PostgreSQL checks, set `TEST_DATABASE_URL` to a migrated local copy named `skynet_test` and run `npm run test:postgres`. The separate migration integration test creates and drops its own temporary database, verifies a forced rollback, imports representative existing records, checks all historical version links and tests reruns after new live data. To run just that self-contained rehearsal against an empty local `skynet_test` database, use `node --experimental-strip-types --test server/migration.integration.test.ts`. These tests refuse remote database hosts.
 
@@ -138,21 +138,21 @@ The saved n8n workflow exports include this distinction in the research and scor
 For cumulative published evidence points `B`:
 
 ```text
-symbolic seconds remaining = 3600 × 2^(-B / 100)
-evidence pressure = 100 × (1 − 2^(-B / 100))
+symbolic seconds remaining = 3600 × 2^(-B / 1000)
+evidence pressure = 100 × (1 − 2^(-B / 1000))
 ```
 
-The fixed 100-point parameter halves the remaining symbolic time after every 100 evidence points. It is an editorial normalisation, not an empirically estimated risk parameter or a fit to a desired current reading. The curve approaches midnight without reaching it and cannot declare that human control has been lost. More coverage can increase the index even if underlying risk has not changed, so the selected sources and inclusion decisions matter.
+The fixed 1,000-point parameter halves the remaining symbolic time after every 1,000 evidence points. It applies to the entire historical record and all future incidents, with no date cutoff or reset. All incident movements, cumulative positions, gap shares and evidence-pressure readings use this same constant. It is an editorial normalisation, not an empirically estimated risk parameter or a fit to a desired current reading. The curve approaches midnight without reaching it and cannot declare that human control has been lost. More coverage can increase the index even if underlying risk has not changed, so the selected sources and inclusion decisions matter.
 
 The cumulative point total defines the clock position. The interface shows `<00:01` below one second. At extreme totals, stored seconds are limited to JavaScript's smallest positive number; this is a numeric representation limit. Per-event movement is calculated from the published score and proportional impact, so a positive event is still shown as moving less than one second, rather than as a zero-score event.
 
 For an incident with a published score of `s`:
 
 ```text
-share of remaining gap closed = 100 × (1 − 2^(-s / 100))
+share of remaining gap closed = 100 × (1 − 2^(-s / 1000))
 ```
 
-The same point score always closes the same proportion of the remaining gap. A two-point incident closes 1.38%; a 17-point incident closes 11.12%. Its movement in seconds depends on the clock position when it occurs because the remaining interval gets smaller over time. Incident impact should therefore be compared by score and share of gap closed, with seconds shown as the movement in historical context.
+The same point score always closes the same proportion of the remaining gap. A two-point incident closes 0.14%; a 17-point incident closes 1.17%. Its movement in seconds depends on the clock position when it occurs because the remaining interval gets smaller over time. Incident impact should therefore be compared by score and share of gap closed, with seconds shown as the movement in historical context.
 
 The clock changes with records, not wall time. There is no passive decay or positive-event recovery model. Published improvements can score zero; they do not subtract previous evidence. Formal corrective or recovery events would require a defined extension to the methodology.
 
@@ -165,7 +165,7 @@ The `total_score` and `classification` values reflect the workflow's unweighted 
 - 63 assessment rows, containing 51 distinct assessments grouped into 40 events.
 - 38 editorial reports cover 32 events; eight events have no editorial copy.
 - 113 published evidence points derived from the selected criterion values.
-- 27:25 symbolic minutes remaining; 54.3/100 evidence pressure.
+- 55:29 symbolic minutes remaining; 7.5/100 evidence pressure.
 - Latest recorded event: 28 September 2026.
 
 Historical conflicting assessments use explicitly reviewed, conservative selections. Original editorial text remains available and is labelled when written for a different assessment version. Machine citation markers are removed from display; original source links and raw downloadable CSVs are preserved.
