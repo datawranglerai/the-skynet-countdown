@@ -228,6 +228,14 @@ svg { flex-shrink: 0; }
 .footer-main .brand > span { font-size: 20px; }
 .footer-main .brand > span > span { font-size: 10px; }
 .footer-main p { color: var(--muted); font-size: 10px; margin: 16px 0 0; }
+.footer-support { display: inline-flex; align-items: center; gap: 12px; min-height: 52px; max-width: 100%; margin-top: 20px; padding: 10px 12px; border: 1px solid var(--line); color: var(--ink); transition: border-color .15s, background-color .15s; }
+.footer-support > span { display: grid; gap: 4px; }
+.footer-support strong { font-size: 12px; font-weight: 500; line-height: 1.4; }
+.footer-support small { color: var(--muted); font-size: 10px; line-height: 1.4; }
+.footer-support-icon { color: var(--accent); }
+.footer-support > .arrow-icon { width: 14px; height: 14px; margin-left: 4px; color: var(--muted); }
+.footer-support:hover, .footer-support:focus-visible { border-color: var(--accent); background-color: color-mix(in srgb, var(--accent) 5%, transparent); }
+.footer-support:hover > .arrow-icon, .footer-support:focus-visible > .arrow-icon { color: var(--accent); }
 .footer-links { display: grid; gap: 7px; min-width: 190px; }
 .footer-links a { display: flex; align-items: center; justify-content: space-between; gap: 32px; font-size: 11px; min-height: 36px; }
 .footer-links a:hover { color: var(--accent); }
