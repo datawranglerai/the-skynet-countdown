@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
-import terminatorPortrait from '../../assets/terminator-1-no-bg.png';
+import robotPortrait from '../../assets/optimized/futuristic-robot-head.webp';
+import robotPortraitLarge from '../../assets/optimized/futuristic-robot-head-large.webp';
+import ImageCredit from '../components/ImageCredit';
 import { getDatasetExportUrl } from '../data';
 import {
   CALIBRATION,
@@ -250,11 +252,20 @@ export default function Methodology({ dataset }: MethodologyProps) {
       <section className="method-hero container" aria-labelledby="method-title">
         <div className="method-hero-heading">
           <p className="eyebrow">Methodology · v{CALIBRATION.version}</p>
-          <h1 id="method-title">Show your working.</h1>
-          <figure className="method-reference" aria-hidden="true">
-            <img src={terminatorPortrait} alt="" width="500" height="500" loading="lazy" decoding="async" />
-          </figure>
+          <h1 id="method-title">Show your<br />working<span>.</span></h1>
         </div>
+        <figure className="method-reference">
+          <img
+            src={robotPortrait}
+            srcSet={`${robotPortrait} 680w, ${robotPortraitLarge} 1280w`}
+            sizes="(max-width: 600px) 100vw, (max-width: 900px) 75vw, (min-width: 1440px) 680px, 54vw"
+            alt=""
+            width="680"
+            height="850"
+            decoding="async"
+          />
+          <ImageCredit filename="Futuristic Robot Head.jpg" />
+        </figure>
         <div className="method-hero-copy">
           <p className="method-deck">
             The Skynet Countdown is a transparent editorial index of evidence that AI systems are moving beyond meaningful human control.
@@ -268,7 +279,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
       <section className="method-score-section container" aria-labelledby="scoring-title">
         <div className="section-heading">
           <p className="eyebrow">01 · Assessment</p>
-          <h2 id="scoring-title">Three switches. Five amplifiers.</h2>
+          <h2 id="scoring-title">How a score gets its points.</h2>
           <p>Score what happened, not the most dramatic thing that could happen next.</p>
         </div>
 
