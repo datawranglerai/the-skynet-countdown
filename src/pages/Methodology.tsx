@@ -279,7 +279,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
       <section className="method-score-section container" aria-labelledby="scoring-title">
         <div className="section-heading">
           <p className="eyebrow">01 · Assessment</p>
-          <h2 id="scoring-title">Three switches. Five amplifiers.</h2>
+          <h2 id="scoring-title">How a score gets its points.</h2>
           <p>Score what happened, not the most dramatic thing that could happen next.</p>
         </div>
 

@@ -20,10 +20,9 @@ export default function Home({ dataset }: { dataset: Dataset }) {
     </section>
     <section className="section container" id="trajectory"><div className="section-heading"><div><div className="eyebrow">01 / THE TRAJECTORY</div><h2>A little closer. One decision at a time.</h2></div><a className="text-link" href="#/methodology">Understand the scale <Arrow diagonal /></a></div><Timeline incidents={dataset.incidents} /></section>
     <section className="section section-records container"><div className="section-heading"><div><div className="eyebrow">02 / RECENT FIELD REPORTS</div><h2>What moved the needle.</h2></div><a className="text-link" href="#/incidents">All {dataset.incidents.length} developments <Arrow /></a></div><div className="incident-grid">{recent.map((incident, index) => <IncidentCard incident={incident} index={index} key={incident.id} />)}</div></section>
-    <section className="method-teaser container"><div><div className="eyebrow">03 / SHOW YOUR WORKING</div><h2>Less prophecy.<br /><span>More methodology.</span></h2><p>Three conditions. Five amplifiers. Seventeen possible points. A framework you can inspect, reproduce, and argue with.</p><a className="button button-outline" href="#/methodology">Inside the methodology <Arrow diagonal /></a></div><div className="trifecta-teaser"><div className="trifecta-heading">THE LETHAL TRIFECTA <span>3 / 3 = AT LEAST CRITICAL</span></div><div><span>T1</span><p>Ungoverned access<small>The keys to something that matters.</small></p><span className="trifecta-cross">+</span></div><div><span>T2</span><p>Untrusted input<small>An open door to outside instructions.</small></p><span className="trifecta-cross">+</span></div><div><span>T3</span><p>Autonomous action<small>The ability to act without asking.</small></p><span className="trifecta-cross">↗</span></div></div></section>
     <section className="manifesto-feature container" aria-labelledby="manifesto-title">
+      <div className="eyebrow manifesto-eyebrow">03 / THE FRAMEWORK</div>
       <div className="manifesto-copy">
-        <div className="eyebrow">THE FICTION / THE REALITY</div>
         <h2 id="manifesto-title">NO FATE BUT<br /><span>WHAT WE <em>MAKE.</em></span></h2>
       </div>
       <figure className="manifesto-visual">
@@ -33,8 +32,15 @@ export default function Home({ dataset }: { dataset: Dataset }) {
         <ImageCredit filename="Black and White Robot Photo.jpg" />
       </figure>
       <div className="manifesto-note">
-        <p>A metaphor for paying attention.<br />Not a prediction of the end.</p>
-        <a className="text-link" href="#/methodology">Understand the framework <Arrow diagonal /></a>
+        <p>Three conditions. Five amplifiers.<br />Every score explained.</p>
+      </div>
+      <div className="manifesto-framework">
+        <ul className="manifesto-conditions" aria-label="The three framework conditions" role="list">
+          <li>Ungoverned access</li>
+          <li><span aria-hidden="true">+</span>Untrusted input</li>
+          <li><span aria-hidden="true">+</span>Autonomous action</li>
+        </ul>
+        <a className="text-link" href="#/methodology">Explore the methodology <Arrow diagonal /></a>
       </div>
     </section>
   </>;
