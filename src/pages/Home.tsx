@@ -2,7 +2,8 @@ import type { Dataset } from '../lib/types';
 import Clock from '../components/Clock';
 import Timeline from '../components/Timeline';
 import { Arrow, dateLabel, IncidentCard } from '../components/Shared';
-import terminatorFigure from '../../assets/terminator-3.png';
+import ImageCredit from '../components/ImageCredit';
+import robotFigure from '../../assets/optimized/black-and-white-robot.webp';
 
 export default function Home({ dataset }: { dataset: Dataset }) {
   const recent = [...dataset.incidents].reverse().filter((incident) => incident.editorial).slice(0, 3);
@@ -23,15 +24,17 @@ export default function Home({ dataset }: { dataset: Dataset }) {
     <section className="manifesto-feature container" aria-labelledby="manifesto-title">
       <div className="manifesto-copy">
         <div className="eyebrow">THE FICTION / THE REALITY</div>
-        <h2 id="manifesto-title">NO FATE BUT<br />WHAT WE MAKE.</h2>
+        <h2 id="manifesto-title">NO FATE BUT<br /><span>WHAT WE <em>MAKE.</em></span></h2>
+      </div>
+      <figure className="manifesto-visual">
+        <div className="manifesto-portrait">
+          <img src={robotFigure} alt="" width="960" height="1440" loading="lazy" decoding="async" />
+        </div>
+        <ImageCredit filename="Black and White Robot Photo.jpg" />
+      </figure>
+      <div className="manifesto-note">
         <p>A metaphor for paying attention.<br />Not a prediction of the end.</p>
         <a className="text-link" href="#/methodology">Understand the framework <Arrow diagonal /></a>
-      </div>
-      <div className="manifesto-visual" aria-hidden="true">
-        <div className="manifesto-portrait">
-          <img src={terminatorFigure} alt="" width="979" height="1920" loading="lazy" decoding="async" />
-          <span className="manifesto-flare" />
-        </div>
       </div>
     </section>
   </>;
