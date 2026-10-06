@@ -1,7 +1,7 @@
 # Design
 
 ## Source of truth
-Active · 5 October 2026. Surfaces: clock, incident archive, individual reports, methodology. Evidence: README.md, both source CSVs, the n8n prompts and the user's visual feedback. The visual direction uses the original open clock, the supplied Anta font for H1/H2 headings and two credited robot images sparingly. Reference assets inspected: the six supplied JPEGs and assets/sources.json, the previous Terminator PNGs, and public/fonts/Anta/Anta-Regular.ttf and its OFL licence.
+Active · 6 October 2026. Surfaces: clock, incident archive, individual reports, methodology. Evidence: README.md, both source CSVs, the n8n prompts and the user's visual feedback. The visual direction uses the original open clock, the supplied Anta font for H1/H2 headings and two credited robot images sparingly. Reference assets inspected: the six supplied JPEGs and assets/sources.json, the previous Terminator PNGs, and public/fonts/Anta/Anta-Regular.ttf and its OFL licence.
 
 ## Brand
 An independent practitioner's field journal: technically literate, dry, curious, occasionally darkly funny. Terminator influences appear in the instruments, warning red, Anta headings and two considered images. Earn trust through linked sources, visible reasoning, explicit limitations and separate facts/analysis. Avoid panic, faux classified information, invented scientific certainty and decorative glitches. The imagery is a framing device; it must not crowd the evidence or obscure text.
@@ -37,6 +37,8 @@ Place a quiet 10px monospace “Image: artist / Unsplash” credit immediately b
 Root CSS owns tokens, including the heading face and quiet instrument edge lighting. Shared header/footer, severity label, incident row/card, scoring bars, time readout, section heading, and ImageCredit captions. Clock uses its original ticked dial and oversized digital readout. Decorative SVG layers and editorial images are hidden from assistive technology; their figures and credit links remain accessible. Headings and data retain semantic HTML. History combines a selectable chart with an accessible native range control. Archive uses native controls with labeled active state. Every interactive control has a functional outcome.
 
 Optional support appears once in the shared footer, beneath the project description. The “Fuel the resistance” link uses the existing body type, a fine border, a small red coffee icon and a muted “Support via Buy Me a Coffee” caption. Keep it secondary to the editorial content and footer navigation. Link directly to `https://buymeacoffee.com/datawranglerai`, with an accessible new-tab label and the existing focus treatment.
+
+The archive introduction includes an always-visible “AI-generated records” label before the search and filters, followed by “Sources linked in every report.” Use a small red chip icon, warm-white monospace text, a fine border and the existing surface colour. This is a static disclosure, with no tooltip or interaction required to read it. Let the supporting text wrap beneath the label on narrow screens; keep it clear of severity and filter controls.
 
 ## Accessibility
 Target WCAG 2.2 AA. Semantic landmarks and headings; skip link; visible focus; labeled controls; 44px touch targets. Charts have text summaries and keyboard controls. Score/state is always also text. Respect prefers-reduced-motion. No realtime flashing or fake ticking. Route changes update title, reset scroll and move focus to main content.
