@@ -1,7 +1,7 @@
 # Design
 
 ## Source of truth
-Active · 6 October 2026. Surfaces: clock, incident archive, individual reports, methodology. Evidence: README.md, both source CSVs, the n8n prompts and the user's visual feedback. The visual direction uses the original open clock, the supplied Anta font for H1/H2 headings and two credited robot images sparingly. Reference assets inspected: the six supplied JPEGs and assets/sources.json, the previous Terminator PNGs, and public/fonts/Anta/Anta-Regular.ttf and its OFL licence.
+Active · 7 October 2026. Surfaces: clock, incident archive, individual reports, methodology. Evidence: README.md, both source CSVs, the n8n prompts and the user's visual feedback. The visual direction uses the original open clock, the supplied Anta font for H1/H2 headings and two credited robot images sparingly. Reference assets inspected: the six supplied JPEGs and assets/sources.json, the previous Terminator PNGs, public/fonts/Anta/Anta-Regular.ttf and its OFL licence, and the supplied soundtrack MP3 and attribution.
 
 ## Brand
 An independent practitioner's field journal: technically literate, dry, curious, occasionally darkly funny. Terminator influences appear in the instruments, warning red, Anta headings and two considered images. Earn trust through linked sources, visible reasoning, explicit limitations and separate facts/analysis. Avoid panic, faux classified information, invented scientific certainty and decorative glitches. The imagery is a framing device; it must not crowd the evidence or obscure text.
@@ -40,6 +40,8 @@ Optional support appears once in the shared footer, beneath the project descript
 
 The archive introduction includes an always-visible “AI-generated records” label before the search and filters, followed by “Sources linked in every report.” Use a small red chip icon, warm-white monospace text, a fine border and the existing surface colour. This is a static disclosure, with no tooltip or interaction required to read it. Let the supporting text wrap beneath the label on narrow screens; keep it clear of severity and filter controls.
 
+Optional audio uses one compact “Soundtrack” switch in the shared header. Use existing monospace type, a square switch track, a muted off state and a red on state; show ON/OFF in text as well as colour. Keep a 44px activation area and visible keyboard focus. The shared footer credits “Kepler’s Harmony of the Worlds · Laurie Spiegel” and “℗ 2012 Laurie Spiegel Publishing (ASCAP)” in quiet monospace text. The supplied recording was released on 25 September 2012; retain the original MP3 in assets/sounds.
+
 ## Accessibility
 Target WCAG 2.2 AA. Semantic landmarks and headings; skip link; visible focus; labeled controls; 44px touch targets. Charts have text summaries and keyboard controls. Score/state is always also text. Respect prefers-reduced-motion. No realtime flashing or fake ticking. Route changes update title, reset scroll and move focus to main content.
 
@@ -48,7 +50,11 @@ Desktop: broad two-column hero, data strip, spacious report grid. Below 900px: s
 
 Home’s numbered section eyebrows share the container’s left edge, typography and top spacing (65px on desktop, 45px on mobile). Place “03 / THE FRAMEWORK” in its own full-width row above the inset manifesto artwork; keep the overlapping title and robot composition independent of the section label.
 
+At 760px and below, the header places the logo and soundtrack switch on the first row, with navigation on the second. The switch remains available at every supported width. Music credits wrap naturally in the footer.
+
 ## Interaction states
+The soundtrack starts off on every fresh page load, without downloading audio. Only an explicit switch activation assigns the MP3 source and starts playback; use a requested volume of 20% where the browser supports it. Loop the track and preserve playback across internal routes. Switching off pauses immediately, including while loading; switching on resumes. Do not store an enabled preference or autoplay on return visits. Keep the switch in sync with external pauses, discard superseded play results, and show a small retry message if playback fails.
+
 The site fetches its dataset at runtime. Show a clear loading state on the first request and an actionable retry state when no record can be loaded. If a refresh fails, keep the last good record with a visible stale-data notice. Refresh on focus and every 60 seconds while the tab is visible; keep the selected historical event stable, or follow the latest event when the user is at the end of the timeline. Empty archive explains how to clear filters. Unknown routes provide a return link. Invalid data produces a visible error instead of invented clock values. Unmatched editorial reports remain out of the published joins and are reported by validation. Assessment-only events identify that editorial coverage is pending. External sources open with safe link attributes.
 
 ## Content voice
