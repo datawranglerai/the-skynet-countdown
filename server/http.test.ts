@@ -9,7 +9,7 @@ function fixture(): ApiSnapshot {
       source: 'postgresql', generatedAt: '2026-09-29T10:00:00.000Z',
       incidents: [], assessmentCount: 0, editorialCount: 0, duplicateCount: 0,
       matchedEditorialCount: 0, diagnostics: [], totalPoints: 0,
-      remainingSeconds: 3600, pressure: 0, lastUpdated: '',
+      remainingSeconds: 900, pressure: 0, lastUpdated: '',
     },
     assessmentsCsv: 'cve_id,incident_title\r\n',
     storiesCsv: 'cve_id,headline\r\n',

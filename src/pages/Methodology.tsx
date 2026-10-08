@@ -354,6 +354,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
               <span><b>{CALIBRATION.startingSeconds.toLocaleString('en-GB')} × 2</b><sup>−B / {CALIBRATION.halfwayPoints}</sup></span>
             </p>
             <dl>
+              <div><dt>T₀</dt><dd>The editorial starting window: {formatTime(CALIBRATION.startingSeconds)} symbolic minutes ({CALIBRATION.startingSeconds.toLocaleString('en-GB')} seconds)</dd></div>
               <div><dt>B</dt><dd>Cumulative evidence points across distinct events</dd></div>
               <div><dt>H</dt><dd>The editorial half-scale, fixed at {CALIBRATION.halfwayPoints.toLocaleString('en-GB')} evidence points</dd></div>
               <div><dt>T(B)</dt><dd>Symbolic seconds remaining after B cumulative points</dd></div>
@@ -361,7 +362,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
           </div>
           <div className="method-formula-copy">
             <p>
-              Every {CALIBRATION.halfwayPoints.toLocaleString('en-GB')} evidence points halves the remaining symbolic time: 60 minutes becomes 30, then 15, then 7½. This fixed editorial constant sets the clock’s sensitivity. The same scale applies to every historical and future event, and stays fixed as the record grows. It is not a probability or a scientifically estimated risk parameter.
+              Every {CALIBRATION.halfwayPoints.toLocaleString('en-GB')} evidence points halves the remaining symbolic time: {formatTime(CALIBRATION.startingSeconds)} becomes {formatTime(CALIBRATION.startingSeconds / 2)}, then {formatTime(CALIBRATION.startingSeconds / 4)}. This fixed editorial constant sets the clock’s sensitivity. The same scale applies to every historical and future event, and stays fixed as the record grows. It is not a probability or a scientifically estimated risk parameter.
             </p>
             <p>
               An incident with score <strong>s</strong> closes <strong>1 − 2<sup>−s/{CALIBRATION.halfwayPoints}</sup></strong> of whatever gap remains. That share is persistent: a two-point event always closes {formatGapClosedPercent(calculateGapClosedPercent(2))}; a {MAX_SCORE}-point event always closes {formatGapClosedPercent(calculateGapClosedPercent(MAX_SCORE))}. The raw number of seconds depends on the clock position, so seconds are context rather than a severity comparison.
@@ -374,6 +375,10 @@ export default function Methodology({ dataset }: MethodologyProps) {
             <div><span>Total score</span><strong>2</strong><b>{formatGapClosedPercent(calculateGapClosedPercent(2))}</b><small>of remaining gap</small></div>
             <div><span>Total score</span><strong>{MAX_SCORE}</strong><b>{formatGapClosedPercent(calculateGapClosedPercent(MAX_SCORE))}</b><small>of remaining gap</small></div>
           </div>
+          <aside className="method-baseline-note" aria-label="Starting point and attribution">
+            <p><strong>An editorial starting point.</strong> The {CALIBRATION.startingSeconds / 60}-minute window is our choice for communicating urgency. It applies to the full historical record and every future incident. Midnight represents loss of meaningful human control over AI. The red arc and evidence pressure index show the share of this starting window closed by accumulated evidence.</p>
+            <p>The <a href="https://www.imd.org/centers/digital-ai-transformation-center/aisafetyclock/">IMD AI Safety Clock</a> is an influence: its <a href="https://www.imd.org/ibyimd/artificial-intelligence/imd-ai-safety-clock-moves-to-15-minutes-to-midnight/">16 September 2026 assessment</a> placed its clock at 15 minutes to midnight. Our starting window is independently chosen; all movements follow our published formula. IMD’s assessment is context, not a dated starting measurement for our ledger. The projects are unaffiliated, and their readings are not directly comparable.</p>
+          </aside>
         </div>
       </section>
 

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { Dataset } from './types.ts';
 import { decodeDataset } from './api-response.ts';
+import { calculateClock, calculateGapClosedPercent, calculateMovementSeconds } from './calibration.ts';
 
 const assessment = {
   versionId: 'assessment-version-1', cveId: 'SKYNET-2026-0001', title: 'Test', date: '2026-01-01',
@@ -21,10 +22,11 @@ const fixture: Dataset = {
     assessment, assessments: [assessment], editorial, editorials: [editorial], editorialMatchesAssessment: true,
     headline: editorial.headline, selectionRationale: 'Selected.',
     scoring: { trifectaCount: 1, trifectaPoints: 1, amplifierPoints: 0, totalPoints: 1, severity: 'CANARY' },
-    effectivePoints: 1, gapClosedPercent: 0.69, cumulativePoints: 1, remainingSeconds: 3575, movementSeconds: 25,
+    effectivePoints: 1, gapClosedPercent: calculateGapClosedPercent(1), cumulativePoints: 1,
+    remainingSeconds: calculateClock(1).remainingSeconds, movementSeconds: calculateMovementSeconds(0, 1),
   }],
   assessmentCount: 1, editorialCount: 1, duplicateCount: 0, matchedEditorialCount: 1, diagnostics: [],
-  totalPoints: 1, remainingSeconds: 3575, pressure: 0.69, lastUpdated: '2026-01-01',
+  totalPoints: 1, ...calculateClock(1), lastUpdated: '2026-01-01',
 };
 
 test('API decoder rebinds selected assessment and editorial versions after JSON serialization', () => {
