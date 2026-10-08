@@ -1,9 +1,9 @@
 export const CALIBRATION = Object.freeze({
   version: '1.0' as const,
-  effectiveDate: '2026-10-02' as const,
+  effectiveDate: '2026-10-07' as const,
   // One fixed scale for the entire history and every future event.
   halfwayPoints: 1_000,
-  startingSeconds: 3600,
+  startingSeconds: 900,
 });
 
 function requireNonNegativeFinite(value: number, label: string): void {

@@ -41,15 +41,17 @@ The tone stays technically literate, dry and occasionally darkly funny. The pres
 
 ## The clock
 
-The clock begins with **60:00 symbolic minutes remaining**. Midnight represents the point at which AI systems are sufficiently capable, autonomous and ungoverned that meaningful human oversight has become structurally impossible.
+The clock begins with **15:00 symbolic minutes remaining**. Midnight represents the point at which AI systems are sufficiently capable, autonomous and ungoverned that meaningful human oversight has become structurally impossible.
+
+The 15-minute starting window is an editorial choice, informed by the urgency and framing of the [IMD AI Safety Clock](https://www.imd.org/centers/digital-ai-transformation-center/aisafetyclock/) and its [16 September 2026 reading](https://www.imd.org/ibyimd/artificial-intelligence/imd-ai-safety-clock-moves-to-15-minutes-to-midnight/). Our starting point and subsequent movements use the independent methodology below. IMD's assessment provides context; it is not a dated starting measurement for our ledger. The projects are unaffiliated.
 
 Each incident adds evidence points. The clock converts their cumulative total into symbolic time remaining:
 
 ```text
-remaining seconds = 3600 × 2^(-B / 1000)
+remaining seconds = 900 × 2^(-B / 1000)
 ```
 
-`B` is the cumulative number of published evidence points. Every 1,000 points halve the remaining time: 60 minutes become 30, then 15, then 7:30. The curve continuously approaches midnight but never reaches it after any finite number of incidents.
+`B` is the cumulative number of published evidence points. Every 1,000 points halve the remaining time: 15 minutes become 7:30, then 3:45. The curve continuously approaches midnight but never reaches it after any finite number of incidents.
 
 An incident with a published score of `s` always closes the same share of the gap that remained immediately before it:
 
@@ -59,9 +61,9 @@ share of remaining gap closed = 100 × (1 − 2^(-s / 1000))
 
 For example, a two-point incident always closes **0.14%** of the remaining gap, while a 17-point incident always closes **1.17%**. The movement in seconds becomes smaller as midnight approaches because that same share is taken from a smaller remaining interval. The percentage is the stable measure for comparing incident impact; it is not a probability.
 
-The 1,000-point half-scale is a fixed editorial calibration chosen for gradual accumulation over months of ordinary coverage. It applies uniformly to the entire history and all future events, and does not change as the dataset grows. The calendar pace depends on how many evidence points are added. It is not an empirical risk estimate or a target fitted to the current reading.
+The 1,000-point half-scale is a fixed editorial calibration chosen for gradual accumulation over months of ordinary coverage. It applies uniformly to the entire history and all future events, and does not change as the dataset grows. The 15-minute baseline defines the display window; the half-scale determines the relative impact of every incident. The calendar pace depends on how many evidence points are added. Neither constant is an empirical risk estimate or a target fitted to the current reading.
 
-At 113 evidence points, the calibration leaves **55:29 symbolic minutes** and produces an evidence pressure reading of **7.5/100**.
+At 113 evidence points, the calibration leaves **13:52 symbolic minutes** and produces an evidence pressure reading of **7.5/100**. At 191 points, the clock reads **13:08**. Evidence pressure measures the share of the starting gap consumed.
 
 ## Scoring methodology
 

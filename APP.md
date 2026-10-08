@@ -98,7 +98,7 @@ npm run db:check
 
 Back up the database before applying a migration. Schema and data changes run transactionally, preserve historical versions and are checked before commit. Re-running the same import must preserve later live updates and must not reset event selections. CSV imports are a bootstrap operation; the normal publishing path is n8n → PostgreSQL → API.
 
-For the initial migration, verify all 63 CSV assessment rows are accounted for, all 38 CSV stories and eight database rewrites remain recoverable, and all current source rows have an event. The reviewed historical clock baseline is 40 events, 113 points and 55:29 under the current fixed calibration. Preserve the existing event slugs when assigning permanent `SKYNET-YYYY-NNNN` display IDs.
+For the initial migration, verify all 63 CSV assessment rows are accounted for, all 38 CSV stories and eight database rewrites remain recoverable, and all current source rows have an event. The reviewed historical clock baseline is 40 events, 113 points and 13:52 under the current fixed calibration. Preserve the existing event slugs when assigning permanent `SKYNET-YYYY-NNNN` display IDs.
 
 For the PostgreSQL checks, set `TEST_DATABASE_URL` to a migrated local copy named `skynet_test` and run `npm run test:postgres`. The separate migration integration test creates and drops its own temporary database, verifies a forced rollback, imports representative existing records, checks all historical version links and tests reruns after new live data. To run just that self-contained rehearsal against an empty local `skynet_test` database, use `node --experimental-strip-types --test server/migration.integration.test.ts`. These tests refuse remote database hosts.
 
@@ -138,11 +138,13 @@ The saved n8n workflow exports include this distinction in the research and scor
 For cumulative published evidence points `B`:
 
 ```text
-symbolic seconds remaining = 3600 × 2^(-B / 1000)
+symbolic seconds remaining = 900 × 2^(-B / 1000)
 evidence pressure = 100 × (1 − 2^(-B / 1000))
 ```
 
-The fixed 1,000-point parameter halves the remaining symbolic time after every 1,000 evidence points. It applies to the entire historical record and all future incidents, with no date cutoff or reset. All incident movements, cumulative positions, gap shares and evidence-pressure readings use this same constant. It is an editorial normalisation, not an empirically estimated risk parameter or a fit to a desired current reading. The curve approaches midnight without reaching it and cannot declare that human control has been lost. More coverage can increase the index even if underlying risk has not changed, so the selected sources and inclusion decisions matter.
+Methodology v1.0, effective 7 October 2026, starts with 900 symbolic seconds. This 15-minute window is our editorial choice, informed by the [IMD AI Safety Clock](https://www.imd.org/centers/digital-ai-transformation-center/aisafetyclock/) and its [16 September 2026 reading](https://www.imd.org/ibyimd/artificial-intelligence/imd-ai-safety-clock-moves-to-15-minutes-to-midnight/). It does not import IMD's numerical calibration or imply affiliation or endorsement. The fixed 1,000-point parameter halves the remaining symbolic time after every 1,000 evidence points: 15:00 becomes 07:30, then 03:45. It applies to the entire historical record and all future incidents, with no date cutoff or reset. All incident movements, cumulative positions, gap shares and evidence-pressure readings use this same constant. It is an editorial normalisation, not an empirically estimated risk parameter or a fit to a desired current reading. The curve approaches midnight without reaching it and cannot declare that human control has been lost. More coverage can increase the index even if underlying risk has not changed, so the selected sources and inclusion decisions matter.
+
+The API and frontend both import the shared calibration code, so deploy the Railway service and the GitHub Pages frontend together when this constant changes. Clock values are calculated from the selected records whenever the dataset is read; the PostgreSQL rows do not store the authoritative clock ledger, so this recalibration needs no database backfill.
 
 The cumulative point total defines the clock position. The interface shows `<00:01` below one second. At extreme totals, stored seconds are limited to JavaScript's smallest positive number; this is a numeric representation limit. Per-event movement is calculated from the published score and proportional impact, so a positive event is still shown as moving less than one second, rather than as a zero-score event.
 
@@ -165,7 +167,7 @@ The `total_score` and `classification` values reflect the workflow's unweighted 
 - 63 assessment rows, containing 51 distinct assessments grouped into 40 events.
 - 38 editorial reports cover 32 events; eight events have no editorial copy.
 - 113 published evidence points derived from the selected criterion values.
-- 55:29 symbolic minutes remaining; 7.5/100 evidence pressure.
+- 13:52 symbolic minutes remaining; 7.5/100 evidence pressure.
 - Latest recorded event: 28 September 2026.
 
 Historical conflicting assessments use explicitly reviewed, conservative selections. Original editorial text remains available and is labelled when written for a different assessment version. Machine citation markers are removed from display; original source links and raw downloadable CSVs are preserved.

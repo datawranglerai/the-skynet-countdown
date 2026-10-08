@@ -28,7 +28,12 @@ test('clock, archive filters, direct report links, and scoring evidence', async 
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
-  await expect(page.locator('.clock-digits')).toHaveText('55:29');
+  await expect(page.locator('.clock-digits')).toHaveText('13:52');
+  await expect(page.locator('.clock-svg')).toContainText('BASELINE 15:00');
+  await expect(page.locator('.timeline-chart')).toHaveAttribute('aria-label', /Starting at 15 symbolic minutes/);
+  await expect(page.locator('.timeline-chart > g .chart-axis')).toHaveText(['0m', '5m', '10m', '15m']);
+  const latestPointY = Number(await page.locator('.timeline-chart > circle').last().getAttribute('cy'));
+  expect(latestPointY).toBeCloseTo(25 + 165 * fixture.remainingSeconds / 900, 6);
   await expect(page.getByRole('heading', { name: 'THE FUTURE IS NOT SET.' })).toBeVisible();
   await expect(page.locator('.incident-card').first()).toContainText('The Simulator Asked for Restraint. Astra Submitted Malicious Code.');
   await expect(page.locator('.incident-card').first().locator('.card-movement')).toContainText('0.14%');
@@ -102,8 +107,11 @@ test('methodology calculator, worked examples, downloads, and responsive layout'
   await expect(page.locator('h1')).toBeVisible();
   await expect(page.locator('.method-page')).toContainText('fixed at 1,000 evidence points');
   await expect(page.locator('.method-page')).toContainText('same scale applies to every historical and future event');
+  await expect(page.locator('.method-formula')).toContainText('900 × 2');
+  await expect(page.locator('.method-formula-copy')).toContainText('15:00 becomes 07:30, then 03:45');
+  await expect(page.getByRole('link', { name: 'IMD AI Safety Clock', exact: true })).toHaveAttribute('href', 'https://www.imd.org/centers/digital-ai-transformation-center/aisafetyclock/');
   await expect(page.locator('.method-projected-time')).toHaveText('0%');
-  await expect(page.locator('.method-calculator-output')).toContainText('55:29');
+  await expect(page.locator('.method-calculator-output')).toContainText('13:52');
   const trifecta = page.locator('.method-toggle input');
   await expect(trifecta).toHaveCount(3);
   const expectedShares = ['0.07%', '0.21%', '0.48%'];
@@ -127,6 +135,7 @@ test('methodology calculator, worked examples, downloads, and responsive layout'
   for (const stepper of await page.locator('.method-stepper').all()) await stepper.locator('label').nth(2).click();
   await expect(page.locator('.method-projected-time')).toHaveText('1.17%');
   await expect(page.locator('.method-calculator-output')).toContainText('17 / 17');
+  await expect(page.locator('.method-calculator-output')).toContainText('13:42');
   await expect(page.locator('.method-calculator-severity dd')).toHaveText('EXISTENTIAL');
   await page.locator('.method-toggle').last().click();
   await expect(page.locator('.method-calculator-output')).toContainText('13 / 17');
@@ -165,7 +174,7 @@ test('live dataset failures can recover without inventing a fallback record', as
   await expect(page.locator('.clock-digits')).toHaveCount(0);
   available = true;
   await page.getByRole('button', { name: 'Retry connection' }).click();
-  await expect(page.locator('.clock-digits')).toHaveText('55:29');
+  await expect(page.locator('.clock-digits')).toHaveText('13:52');
 });
 
 test('an empty live dataset is reported without rendering a clock', async ({ page }) => {
@@ -187,10 +196,10 @@ test('a failed refresh retains the last good dataset and reports staleness', asy
     else await route.fulfill({ status: 503, body: 'Unavailable' });
   });
   await page.goto('/');
-  await expect(page.locator('.clock-digits')).toHaveText('55:29');
+  await expect(page.locator('.clock-digits')).toHaveText('13:52');
   await page.evaluate(() => window.dispatchEvent(new Event('focus')));
   await expect(page.getByRole('alert')).toContainText('Showing the last successfully loaded record');
-  await expect(page.locator('.clock-digits')).toHaveText('55:29');
+  await expect(page.locator('.clock-digits')).toHaveText('13:52');
   await page.getByRole('button', { name: 'Retry now' }).click();
   await expect(page.getByRole('alert')).toHaveCount(0);
 });
@@ -238,7 +247,7 @@ test('a successful visible refresh publishes new records without a page reload',
     await route.fulfill({ json: requests === 1 ? fixture : updated, headers: { 'access-control-allow-origin': '*' } });
   });
   await page.goto('/');
-  await expect(page.locator('.clock-digits')).toHaveText('55:29');
+  await expect(page.locator('.clock-digits')).toHaveText('13:52');
   await page.evaluate(() => window.dispatchEvent(new Event('focus')));
   await expect(page.locator('.clock-digits')).toHaveText(formatTime(nextClock.remainingSeconds));
   await page.getByRole('link', { name: 'Incident archive', exact: true }).click();

@@ -1,4 +1,4 @@
-import { formatTime, formatPressure } from '../lib/calibration';
+import { CALIBRATION, formatTime, formatPressure } from '../lib/calibration';
 import type { Dataset } from '../lib/types';
 
 export default function Clock({ dataset }: { dataset: Dataset }) {
@@ -23,7 +23,7 @@ export default function Clock({ dataset }: { dataset: Dataset }) {
         <path d="m294 72 6 10 6-10" fill="var(--accent)" />
         <path d="M129 290h12m-6-6v12m324-6h12m-6-6v12" stroke="#68705f" />
         <text x="300" y="139" textAnchor="middle" className="dial-label">MIDNIGHT / 00:00</text>
-        <text x="300" y="466" textAnchor="middle" className="dial-label">METHOD 01 · BASELINE 60:00</text>
+        <text x="300" y="466" textAnchor="middle" className="dial-label">METHOD 01 · BASELINE {formatTime(CALIBRATION.startingSeconds)}</text>
       </svg>
       <div className="clock-readout"><div className="clock-eyebrow"><span /> DISTANCE TO MIDNIGHT</div><div className="clock-digits">{formatTime(dataset.remainingSeconds)}</div><div className="clock-unit">SYMBOLIC MINUTES : SECONDS</div><div className="clock-pressure"><span className="pressure-dot" />{formatPressure(dataset.pressure)}<span>/100 EVIDENCE PRESSURE</span></div></div>
     </div>

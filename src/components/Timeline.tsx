@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Incident } from '../lib/types';
-import { formatTime, formatGapClosedPercent } from '../lib/calibration';
+import { CALIBRATION, formatTime, formatGapClosedPercent } from '../lib/calibration';
 import { Arrow, dateLabel, movementLabel } from './Shared';
 
 export default function Timeline({ incidents }: { incidents: Incident[] }) {
@@ -13,15 +13,16 @@ export default function Timeline({ incidents }: { incidents: Incident[] }) {
   const start = new Date(`${incidents[0].assessment.date}T00:00:00Z`).getTime() - 86400000;
   const end = Math.max(start + 86400000, new Date(`${incidents.at(-1)!.assessment.date}T00:00:00Z`).getTime());
   const x = (incident: Incident) => 24 + ((new Date(`${incident.assessment.date}T00:00:00Z`).getTime() - start) / (end - start)) * 852;
-  const y = (incident: Incident) => 190 - ((3600 - incident.remainingSeconds) / 3600) * 165;
+  const startingSeconds = CALIBRATION.startingSeconds;
+  const y = (incident: Incident) => 190 - ((startingSeconds - incident.remainingSeconds) / startingSeconds) * 165;
   const path = `M24 190 ${incidents.map((incident) => `H${x(incident)}V${y(incident)}`).join(' ')}`;
   const monthNames = Array.from({ length: 5 }, (_, index) => dateLabel(new Date(start + (end - start) * index / 4).toISOString().slice(0, 10)));
   return <div className="timeline-layout">
     <div className="timeline-chart-wrap">
       <div className="chart-key"><span><i /> SYMBOLIC DISTANCE TO MIDNIGHT</span><span>CALCULATED FROM INCIDENT SCORES</span></div>
-      <svg className="timeline-chart" viewBox="0 0 930 240" role="img" aria-label={`Clock history from ${dateLabel(incidents[0].assessment.date)} to ${dateLabel(incidents.at(-1)!.assessment.date)}. It moves from 60 minutes to ${formatTime(incidents.at(-1)!.remainingSeconds)}. Use the slider below to inspect each event.`}>
+      <svg className="timeline-chart" viewBox="0 0 930 240" role="img" aria-label={`Clock history from ${dateLabel(incidents[0].assessment.date)} to ${dateLabel(incidents.at(-1)!.assessment.date)}. Starting at ${startingSeconds / 60} symbolic minutes, the clock reaches ${formatTime(incidents.at(-1)!.remainingSeconds)}. Use the slider below to inspect each event.`}>
         <defs><linearGradient id="chart-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#f15b40" stopOpacity=".14" /><stop offset="1" stopColor="#f15b40" stopOpacity="0" /></linearGradient></defs>
-        {[25, 80, 135, 190].map((gridY, index) => <g key={gridY}><line x1="24" y1={gridY} x2="878" y2={gridY} stroke="#30372f" strokeDasharray="3 6" /><text x="894" y={gridY + 4} className="chart-axis">{index * 20}m</text></g>)}
+        {[25, 80, 135, 190].map((gridY, index) => <g key={gridY}><line x1="24" y1={gridY} x2="878" y2={gridY} stroke="#30372f" strokeDasharray="3 6" /><text x="894" y={gridY + 4} className="chart-axis">{index * startingSeconds / 180}m</text></g>)}
         <path d={`${path} V207H24Z`} fill="url(#chart-fill)" />
         <path d={path} fill="none" stroke="var(--accent)" strokeWidth="2" />
         <line x1={x(event)} y1="18" x2={x(event)} y2="205" stroke="#939b90" strokeDasharray="4 4" />

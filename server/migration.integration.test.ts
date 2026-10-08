@@ -73,7 +73,7 @@ test('full PostgreSQL migration preserves history, rolls back, and tolerates fut
     await client.query(schema);
     const empty = buildDatabaseDataset(await readDatabaseSnapshotFromClient(client));
     assert.equal(empty.incidents.length, 0);
-    assert.equal(empty.remainingSeconds, 3600);
+    assert.equal(empty.remainingSeconds, 900);
     await client.query('ROLLBACK');
     const newest = parseCsv(assessmentCsv).slice(39, 51);
     const parentIds = new Map<string, string>();

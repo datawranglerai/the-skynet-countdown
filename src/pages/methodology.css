@@ -441,6 +441,19 @@
   margin-bottom: 0;
 }
 
+.method-baseline-note {
+  grid-column: 1 / -1;
+  border-top: 1px solid #bfc2b9;
+  padding-top: 24px;
+  color: #4e554d;
+  font-size: 13px;
+}
+
+.method-baseline-note p { max-width: 100ch; }
+.method-baseline-note p:last-child { margin-bottom: 0; }
+.method-baseline-note a { text-decoration: underline; text-underline-offset: 3px; }
+.method-baseline-note a:hover, .method-baseline-note a:focus-visible { color: #ad321e; }
+
 .method-impact-comparison {
   grid-column: 1 / -1;
   display: grid;
