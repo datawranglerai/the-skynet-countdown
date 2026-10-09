@@ -346,7 +346,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
           <div className="section-heading">
             <p className="eyebrow">02 · Calibration</p>
             <h2 id="formula-title">Same score. Same share of the gap.</h2>
-            <p>Incident impact stays comparable even as the symbolic clock moves closer to midnight.</p>
+            <p>We chose {CALIBRATION.startingSeconds / 60} symbolic minutes to match <a href="https://www.imd.org/ibyimd/artificial-intelligence/imd-ai-safety-clock-moves-to-15-minutes-to-midnight/">IMD’s September 2026 AI Safety Clock reading</a>. This is our editorial starting reference; our own incident scores and formula determine every movement.</p>
           </div>
           <div className="method-formula-card">
             <p className="method-formula">
@@ -377,7 +377,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
           </div>
           <aside className="method-baseline-note" aria-label="Starting point and attribution">
             <p><strong>An editorial starting point.</strong> The {CALIBRATION.startingSeconds / 60}-minute window is our choice for communicating urgency. It applies to the full historical record and every future incident. Midnight represents loss of meaningful human control over AI. The red arc and evidence pressure index show the share of this starting window closed by accumulated evidence.</p>
-            <p>The <a href="https://www.imd.org/centers/digital-ai-transformation-center/aisafetyclock/">IMD AI Safety Clock</a> is an influence: its <a href="https://www.imd.org/ibyimd/artificial-intelligence/imd-ai-safety-clock-moves-to-15-minutes-to-midnight/">16 September 2026 assessment</a> placed its clock at 15 minutes to midnight. Our starting window is independently chosen; all movements follow our published formula. IMD’s assessment is context, not a dated starting measurement for our ledger. The projects are unaffiliated, and their readings are not directly comparable.</p>
+            <p>Our starting window takes inspiration from the <a href="https://www.imd.org/centers/digital-ai-transformation-center/aisafetyclock/">IMD AI Safety Clock</a> and its <a href="https://www.imd.org/ibyimd/artificial-intelligence/imd-ai-safety-clock-moves-to-15-minutes-to-midnight/">16 September 2026 assessment</a>. Our historical ledger and formula remain our own. The projects are unaffiliated, and their readings are not directly comparable.</p>
           </aside>
         </div>
       </section>

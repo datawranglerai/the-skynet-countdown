@@ -451,7 +451,10 @@
 
 .method-baseline-note p { max-width: 100ch; }
 .method-baseline-note p:last-child { margin-bottom: 0; }
+.method-formula-layout .section-heading a,
 .method-baseline-note a { text-decoration: underline; text-underline-offset: 3px; }
+.method-formula-layout .section-heading a:hover,
+.method-formula-layout .section-heading a:focus-visible,
 .method-baseline-note a:hover, .method-baseline-note a:focus-visible { color: #ad321e; }
 
 .method-impact-comparison {

@@ -1,7 +1,7 @@
 # Design
 
 ## Source of truth
-Active · 7 October 2026. Surfaces: clock, incident archive, individual reports, methodology. Evidence: README.md, both source CSVs, the n8n prompts and the user's visual feedback. The visual direction uses the original open clock, the supplied Anta font for H1/H2 headings and two credited robot images sparingly. Reference assets inspected: the six supplied JPEGs and assets/sources.json, the previous Terminator PNGs, public/fonts/Anta/Anta-Regular.ttf and its OFL licence, and the supplied soundtrack MP3 and attribution.
+Active · 9 October 2026. Surfaces: clock, incident archive, individual reports, methodology. Evidence: README.md, both source CSVs, the n8n prompts and the user's visual feedback. The visual direction uses the original open clock, the supplied Anta font for H1/H2 headings and two credited robot images sparingly. Reference assets inspected: the six supplied JPEGs and assets/sources.json, the previous Terminator PNGs, public/fonts/Anta/Anta-Regular.ttf and its OFL licence, and the supplied soundtrack MP3 and attribution.
 
 ## Brand
 An independent practitioner's field journal: technically literate, dry, curious, occasionally darkly funny. Terminator influences appear in the instruments, warning red, Anta headings and two considered images. Earn trust through linked sources, visible reasoning, explicit limitations and separate facts/analysis. Avoid panic, faux classified information, invented scientific certainty and decorative glitches. The imagery is a framing device; it must not crowd the evidence or obscure text.
@@ -35,6 +35,8 @@ Place a quiet 10px monospace “Image: artist / Unsplash” credit immediately b
 
 ## Components
 The shared header contains three elements: the logo, primary navigation and soundtrack switch.
+
+The Calibration introduction explains the 15-minute starting window before the formula, with an inline link to IMD’s September 2026 AI Safety Clock reading. Describe IMD’s reading as the editorial reference for that choice, while making clear that our own incident scores and formula determine movements.
 
 Root CSS owns tokens, including the heading face and quiet instrument edge lighting. Shared header/footer, severity label, incident row/card, scoring bars, time readout, section heading, and ImageCredit captions. Clock uses its original ticked dial and oversized digital readout. Decorative SVG layers and editorial images are hidden from assistive technology; their figures and credit links remain accessible. Headings and data retain semantic HTML. History combines a selectable chart with an accessible native range control. Archive uses native controls with labeled active state. Every interactive control has a functional outcome.
 
