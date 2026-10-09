@@ -267,12 +267,10 @@ export default function Methodology({ dataset }: MethodologyProps) {
           <ImageCredit filename="Futuristic Robot Head.jpg" />
         </figure>
         <div className="method-hero-copy">
-          <p className="method-deck">
-            The Skynet Countdown is a transparent editorial index of evidence that AI systems are moving beyond meaningful human control.
-          </p>
-          <p>
-            Each incident is scored against eight published criteria. Those scores add to a cumulative evidence base, which an exponential formula converts into symbolic time. The clock is an organising metaphor, not a probability, forecast or predicted date.
-          </p>
+          <p className="method-deck">The Skynet Countdown tracks developments that move AI systems further from meaningful human control. It's an editorial index, which means we choose what counts, and we publish the reasons.</p>
+          <p>Each incident is scored against eight published criteria. The scores add up to a single number, and a formula converts that number into symbolic minutes remaining on a clock.</p>
+          <p>The clock is a gauge. It measures how much evidence has accumulated. It doesn't forecast anything. Treat the minutes like a BMI: directionally useful, numerically arbitrary.</p>
+          <p>The title means what it says. Every score publishes its working, the criteria, the rationale, the sources, so if you think we got one wrong, you already know where to start.</p>
         </div>
       </section>
 
@@ -346,7 +344,10 @@ export default function Methodology({ dataset }: MethodologyProps) {
           <div className="section-heading">
             <p className="eyebrow">02 · Calibration</p>
             <h2 id="formula-title">Same score. Same share of the gap.</h2>
-            <p>We chose {CALIBRATION.startingSeconds / 60} symbolic minutes to match <a href="https://www.imd.org/ibyimd/artificial-intelligence/imd-ai-safety-clock-moves-to-15-minutes-to-midnight/">IMD’s September 2026 AI Safety Clock reading</a>. This is our editorial starting reference; our own incident scores and formula determine every movement.</p>
+            <div className="method-calibration-intro">
+              <p>The clock starts at {CALIBRATION.startingSeconds / 60} symbolic minutes to midnight, the reading <a href="https://www.imd.org/ibyimd/artificial-intelligence/imd-ai-safety-clock-moves-to-15-minutes-to-midnight/">IMD's AI Safety Clock</a> published in September 2026. We could have picked any number. Sixty minutes would have been a tidy invention with nothing behind it; IMD's figure is dated, attributable and checkable by anyone who wants to look. Their reading is itself an editorial judgement, but a published one from an independent body, which is more purchase than a number chosen in the dark.</p>
+              <p>From the first incident onward, everything is ours. The scores, the formula, the movement of the hands, all of it comes from our own assessments and our own arithmetic. We set our watch from IMD's once. It doesn't stay synchronised.</p>
+            </div>
           </div>
           <div className="method-formula-card">
             <p className="method-formula">
@@ -368,7 +369,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
               An incident with score <strong>s</strong> closes <strong>1 − 2<sup>−s/{CALIBRATION.halfwayPoints}</sup></strong> of whatever gap remains. That share is persistent: a two-point event always closes {formatGapClosedPercent(calculateGapClosedPercent(2))}; a {MAX_SCORE}-point event always closes {formatGapClosedPercent(calculateGapClosedPercent(MAX_SCORE))}. The raw number of seconds depends on the clock position, so seconds are context rather than a severity comparison.
             </p>
             <p>
-              The curve approaches midnight without reaching it. Below one symbolic second, the display reads less than one second; evidence points and proportional impact continue to be recorded. There is no passive ticking, decay or recovery model. The historical chart follows database record dates; these can be publication or disclosure dates rather than the date an underlying event first occurred.
+              The curve approaches midnight without reaching it. Below one symbolic second, the display reads less than one second; evidence points and proportional impact continue to be recorded. There is no passive ticking, decay or recovery model. Corrections to scores or event grouping can revise the historical position. The historical chart follows database record dates; these can be publication or disclosure dates rather than the date an underlying event first occurred.
             </p>
           </div>
           <div className="method-impact-comparison" aria-label="Examples of persistent incident impact">
@@ -408,8 +409,8 @@ export default function Methodology({ dataset }: MethodologyProps) {
           <h2 id="provenance-title">From signal to published record.</h2>
         </div>
         <ol className="method-pipeline">
-          <li><span>01</span><strong>Scan</strong><p>Twenty-one AI and technology subreddits provide discovery signals.</p></li>
-          <li><span>02</span><strong>Research</strong><p>The workflow follows qualifying posts to their original source articles.</p></li>
+          <li><span>01</span><strong>Scan</strong><p>Twenty-one AI and technology subreddits, plus manually supplied links, provide discovery signals.</p></li>
+          <li><span>02</span><strong>Research</strong><p>The workflow reads the original sources behind qualifying developments.</p></li>
           <li><span>03</span><strong>Assess</strong><p>An AI scoring pass applies the eight criteria and records a rationale for each.</p></li>
           <li><span>04</span><strong>Edit</strong><p>Separate factual and analytical copy is produced for incident reports.</p></li>
         </ol>
@@ -423,7 +424,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
           <article>
             <h3>Reconciliation policy</h3>
             <p>
-              Assessment revisions and repeated coverage remain auditable, while each reviewed event contributes to the clock once. A canonical assessment version supplies the published score.
+              Assessment revisions and repeated coverage remain auditable, while each grouped event contributes to the clock once. A canonical assessment version supplies the published score.
             </p>
             <p>
               Records with different sources are grouped only when a reviewed identity match shows they describe the same event. Permanent event IDs drive the public record; legacy CVE labels remain upstream references rather than unique keys.
@@ -431,7 +432,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
           </article>
           <article>
             <h3>Download the records</h3>
-            <p>These exports contain the current database records. Their total-score, classification, clock and timing fields are workflow audit metadata; the app calculates its published 0–{MAX_SCORE} score and clock from the individual criterion values. New records appear here as the live dataset updates.</p>
+            <p>These exports contain the preserved assessment and editorial versions, with event and source links. Their total-score, classification, clock and timing fields are workflow audit metadata; the app calculates its published 0–{MAX_SCORE} score and clock from the individual criterion values. New records appear here as the live dataset updates.</p>
             <div className="method-downloads">
               <a className="button button-primary" href={assessmentsUrl} download>Assessment CSV</a>
               <a className="button" href={storiesUrl} download>Editorial CSV</a>
@@ -452,7 +453,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
             <p><strong>It cannot determine loss of control.</strong> The clock is a consistent editorial lens on selected evidence. It is not a measurement of actual human control, extinction risk or time remaining.</p>
             <p><strong>The records are automated.</strong> The supplied assessments and reports were produced by an AI workflow and have not been independently fact-checked. Follow the original source before relying on a claim.</p>
             <p><strong>Judgement remains.</strong> Criteria make disagreement inspectable, not impossible. Scores reflect interpretation and the framework tends to underweight early governance signals.</p>
-            <p><strong>Only adverse evidence moves the clock.</strong> The index has no recovery model. That is an editorial boundary, not a claim that improvement is impossible.</p>
+            <p><strong>No recovery credit.</strong> The index awards no negative scores or credit for improvements. Corrections to scores or event grouping can change the recalculated clock in either direction.</p>
           </div>
           <p className="method-closing">Transparent methodology does not make a clock objective. It makes the argument available for inspection.</p>
         </div>

@@ -377,6 +377,10 @@
   border: 1px solid #bfc2b9;
 }
 
+.method-calibration-intro { max-width: 670px; color: #62685f; font-size: 1.05rem; }
+.method-calibration-intro p { line-height: 1.6; }
+.method-calibration-intro p:last-child { margin-bottom: 0; }
+
 .method-formula {
   display: flex;
   align-items: center;

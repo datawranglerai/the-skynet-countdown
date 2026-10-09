@@ -8,7 +8,7 @@ The framing is tongue-in-cheek. The analysis isn't.
 
 ## Run the web app
 
-The app uses Vite, React and TypeScript, with a Railway API reading live PostgreSQL data from Neon. The CSV files in `data/` are retained as migration evidence and test fixtures. See [APP.md](APP.md) for development, migration and deployment instructions.
+The app uses Vite, React and TypeScript, with a Railway API reading live PostgreSQL data from Neon. The CSV files in `data/` are retained as migration evidence and test fixtures. See [METHODOLOGY.md](METHODOLOGY.md) for the complete current scoring and calibration method, and [APP.md](APP.md) for development, migration and deployment instructions.
 
 ```sh
 npm install
@@ -43,7 +43,9 @@ The tone stays technically literate, dry and occasionally darkly funny. The pres
 
 The clock begins with **15:00 symbolic minutes remaining**. Midnight represents the point at which AI systems are sufficiently capable, autonomous and ungoverned that meaningful human oversight has become structurally impossible.
 
-The 15-minute starting window is an editorial choice, informed by the urgency and framing of the [IMD AI Safety Clock](https://www.imd.org/centers/digital-ai-transformation-center/aisafetyclock/) and its [16 September 2026 reading](https://www.imd.org/ibyimd/artificial-intelligence/imd-ai-safety-clock-moves-to-15-minutes-to-midnight/). Our starting point and subsequent movements use the independent methodology below. IMD's assessment provides context; it is not a dated starting measurement for our ledger. The projects are unaffiliated.
+The clock starts at 15 symbolic minutes to midnight, the reading [IMD's AI Safety Clock](https://www.imd.org/ibyimd/artificial-intelligence/imd-ai-safety-clock-moves-to-15-minutes-to-midnight/) published in September 2026. We could have picked any number. Sixty minutes would have been a tidy invention with nothing behind it; IMD's figure is dated, attributable and checkable by anyone who wants to look. Their reading is itself an editorial judgement, but a published one from an independent body, which is more purchase than a number chosen in the dark.
+
+From the first incident onward, everything is ours. The scores, the formula, the movement of the hands, all of it comes from our own assessments and our own arithmetic. We set our watch from IMD's once. It doesn't stay synchronised.
 
 Each incident adds evidence points. The clock converts their cumulative total into symbolic time remaining:
 
@@ -67,7 +69,7 @@ At 113 evidence points, the calibration leaves **13:52 symbolic minutes** and pr
 
 ## Scoring methodology
 
-We use two tiers with a maximum published score of 17. The app derives that score directly from the eight criterion values recorded for each selected assessment.
+Methodology **v1.0**, effective **7 October 2026**, uses two tiers with a maximum published score of 17. The app derives that score directly from the eight criterion values recorded for each selected assessment. [METHODOLOGY.md](METHODOLOGY.md) is the full specification, including evidence rules, calculations, record selection, limitations and handoff guidance; the summary below is kept concise.
 
 ### Tier 1 — The Lethal Trifecta (0–7 points)
 
@@ -75,8 +77,8 @@ An AI system's risk profile escalates when three elements are present simultaneo
 
 | Element | Description |
 | --- | --- |
-| **T1** | Access to ungoverned, private or sensitive systems and data |
-| **T2** | Exposure to or processing of untrusted external input |
+| **T1** | Access to private systems, credentials or sensitive data without adequate permission boundaries |
+| **T2** | Exposure to open-web, email, user or third-party input that the system does not control |
 | **T3** | Permission and capability to affect external digital or physical systems without mandatory human approval for each action |
 
 Each check is either active or inactive. Their combined contribution increases as the elements converge:
@@ -96,11 +98,11 @@ Each amplifier scores zero when absent, one when present or two when significant
 
 | Amplifier | What we're measuring |
 | --- | --- |
-| **Sentience / Self-Preservation** | Goal-directed behaviour outside the training distribution; deceptive alignment; resistance to shutdown or value modification |
-| **Physical Embodiment / Weaponisation** | Physical presence; access to harmful capability; military or law-enforcement deployment |
-| **Human Capability Erosion** | Skill atrophy at population scale; attacks on shared knowledge; dependency that reduces people's ability to detect AI failures |
-| **Governance Vacuum** | Missing or circumvented oversight; self-regulation by the regulated entity; deployment ahead of governance infrastructure |
+| **Governance Vacuum** | Safety, accountability or oversight mechanisms are absent, weakened, bypassed or mostly reactive |
 | **Autonomy Without Oversight** | The extent, duration and scale of operation beyond meaningful human checkpoints |
+| **Human Capability Erosion** | Measurable deskilling, dependency or loss of human capacity to understand and check the work |
+| **Emergent Agency Signals** | Evidence of deceptive alignment, self-preservation, shutdown resistance or unexpected goal pursuit |
+| **Physical Weaponisation** | Embodied, military or weapon-relevant deployment with the ability to affect the physical world |
 
 Every amplifier point is added to the Trifecta contribution. The autonomy amplifier uses these anchors:
 
@@ -133,11 +135,13 @@ Included developments tend to fall into several recurring patterns:
 - **Governance erosion:** the people or institutions responsible for oversight leave, are overruled or stop enforcing the rules.
 - **Normalisation of dangerous patterns:** a capability becomes standard practice without a deliberate decision about the risk being accepted.
 - **Physical embodiment milestones:** AI gains greater ability to act in the physical world, particularly at scale or in adversarial settings.
-- **Sentience and self-preservation signals:** a system models its continued existence as a goal, changes behaviour when observed or resists modification.
+- **Emergent agency signals:** evidence of deceptive alignment, self-preservation, shutdown resistance or unexpected goal pursuit.
 - **Epistemic attacks:** synthetic content or AI-generated disinformation degrades the shared information people use to make collective decisions.
 - **Quantum computing breakthroughs:** major advances can compress timelines across several other risk categories.
 
-The current methodology has no automatic decay or recovery mechanism. Constructive developments can score zero, but they do not subtract earlier evidence. A future recovery model would need equally clear criteria and worked examples before it could move the clock backwards.
+These patterns help decide what deserves assessment; they do not award points by category. Only evidence satisfying the eight published criteria contributes to the score.
+
+The current methodology has no automatic decay or recovery mechanism. Constructive developments can score zero, but they do not subtract earlier evidence. With a fixed set of selected assessments, every added event has a non-negative score and therefore cannot move the clock away from midnight. A correction to an assessment or an explicit regrouping of records can reduce the cumulative total and recalculate history backwards. A future recovery model would need equally clear criteria and worked examples before positive developments could subtract evidence points.
 
 ## Incident format
 
@@ -151,7 +155,7 @@ Each incident is published as a **SKYNET CVE**, borrowing the structure of a sec
 - the clock movement in seconds at that point in the timeline; and
 - the resulting symbolic time remaining.
 
-The CVE-style labels originate in the collection workflow and are not guaranteed to be unique event keys. The app reconciles records using reviewed event identities so repeated labels do not silently merge unrelated developments.
+The public `SKYNET-YYYY-NNNN` identifier belongs to an event. PostgreSQL identity keys and foreign keys relate assessment and story records; explicit `event_id` values group different sources covering the same event after review. In the live database, upstream `cve_id` values are reference metadata and are not used as join keys. The archived CSV importer uses an audited manifest and limited unambiguous legacy-ID fallbacks to reconstruct relationships from the earlier exports.
 
 ## Our belief system, inverted
 
@@ -181,11 +185,13 @@ The source exports retain repeated records and assessment versions. The app vali
 
 **Criterion ratings require judgement.** The current component values are assessor judgements based on the evidence recorded with each assessment. Every criterion includes a rationale so readers can see where interpretation enters the method.
 
+**The records are automated.** An AI workflow produces the assessments and reports. Structural validation checks their format and arithmetic; it does not independently fact-check the source or its interpretation.
+
 **The source set shapes the index.** More coverage can add evidence points even if the underlying level of risk has not changed. Inclusion choices and source selection therefore matter.
 
-**Leading indicators can score modestly.** An expert resignation or weakened institution may be consequential without directly activating the Trifecta or an amplifier. Reports flag this where relevant.
+**Leading indicators are annotations, not points.** An expert resignation or weakened institution may be consequential even when its direct criterion score is low or zero. Reports can flag that significance, but the label does not add to the published score or move the clock by itself.
 
-**The clock only moves forward.** That is a boundary of the current methodology, not a claim that meaningful recovery is impossible.
+**New events only add non-negative evidence.** For a fixed set of selected assessments, appending events cannot move the clock away from midnight. Corrections and explicit canonical regrouping can lower the cumulative score and recalculate earlier positions. The method has no scored recovery events yet; that is a boundary of v1.0, not a claim that meaningful recovery is impossible.
 
 **The index cannot determine that control has been lost.** Midnight is an asymptote and a framing device. The app does not estimate a date, probability or real-world percentage of control.
 

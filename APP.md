@@ -4,7 +4,7 @@
 
 The Vite/React frontend runs on GitHub Pages. It fetches `https://api.skynetcountdown.org/dataset` from a small Node.js API on Railway. The API reads Neon PostgreSQL and applies the same scoring and clock calculation used in the tests. Data updates appear on page load, window focus and every 60 seconds while the tab is visible. API snapshots are cached in memory for up to 30 seconds.
 
-`assessments` and `stories` remain the current n8n records. `events` stores their reviewed grouping, stable route slugs, public SKYNET IDs and canonical selections. `record_history` preserves previous versions and the assessment version each report describes. New source records receive an event automatically; updates to a selected source advance its published assessment while retaining history. Different articles about one incident still require an explicit shared event identity.
+`assessments` and `stories` remain the current n8n records. `events` stores their grouping, stable route slugs, public SKYNET IDs and canonical selections. `record_history` preserves previous versions and the assessment version each report describes. New source records receive an event automatically; updates to a selected source advance its published assessment while retaining history. Different articles about one incident still require an explicit shared event identity after review.
 
 The files in `data/` and `src/lib/manifest.ts` are migration evidence and test fixtures. The production browser bundle does not import them or fall back to them when the API is unavailable.
 
@@ -106,9 +106,13 @@ For the PostgreSQL checks, set `TEST_DATABASE_URL` to a migrated local copy name
 
 Continue writing the existing `assessments` and `stories` tables from n8n, omitting identity `id` on inserts. Upsert assessments by `source_url`, use their returned database `id` for `stories.assessment_id`, and upsert stories by that foreign key. Database triggers update timestamps, preserve previous versions and maintain event selections. Prefer writing an assessment and its corresponding story in one transaction.
 
-For another article about an existing event, supply its existing `event_id` on the assessment. Event grouping remains an editorial decision; a new URL alone cannot prove that an incident is new. Published scores and clock positions are computed from the eight criteria. Writer-supplied score labels and clock text remain source metadata.
+The database can group another source under an existing event when its assessment is inserted with that `event_id`. The saved n8n v1.1/v1.2 mappings and assessment upserts omit this field, so using that path requires extending both the mapping and query to carry a reviewed event identity, or using a separate reviewed database ingestion step. The app has no merge interface; existing duplicate groups need a reconciliation procedure that preserves their history and canonical references. A new URL alone cannot prove that an incident is new.
+
+Published scores and clock positions are computed from the eight criteria. Writer-supplied score labels and clock text remain source metadata.
 
 ## Methodology
+
+[METHODOLOGY.md](METHODOLOGY.md) is the full description of methodology v1.0 and its maintainer handoff. This section records the operational rules that the API, database workflow and frontend must implement.
 
 The method uses three binary Trifecta checks and five amplifiers worth zero to two points each. Count the active Trifecta checks and assign a combined base of 0, 1, 3 or 7 points for zero, one, two or three active checks. Add every amplifier point to that base. Published scores therefore range from 0 to 17. A complete Trifecta contributes seven points and is naturally at least CRITICAL; no separate floor or aggregate clamp is applied. Zero-score events remain visible and add nothing.
 
@@ -142,7 +146,9 @@ symbolic seconds remaining = 900 × 2^(-B / 1000)
 evidence pressure = 100 × (1 − 2^(-B / 1000))
 ```
 
-Methodology v1.0, effective 7 October 2026, starts with 900 symbolic seconds. This 15-minute window is our editorial choice, informed by the [IMD AI Safety Clock](https://www.imd.org/centers/digital-ai-transformation-center/aisafetyclock/) and its [16 September 2026 reading](https://www.imd.org/ibyimd/artificial-intelligence/imd-ai-safety-clock-moves-to-15-minutes-to-midnight/). It does not import IMD's numerical calibration or imply affiliation or endorsement. The fixed 1,000-point parameter halves the remaining symbolic time after every 1,000 evidence points: 15:00 becomes 07:30, then 03:45. It applies to the entire historical record and all future incidents, with no date cutoff or reset. All incident movements, cumulative positions, gap shares and evidence-pressure readings use this same constant. It is an editorial normalisation, not an empirically estimated risk parameter or a fit to a desired current reading. The curve approaches midnight without reaching it and cannot declare that human control has been lost. More coverage can increase the index even if underlying risk has not changed, so the selected sources and inclusion decisions matter.
+Methodology v1.0, effective 7 October 2026, starts with 900 symbolic seconds. The starting window borrows the [15-minute reading published by IMD's AI Safety Clock in September 2026](https://www.imd.org/ibyimd/artificial-intelligence/imd-ai-safety-clock-moves-to-15-minutes-to-midnight/) as a dated, attributable editorial reference. IMD's reading is itself an editorial judgement. It sets this project's watch once: from the first incident onward, the selected evidence, scores, formula and historical movements are this project's own and do not remain synchronised with IMD. The projects are unaffiliated.
+
+The fixed 1,000-point parameter halves the remaining symbolic time after every 1,000 evidence points: 15:00 becomes 07:30, then 03:45. It applies to the entire historical record and all future incidents, with no date cutoff or reset. All incident movements, cumulative positions, gap shares and evidence-pressure readings use this same constant. It is an editorial normalisation, not an empirically estimated risk parameter or a fit to a desired current reading. The curve approaches midnight without reaching it and cannot declare that human control has been lost. More coverage can increase the index even if underlying risk has not changed, so the selected sources and inclusion decisions matter.
 
 The API and frontend both import the shared calibration code, so deploy the Railway service and the GitHub Pages frontend together when this constant changes. Clock values are calculated from the selected records whenever the dataset is read; the PostgreSQL rows do not store the authoritative clock ledger, so this recalibration needs no database backfill.
 
@@ -156,7 +162,7 @@ share of remaining gap closed = 100 × (1 − 2^(-s / 1000))
 
 The same point score always closes the same proportion of the remaining gap. A two-point incident closes 0.14%; a 17-point incident closes 1.17%. Its movement in seconds depends on the clock position when it occurs because the remaining interval gets smaller over time. Incident impact should therefore be compared by score and share of gap closed, with seconds shown as the movement in historical context.
 
-The clock changes with records, not wall time. There is no passive decay or positive-event recovery model. Published improvements can score zero; they do not subtract previous evidence. Formal corrective or recovery events would require a defined extension to the methodology.
+The clock changes with records, not wall time. There is no passive decay or positive-event recovery model. Published improvements can score zero; they do not subtract previous evidence. With selected assessments held fixed, added events have non-negative scores and cannot move the clock away from midnight. Corrections to selected assessments or explicit canonical regrouping can reduce the cumulative score and recalculate history backwards. Scored recovery events would require a defined extension to the methodology.
 
 History sorts events by incident date, then stable ID. Each displayed movement is the difference between the positions before and after that event. Late discoveries and explicit assessment changes recompute the history. The methodology version, latest incident date and database update timestamp are visible in the app.
 
@@ -185,3 +191,7 @@ The supplied stories are automated workflow outputs, not independently verified 
 - `src/pages/`: home, archive, report and methodology views.
 - `src/styles.css`, `src/pages/methodology.css`: the visual system documented in `DESIGN.md`.
 - `tests/app.spec.ts`: production-browser checks.
+- `METHODOLOGY.md`: full methodology v1.0 specification and maintainer handoff.
+- `README.md`: public project overview and concise methodology summary.
+- `APP.md`: operational development, data, migration and deployment rules.
+- `DESIGN.md`: interface and content presentation contract.
