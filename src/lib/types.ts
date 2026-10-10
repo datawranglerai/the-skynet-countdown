@@ -51,6 +51,7 @@ export interface Editorial {
 
 export interface Incident {
   id: string;
+  routeAliases?: string[];
   publicId?: string;
   eventKey: string;
   assessment: Assessment;

@@ -102,6 +102,32 @@ test('clock, archive filters, direct report links, and scoring evidence', async 
   expect(errors).toEqual([]);
 });
 
+test('a merged event old route stays canonical after the former child is restored', async ({ page }) => {
+  const mergedFixture = structuredClone(fixture);
+  const canonical = mergedFixture.incidents[0];
+  const restoredChild = mergedFixture.incidents[1];
+  canonical.routeAliases = [restoredChild.id];
+  mergedFixture.incidents = mergedFixture.incidents.filter((incident) => incident.id !== restoredChild.id);
+  let currentFixture = mergedFixture;
+  let requests = 0;
+  await page.unroute('https://api.skynetcountdown.org/**');
+  await page.route(DATASET_URL, (route) => {
+    requests += 1;
+    return route.fulfill({ json: currentFixture, headers: { 'access-control-allow-origin': '*' } });
+  });
+
+  await page.goto(`/#/incidents/${restoredChild.id}`);
+  await expect(page.locator('.report-header h1')).toHaveText(canonical.headline);
+  await expect(page).toHaveURL(new RegExp(`#/incidents/${canonical.id}$`));
+
+  currentFixture = fixture;
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await expect.poll(() => requests).toBeGreaterThan(1);
+  await expect(page.locator('.report-header h1')).toHaveText(canonical.headline);
+  await expect(page.locator('.report-header h1')).not.toHaveText(restoredChild.headline);
+  await expect(page).toHaveURL(new RegExp(`#/incidents/${canonical.id}$`));
+});
+
 test('methodology calculator, worked examples, downloads, and responsive layout', async ({ page }) => {
   await page.goto('/#/methodology');
   await expect(page.locator('h1')).toBeVisible();

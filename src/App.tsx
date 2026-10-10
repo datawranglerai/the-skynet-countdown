@@ -75,7 +75,16 @@ export default function App() {
     };
   }, [refreshDataset]);
 
-  const incident = route.startsWith('/incidents/') ? dataset?.incidents.find((item) => item.id === route.slice('/incidents/'.length)) : undefined;
+  const incidentRoute = route.startsWith('/incidents/') ? route.slice('/incidents/'.length) : undefined;
+  const incident = incidentRoute
+    ? dataset?.incidents.find((item) => item.id === incidentRoute || item.routeAliases?.includes(incidentRoute))
+    : undefined;
+  useEffect(() => {
+    if (!incident || incidentRoute === incident.id) return;
+    const canonicalRoute = `/incidents/${incident.id}`;
+    window.history.replaceState(null, '', `#${canonicalRoute}`);
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+  }, [incident, incidentRoute]);
   useEffect(() => {
     document.title = `${incident?.headline ?? (route === '/methodology' ? 'The Methodology' : route === '/incidents' ? 'The Incident Archive' : 'The future is not set.')} — The Skynet Countdown`;
   }, [route, incident]);

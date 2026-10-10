@@ -446,7 +446,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
               Assessment revisions and repeated coverage remain auditable, while each grouped event contributes to the clock once. A canonical assessment version supplies the published score.
             </p>
             <p>
-              Records with different sources are grouped only when a reviewed identity match shows they describe the same event. Permanent event IDs drive the public record; legacy CVE labels remain upstream references rather than unique keys.
+              AI compares factual records across sources. Very confident matches passing evidence and date checks are grouped automatically; uncertain matches require human review. Every grouping is logged and reversible. Permanent event IDs drive the public record; legacy CVE labels remain upstream references rather than unique keys.
             </p>
           </article>
           <article>
@@ -468,7 +468,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
             <h2 id="limitations-title">What this index cannot tell you.</h2>
           </div>
           <div className="method-limitations-grid">
-            <p><strong>Coverage changes the reading.</strong> More reporting or a wider source list can add evidence points without an equivalent change in underlying risk. Different articles about the same event need an explicit identity review to avoid double counting.</p>
+            <p><strong>Coverage changes the reading.</strong> More reporting or a wider source list can add evidence points without an equivalent change in underlying risk. Identity checks help avoid double counting, but automated matching can miss duplicates or group separate developments incorrectly.</p>
             <p><strong>It cannot determine loss of control.</strong> The clock is a consistent editorial lens on selected evidence. It is not a measurement of actual human control, extinction risk or time remaining.</p>
             <p><strong>The records are automated.</strong> The supplied assessments and reports were produced by an AI workflow and have not been independently fact-checked. Follow the original source before relying on a claim.</p>
             <p><strong>Judgement remains.</strong> Criteria make disagreement inspectable, not impossible. Scores reflect interpretation and the framework tends to underweight early governance signals.</p>
