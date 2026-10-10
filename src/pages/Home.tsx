@@ -1,9 +1,11 @@
 import type { Dataset } from '../lib/types';
 import Clock from '../components/Clock';
 import Timeline from '../components/Timeline';
-import { Arrow, dateLabel, IncidentCard } from '../components/Shared';
+import { Arrow, dateLabel, FRAMEWORK_REPOSITORY_URL, IncidentCard } from '../components/Shared';
 import ImageCredit from '../components/ImageCredit';
 import robotFigure from '../../assets/optimized/black-and-white-robot.webp';
+
+const githubRibbon = 'M-12 59 C9 37 33 48 53 72 C76 100 110 102 143 90 C171 90 194 88 222 92 C253 96 282 98 323 80';
 
 export default function Home({ dataset }: { dataset: Dataset }) {
   const recent = [...dataset.incidents].reverse().filter((incident) => incident.editorial).slice(0, 3);
@@ -32,7 +34,23 @@ export default function Home({ dataset }: { dataset: Dataset }) {
         <ImageCredit filename="Black and White Robot Photo.jpg" />
       </figure>
       <div className="manifesto-note">
-        <p>Three conditions. Five amplifiers.<br />Every score explained.</p>
+        <p>Three checks. Five amplifiers.<br />Every score explained.</p>
+        <a className="text-link manifesto-source-link" href={FRAMEWORK_REPOSITORY_URL} target="_blank" rel="noopener noreferrer" aria-label="Read the method on GitHub (opens in a new tab)">
+          <svg className="manifesto-source-glow" viewBox="0 0 320 120" preserveAspectRatio="none" fill="none" aria-hidden="true" focusable="false">
+            <defs>
+              <linearGradient id="github-ribbon-colour"><stop stopColor="#ec3029" stopOpacity="0" /><stop offset=".16" stopColor="#ff503b" stopOpacity=".8" /><stop offset=".46" stopColor="#ea251f" stopOpacity=".5" /><stop offset="1" stopColor="#ec3029" stopOpacity="0" /></linearGradient>
+              <radialGradient id="github-ribbon-bloom"><stop stopColor="#ef382a" stopOpacity=".22" /><stop offset="1" stopColor="#ef382a" stopOpacity="0" /></radialGradient>
+              <filter id="github-ribbon-soften" x="-20%" y="-100%" width="140%" height="300%" colorInterpolationFilters="sRGB"><feGaussianBlur stdDeviation="3.5" /></filter>
+            </defs>
+            <ellipse cx="30" cy="66" rx="28" ry="20" fill="url(#github-ribbon-bloom)" />
+            <path d={`${githubRibbon} C280 104 254 102 220 98 C189 94 172 97 142 99 C108 114 72 108 50 77 C30 52 10 46 -12 59Z`} fill="url(#github-ribbon-colour)" opacity=".22" />
+            <path d={githubRibbon} stroke="url(#github-ribbon-colour)" strokeWidth="5" opacity=".55" filter="url(#github-ribbon-soften)" />
+            <path d={githubRibbon} stroke="url(#github-ribbon-colour)" strokeWidth="1" />
+          </svg>
+          {/* GitHub mark from Primer Octicons; MIT licence in public/licenses/github-octicons.txt. */}
+          <svg className="manifesto-github-mark" width="28" height="28" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" focusable="false"><path d="M6.766 11.328c-2.063-.25-3.516-1.734-3.516-3.656 0-.781.281-1.625.75-2.188-.203-.515-.172-1.609.063-2.062.625-.078 1.468.25 1.968.703.594-.187 1.219-.281 1.985-.281.765 0 1.39.094 1.953.265.484-.437 1.344-.765 1.969-.687.218.422.25 1.515.046 2.047.5.593.766 1.39.766 2.203 0 1.922-1.453 3.375-3.547 3.64.531.344.89 1.094.89 1.954v1.625c0 .468.391.734.86.547C13.781 14.359 16 11.53 16 8.03 16 3.61 12.406 0 7.984 0 3.563 0 0 3.61 0 8.031a7.88 7.88 0 0 0 5.172 7.422c.422.156.828-.125.828-.547v-1.25c-.219.094-.5.156-.75.156-1.031 0-1.64-.562-2.078-1.609-.172-.422-.36-.672-.719-.719-.187-.015-.25-.093-.25-.187 0-.188.313-.328.625-.328.453 0 .844.281 1.25.86.313.452.64.655 1.031.655s.641-.14 1-.5c.266-.265.47-.5.657-.656" /></svg>
+          <span className="manifesto-source-label"><strong>Read the method</strong><span>on GitHub</span></span><Arrow diagonal />
+        </a>
       </div>
       <div className="manifesto-framework">
         <ul className="manifesto-conditions" aria-label="The three framework conditions" role="list">

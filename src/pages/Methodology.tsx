@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import robotPortrait from '../../assets/optimized/futuristic-robot-head.webp';
 import robotPortraitLarge from '../../assets/optimized/futuristic-robot-head-large.webp';
 import ImageCredit from '../components/ImageCredit';
+import { Arrow, FRAMEWORK_REPOSITORY_URL } from '../components/Shared';
 import { getDatasetExportUrl } from '../data';
 import {
   CALIBRATION,
@@ -269,7 +270,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
         <div className="method-hero-copy">
           <p className="method-deck">The Skynet Countdown tracks developments that move AI systems further from meaningful human control. It's an editorial index, which means we choose what counts, and we publish the reasons.</p>
           <p>Each incident is scored against eight published criteria. The scores add up to a single number, and a formula converts that number into symbolic minutes remaining on a clock.</p>
-          <p>The clock is a gauge. It measures how much evidence has accumulated. It doesn't forecast anything. Treat the minutes like a BMI: directionally useful, numerically arbitrary.</p>
+          <p>The clock is a gauge. It measures how much evidence has accumulated. It doesn't forecast anything. The exact number is arbitrary. The direction of travel isn't.</p>
           <p>The title means what it says. Every score publishes its working, the criteria, the rationale, the sources, so if you think we got one wrong, you already know where to start.</p>
         </div>
       </section>
@@ -403,9 +404,27 @@ export default function Methodology({ dataset }: MethodologyProps) {
         </div>
       </section>
 
+      <section className="container method-open-source" aria-labelledby="open-method-title">
+        <div className="method-open-source-panel">
+          <div className="method-open-source-heading">
+            <p className="eyebrow">05 · Open method</p>
+            <h2 id="open-method-title">The method is open<span>.</span></h2>
+          </div>
+          <div className="method-open-source-copy">
+            <p>The clock is one application of this scoring method. The method itself lives in a public repo: the eight criteria, the trifecta table, the amplifier anchors, the formula, written down properly so you can point it at your own records. Your own incident log, your own deployment decisions, your own governance failures. Whatever you're tracking, the criteria should transfer.</p>
+            <p>Adapt it. Change what doesn't fit. And if you think we mis-scored something on this site, the repo is where that conversation belongs.</p>
+            <div className="method-open-source-actions">
+              <a className="button button-outline" href={FRAMEWORK_REPOSITORY_URL} target="_blank" rel="noopener noreferrer" aria-label="Read the method on GitHub (opens in a new tab)">Read the method on GitHub <Arrow diagonal /></a>
+              <a className="text-link" href={`${FRAMEWORK_REPOSITORY_URL}/blob/main/CONTRIBUTING.md`} target="_blank" rel="noopener noreferrer" aria-label="Propose a change on GitHub (opens in a new tab)">Propose a change <Arrow diagonal /></a>
+            </div>
+            <p className="method-open-source-status"><strong>In development</strong> · The implementation is catching up with this site's methodology.</p>
+          </div>
+        </div>
+      </section>
+
       <section className="container method-provenance" aria-labelledby="provenance-title">
         <div className="section-heading">
-          <p className="eyebrow">05 · Provenance</p>
+          <p className="eyebrow">06 · Provenance</p>
           <h2 id="provenance-title">From signal to published record.</h2>
         </div>
         <ol className="method-pipeline">
@@ -445,7 +464,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
       <section className="method-limitations" aria-labelledby="limitations-title">
         <div className="container">
           <div className="section-heading">
-            <p className="eyebrow">06 · Read before panicking</p>
+            <p className="eyebrow">07 · Read before panicking</p>
             <h2 id="limitations-title">What this index cannot tell you.</h2>
           </div>
           <div className="method-limitations-grid">

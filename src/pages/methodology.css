@@ -1020,6 +1020,25 @@
   text-transform: uppercase;
 }
 
+.method-open-source { padding-top: clamp(64px, 8vw, 112px); }
+
+.method-open-source-panel {
+  display: grid;
+  grid-template-columns: minmax(160px, .65fr) minmax(0, 1.35fr);
+  gap: 24px clamp(32px, 6vw, 88px);
+  padding: clamp(24px, 4vw, 56px);
+  border: 1px solid var(--line);
+}
+
+.method-open-source-heading .eyebrow { margin-bottom: 20px; }
+.method-open-source-heading h2 { margin-bottom: 0; font-size: clamp(30px, 3.6vw, 48px); line-height: 1.12; letter-spacing: -.025em; text-transform: uppercase; }
+.method-open-source-heading h2 span { color: var(--accent); }
+.method-open-source-copy { max-width: 65ch; color: var(--muted); font-size: 1rem; }
+.method-open-source-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; margin-top: 24px; color: var(--ink); }
+.method-open-source-actions .button { max-width: 100%; gap: 12px; }
+.method-open-source-copy .method-open-source-status { margin: 24px 0 0; font: 10px/1.8 var(--mono); }
+.method-open-source-status strong { color: var(--ink); font-weight: 400; }
+
 .method-limitations-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1058,6 +1077,8 @@
 }
 
 @media (max-width: 900px) {
+  .method-open-source-panel { grid-template-columns: 1fr; }
+
   .method-formula-layout,
   .method-calculator {
     grid-template-columns: 1fr;
