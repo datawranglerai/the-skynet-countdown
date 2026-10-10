@@ -4,6 +4,8 @@ import { CRITERIA } from '../lib/criteria';
 import { MAX_SCORE } from '../lib/scoring';
 import logo from '../../assets/logos/logo-skynet-clock-2.png';
 
+export const FRAMEWORK_REPOSITORY_URL = 'https://github.com/datawranglerai/skynet-countdown-scoring-methodology';
+
 export function Arrow({ diagonal = false, className = '' }: { diagonal?: boolean; className?: string }) {
   return <svg className={`arrow-icon ${className}`} width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d={diagonal ? 'M6 18 18 6M6 6h12v12' : 'M4 12h16m-6-6 6 6-6 6'} stroke="currentColor" strokeWidth="1.6" /></svg>;
 }

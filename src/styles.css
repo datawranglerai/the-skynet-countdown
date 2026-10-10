@@ -179,6 +179,28 @@ svg { flex-shrink: 0; }
 .manifesto-copy h2 em { color: var(--accent); font-style: normal; }
 .manifesto-note { grid-column: 2 / 5; grid-row: 3; align-self: start; }
 .manifesto-note > p { font-size: 13px; color: var(--muted); margin-bottom: 0; }
+.manifesto-source-link {
+  position: relative;
+  isolation: isolate;
+  display: inline-grid;
+  grid-template-columns: 28px minmax(0, 1fr) 16px;
+  width: 100%;
+  max-width: 252px;
+  min-height: 80px;
+  margin: 28px 0 14px;
+  padding: 14px 8px;
+  gap: 12px;
+  color: var(--ink);
+  background: none;
+}
+.manifesto-source-link:hover, .manifesto-source-link:focus-visible { color: var(--ink); }
+.manifesto-source-label, .manifesto-github-mark, .manifesto-source-link > .arrow-icon { position: relative; z-index: 1; }
+.manifesto-source-label { display: grid; gap: 3px; min-width: 0; }
+.manifesto-source-label strong { font-size: 14px; line-height: 1.4; font-weight: 600; }
+.manifesto-source-label > span { color: #bac0b5; font: 11px/1.5 var(--mono); }
+.manifesto-github-mark { filter: drop-shadow(0 1px 5px var(--bg)); }
+.manifesto-source-link > .arrow-icon { width: 16px; height: 16px; color: var(--accent); }
+.manifesto-source-glow { position: absolute; left: 0; bottom: -18px; width: 100%; height: 92px; overflow: visible; pointer-events: none; }
 .manifesto-framework {
   grid-column: 2 / 11;
   grid-row: 4;
@@ -244,7 +266,7 @@ svg { flex-shrink: 0; }
 .footer-support:hover, .footer-support:focus-visible { border-color: var(--accent); background-color: color-mix(in srgb, var(--accent) 5%, transparent); }
 .footer-support:hover > .arrow-icon, .footer-support:focus-visible > .arrow-icon { color: var(--accent); }
 .footer-links { display: grid; gap: 7px; min-width: 190px; }
-.footer-links a { display: flex; align-items: center; justify-content: space-between; gap: 32px; font-size: 11px; min-height: 36px; }
+.footer-links a { display: flex; align-items: center; justify-content: space-between; gap: 32px; font-size: 11px; min-height: 44px; }
 .footer-links a:hover { color: var(--accent); }
 .footer-links > span { font: 7px var(--mono); margin-top: 15px; color: var(--muted); }
 .soundtrack-credit { display: flex; flex-wrap: wrap; gap: 4px 16px; padding-bottom: 20px; color: var(--muted); font: 9px/1.7 var(--mono); }
