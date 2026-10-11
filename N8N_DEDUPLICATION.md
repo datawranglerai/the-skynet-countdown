@@ -126,10 +126,20 @@ The reconciliation credential needs no direct writes to the new tables. Review a
 
    Use a model available to your account. Change it in this configuration node so the model call and audit label stay aligned.
 
-5. Leave **Loop Over Candidate Pairs** at batch size **1**. The parser is a sub-node; serial processing also keeps evidence bound to the correct pair. The validator retrieves the current loop run explicitly instead of relying on the LLM node to preserve item linking.
+5. Leave **Loop Over Candidate Pairs** at batch size **1**. Serial processing keeps one pair per model call. The validator retrieves the current loop run explicitly instead of relying on the LLM node to preserve item linking.
 6. Keep the workflow inactive while doing its first manual run. The export has no embedded credentials and is inactive by default.
 
 The Postgres nodes use `$1`, `$2` and `$3` with Query Parameters. Keep those expressions intact. The model's JSON is passed as data to a fixed function; it is never interpolated into SQL.
+
+**Classify Event Identity** explicitly lists the nine required JSON fields. **Require Specific Output Format** stays off and there is no Structured Output Parser attached. **Validate and Rebind Pair** accepts plain JSON and the fenced `output` wrapper observed in n8n 2.13.2, then checks all fields, types, lengths and evidence substrings. Formatting is removed without changing or filling in decision values. Missing fields and invalid evidence stop the workflow before PostgreSQL receives a decision.
+
+### Fixing “Model output doesn't fit required format”
+
+On n8n 2.13.2, a reported failure returned valid classification fields inside a fenced `{"output": {...}}` object. The Structured Output Parser rejected that response before the workflow's validator ran. The current export uses the Code validator directly and includes a regression test for that exact response.
+
+Import the updated JSON into your reconciliation workflow, reconnect credentials if needed, and execute a fresh manual run with `candidate_limit=1`. Keep only one reconciliation schedule active. No database migration or application redeployment is needed for this formatting fix.
+
+If updating the nodes in place, copy the updated prompt from **Classify Event Identity** and the entire code from **Validate and Rebind Pair**, turn off **Require Specific Output Format**, and remove the old parser connection. Turning off the parser alone leaves the older validator unable to handle the reported fenced wrapper. Leave **On Error** set to stop: a malformed classification must not reach the database.
 
 ## 4. Run and inspect the first batch
 
@@ -234,4 +244,4 @@ The JSON and validator are tested locally, and node parameters are checked again
 - [n8n Postgres query parameters](https://docs.n8n.io/integrations/builtin/app-nodes/n8n-nodes-base.postgres/#use-query-parameters)
 - [Loop Over Items](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.splitinbatches/)
 - [Basic LLM Chain](https://docs.n8n.io/integrations/builtin/cluster-nodes/root-nodes/n8n-nodes-langchain.chainllm/)
-- [Structured Output Parser and sub-node item handling](https://docs.n8n.io/integrations/builtin/cluster-nodes/sub-nodes/n8n-nodes-langchain.outputparserstructured/)
+- [n8n Code node](https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.code/)

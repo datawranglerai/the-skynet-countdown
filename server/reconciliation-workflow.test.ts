@@ -52,6 +52,10 @@ const classification = {
 };
 
 async function executeValidator(output: unknown, candidatePairs: unknown[] = [pair], runIndex = 0) {
+  return executeValidatorItem({ output }, candidatePairs, runIndex);
+}
+
+async function executeValidatorItem(input: unknown, candidatePairs: unknown[] = [pair], runIndex = 0) {
   const workflow = await loadWorkflow();
   const code = node(workflow, 'Validate and Rebind Pair').parameters.jsCode;
   if (typeof code !== 'string') throw new Error('Validator code is missing');
@@ -74,8 +78,26 @@ async function executeValidator(output: unknown, candidatePairs: unknown[] = [pa
 
   const AsyncFunction = Object.getPrototypeOf(async function () {}).constructor as new (...args: string[]) => (...values: unknown[]) => Promise<unknown>;
   const run = new AsyncFunction('$json', '$', '$execution', '$runIndex', code);
-  return run({ output }, select, { id: 'n8n-execution-123' }, runIndex);
+  return run(input, select, { id: 'n8n-execution-123' }, runIndex);
 }
+
+test('validator accepts the fenced output wrapper observed in n8n 2.13.2', async () => {
+  const observed = {
+    relation: 'same_event', confidence: 0.99,
+    same_actor: true, same_action: true, same_occurrence: true, material_followup: false,
+    evidence_left: 'Former OpenAI safety-report lead David Robinson resigned and publicly argued that the company’s safety culture is broken',
+    evidence_right: 'Former OpenAI safety lead David Robinson resigned and said the company’s safety culture is broken.',
+    rationale: 'Both records describe the same resignation by David Robinson and the same criticism of OpenAI’s safety culture, indicating a single shared event.',
+  };
+  const observedPair = {
+    left: { ...pair.left, evidence: `Title: ${observed.evidence_left}` },
+    right: { ...pair.right, evidence: `Title: ${observed.evidence_right}` },
+  };
+  const text = '```json\n' + JSON.stringify({ output: observed }, null, 2) + '\n```';
+  const result = await executeValidatorItem({ text }, [observedPair]) as { json: { classification: unknown; pair: unknown } };
+  assert.deepEqual(result.json.classification, observed);
+  assert.deepEqual(result.json.pair, observedPair);
+});
 
 test('reconciliation workflow is an inactive, bounded sidecar with no AI database tools', async () => {
   const workflow = await loadWorkflow();
@@ -104,9 +126,11 @@ test('reconciliation workflow is an inactive, bounded sidecar with no AI databas
   assert.deepEqual(node(workflow, 'OpenAI Identity Model').parameters.builtInTools, {});
   assert.equal(node(workflow, 'Validate and Rebind Pair').parameters.mode, 'runOnceForEachItem');
   const prompt = String(node(workflow, 'Classify Event Identity').parameters.text);
-  const schema = String(node(workflow, 'Identity Classification Parser').parameters.inputSchema);
+  assert.equal(node(workflow, 'Classify Event Identity').parameters.hasOutputParser, false);
+  assert.equal(workflow.nodes.some((candidate) => candidate.type.endsWith('.outputParserStructured')), false);
+  assert.equal(Object.values(workflow.connections).some((connection) => 'ai_outputParser' in connection), false);
+  for (const field of Object.keys(classification)) assert.ok(prompt.includes(`- ${field}:`), `Prompt must describe ${field}`);
   assert.doesNotMatch(prompt, /event_id|public_id|fingerprint/i, 'The model must not receive database identity fields');
-  assert.doesNotMatch(schema, /event_id|public_id|fingerprint/i, 'The model must not be allowed to choose database identities');
   assert.ok(workflow.nodes.every((candidate) => candidate.credentials === undefined), 'Export must not contain credential references');
 });
 
@@ -129,6 +153,46 @@ test('validator restores database identity and emits the audited context', async
   assert.deepEqual(item.json.context, {
     execution_id: 'n8n-execution-123', model: 'gpt-5.4', prompt_version: 'event-identity-1', auto_merge: true,
   });
+});
+
+test('validator accepts plain and wrapped JSON without changing decision values', async () => {
+  const uncertain = { ...classification, relation: 'uncertain', confidence: 0, same_actor: false };
+  for (const input of [
+    uncertain,
+    { output: uncertain },
+    { text: JSON.stringify(uncertain) },
+    { text: JSON.stringify({ output: uncertain }) },
+    { text: ['  ', '```json', JSON.stringify(uncertain), '```  '].join('\n') },
+  ]) {
+    const result = await executeValidatorItem(input) as { json: { classification: unknown } };
+    assert.deepEqual(result.json.classification, uncertain);
+  }
+});
+
+test('format handling does not salvage incomplete JSON, mixed prose, arrays or extra fields', async () => {
+  const json = JSON.stringify(classification);
+  for (const text of [
+    json.slice(0, -1),
+    `Here is the answer: ${json}`,
+    ['```json', json, '```', '```json', json, '```'].join('\n'),
+  ]) {
+    await assert.rejects(executeValidatorItem({ text }), /not a complete JSON object/);
+  }
+  await assert.rejects(executeValidatorItem({ text: JSON.stringify([classification, classification]) }), /not an object/);
+  await assert.rejects(executeValidatorItem({ text: JSON.stringify({ output: classification, event_id: '999' }) }), /unexpected: output, event_id/);
+  await assert.rejects(executeValidatorItem({ output: { text: { output: { text: { output: classification } } } } }), /too many response wrappers/);
+});
+
+test('validator reports invalid fields and never supplies or coerces a decision', async () => {
+  const { confidence: omitted, ...missingConfidence } = classification;
+  assert.equal(omitted, 0.995);
+  await assert.rejects(executeValidator(missingConfidence), /missing: confidence/);
+  await assert.rejects(executeValidator({ ...classification, confidence: 99 }), /confidence is outside/);
+  await assert.rejects(executeValidator({ ...classification, confidence: '0.99' }), /confidence is outside/);
+  await assert.rejects(executeValidator({ ...classification, same_actor: 'true' }), /same_actor must be boolean/);
+  await assert.rejects(executeValidator({ ...classification, relation: 'duplicate' }), /relation is invalid/);
+  await assert.rejects(executeValidator({ ...classification, evidence_left: 'too short' }), /not a verbatim excerpt/);
+  await assert.rejects(executeValidator({ ...classification, rationale: 'x'.repeat(1001) }), /rationale length/);
 });
 
 test('validator rebinds the pair from the current loop iteration', async () => {
