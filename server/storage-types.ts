@@ -73,6 +73,13 @@ export interface DatabaseEventRow {
   updated_at: string;
 }
 
+export interface DatabaseEventParentRow {
+  child_event_id: string;
+  parent_event_id: string;
+  merge_decision_id: string;
+  created_at: string;
+}
+
 export type RecordHistoryKind = 'assessment' | 'story';
 
 export interface DatabaseHistoryRow {
@@ -94,5 +101,7 @@ export interface DatabaseSnapshot {
   assessments: DatabaseAssessmentRow[];
   stories: DatabaseStoryRow[];
   history: DatabaseHistoryRow[];
+  /** Absent snapshots predate event grouping and are equivalent to an empty list. */
+  eventParents?: DatabaseEventParentRow[];
   dataUpdatedAt: string;
 }

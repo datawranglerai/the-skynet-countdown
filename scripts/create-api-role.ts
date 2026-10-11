@@ -30,6 +30,17 @@ export async function createApiRole(connectionString: string): Promise<void> {
     await client.query(`GRANT CONNECT ON DATABASE "${database}" TO ${ROLE_NAME}`);
     await client.query(`GRANT USAGE ON SCHEMA public TO ${ROLE_NAME}`);
     await client.query(`GRANT SELECT ON public.events, public.assessments, public.stories, public.record_history TO ${ROLE_NAME}`);
+    const identityTables = await client.query<{ event_parents: string | null; event_identity_decisions: string | null }>(`
+      SELECT
+        to_regclass('public.event_parents')::text AS event_parents,
+        to_regclass('public.event_identity_decisions')::text AS event_identity_decisions
+    `);
+    if (identityTables.rows[0]?.event_parents) {
+      await client.query(`GRANT SELECT ON public.event_parents TO ${ROLE_NAME}`);
+    }
+    if (identityTables.rows[0]?.event_identity_decisions) {
+      await client.query(`GRANT SELECT (created_at) ON public.event_identity_decisions TO ${ROLE_NAME}`);
+    }
     url.username = ROLE_NAME;
     url.password = password;
     await writeFile(OUTPUT_PATH, `# Private Railway service variables. This file is ignored by Git.\nDATABASE_URL='${url.toString()}'\nCORS_ORIGINS=https://skynetcountdown.org,https://www.skynetcountdown.org\n`, { mode: 0o600, flag: 'wx' });

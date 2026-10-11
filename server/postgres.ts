@@ -1,6 +1,7 @@
 import { Pool, types as pgTypes, type PoolConfig } from 'pg';
 import type {
   DatabaseAssessmentRow,
+  DatabaseEventParentRow,
   DatabaseEventRow,
   DatabaseHistoryRow,
   DatabaseSnapshot,
@@ -49,7 +50,7 @@ function dateOnly(value: unknown): string {
 
 function normalize(row: unknown): Record<string, unknown> {
   const result: Record<string, unknown> = { ...(row as Record<string, unknown>) };
-  for (const key of ['id', 'event_id', 'assessment_id', 'selected_assessment_id', 'selected_story_id', 'source_row_id']) {
+  for (const key of ['id', 'event_id', 'assessment_id', 'selected_assessment_id', 'selected_story_id', 'source_row_id', 'child_event_id', 'parent_event_id', 'merge_decision_id']) {
     if (result[key] !== undefined && result[key] !== null) result[key] = String(result[key]);
   }
   for (const key of ['created_at', 'updated_at', 'recorded_at']) {
@@ -60,15 +61,33 @@ function normalize(row: unknown): Record<string, unknown> {
 }
 
 export async function readDatabaseSnapshotFromClient(client: Queryable): Promise<DatabaseSnapshot> {
+    const schema = await client.query<{ event_parents: string | null; event_identity_decisions: string | null }>(`
+      SELECT
+        to_regclass('public.event_parents')::text AS event_parents,
+        to_regclass('public.event_identity_decisions')::text AS event_identity_decisions
+    `);
+    const hasEventParents = Boolean(schema.rows[0]?.event_parents);
+    const hasIdentityDecisions = Boolean(schema.rows[0]?.event_identity_decisions);
     const events = await client.query<DatabaseEventRow>('SELECT * FROM public.events ORDER BY id');
     const assessments = await client.query<DatabaseAssessmentRow>('SELECT * FROM public.assessments ORDER BY id');
     const stories = await client.query<DatabaseStoryRow>('SELECT * FROM public.stories ORDER BY id');
     const history = await client.query<DatabaseHistoryRow>('SELECT * FROM public.record_history ORDER BY recorded_at, id');
+    const eventParents = hasEventParents
+      ? await client.query<DatabaseEventParentRow>('SELECT * FROM public.event_parents ORDER BY child_event_id')
+      : { rows: [] as DatabaseEventParentRow[] };
+    const identityUpdatedAt = hasIdentityDecisions
+      ? `(SELECT MAX(created_at) FROM public.event_identity_decisions)`
+      : `'-infinity'::timestamptz`;
+    const parentsUpdatedAt = hasEventParents
+      ? `(SELECT MAX(created_at) FROM public.event_parents)`
+      : `'-infinity'::timestamptz`;
     const updated = await client.query<{ data_updated_at: Date | string }>(`
         SELECT COALESCE(NULLIF(GREATEST(
           COALESCE((SELECT MAX(updated_at) FROM public.events), '-infinity'::timestamptz),
           COALESCE((SELECT MAX(updated_at) FROM public.assessments), '-infinity'::timestamptz),
-          COALESCE((SELECT MAX(updated_at) FROM public.stories), '-infinity'::timestamptz)
+          COALESCE((SELECT MAX(updated_at) FROM public.stories), '-infinity'::timestamptz),
+          COALESCE(${parentsUpdatedAt}, '-infinity'::timestamptz),
+          COALESCE(${identityUpdatedAt}, '-infinity'::timestamptz)
         ), '-infinity'::timestamptz), CURRENT_TIMESTAMP) AS data_updated_at
       `);
     const dataUpdatedAt = updated.rows[0]?.data_updated_at;
@@ -78,6 +97,7 @@ export async function readDatabaseSnapshotFromClient(client: Queryable): Promise
       assessments: assessments.rows.map((row) => normalize(row) as unknown as DatabaseAssessmentRow),
       stories: stories.rows.map((row) => normalize(row) as unknown as DatabaseStoryRow),
       history: history.rows.map((row) => normalize(row) as unknown as DatabaseHistoryRow),
+      eventParents: eventParents.rows.map((row) => normalize(row) as unknown as DatabaseEventParentRow),
       dataUpdatedAt: iso(dataUpdatedAt),
     };
 }

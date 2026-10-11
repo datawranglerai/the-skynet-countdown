@@ -155,7 +155,9 @@ Each incident is published as a **SKYNET CVE**, borrowing the structure of a sec
 - the clock movement in seconds at that point in the timeline; and
 - the resulting symbolic time remaining.
 
-The public `SKYNET-YYYY-NNNN` identifier belongs to an event. PostgreSQL identity keys and foreign keys relate assessment and story records; explicit `event_id` values group different sources covering the same event after review. In the live database, upstream `cve_id` values are reference metadata and are not used as join keys. The archived CSV importer uses an audited manifest and limited unambiguous legacy-ID fallbacks to reconstruct relationships from the earlier exports.
+The public `SKYNET-YYYY-NNNN` identifier belongs to an event. PostgreSQL identity keys and foreign keys relate assessment and story records. Sources can share an `event_id`, and a separate n8n reconciliation workflow groups duplicate events through reversible links. Very confident matches passing fixed evidence and date checks are grouped automatically; uncertain cases enter a review queue. The retained event supplies one selected score, with every source version preserved and old report links still working. See [the setup and review guide](N8N_DEDUPLICATION.md).
+
+In the live database, upstream `cve_id` values are reference metadata and are not used as join keys. The archived CSV importer uses an audited manifest and limited unambiguous legacy-ID fallbacks to reconstruct relationships from the earlier exports.
 
 ## Our belief system, inverted
 

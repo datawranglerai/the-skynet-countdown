@@ -48,6 +48,15 @@ function expectArray(value: unknown, path: string): unknown[] {
   return value;
 }
 
+function expectOptionalRouteAliases(value: unknown, id: string, path: string): string[] | undefined {
+  if (value === undefined) return undefined;
+  const aliases = expectArray(value, path).map((alias, index) => expectString(alias, `${path}[${index}]`));
+  if (aliases.some((alias) => alias.length === 0)) throw new Error(`${path} cannot contain an empty route.`);
+  if (aliases.includes(id)) throw new Error(`${path} cannot contain the incident's canonical route.`);
+  if (new Set(aliases).size !== aliases.length) throw new Error(`${path} cannot contain duplicate routes.`);
+  return aliases;
+}
+
 function stringRecord(value: unknown, path: string): Record<string, string> {
   const record = expectRecord(value, path);
   return Object.fromEntries(Object.entries(record).map(([key, entry]) => [key, expectString(entry, `${path}.${key}`)]));
@@ -139,8 +148,10 @@ function decodeIncident(value: unknown, index: number): Incident {
     ? undefined
     : decodeEditorial(record.editorial, `${path}.editorial`);
 
+  const id = expectString(record.id, `${path}.id`);
   return {
-    id: expectString(record.id, `${path}.id`),
+    id,
+    routeAliases: expectOptionalRouteAliases(record.routeAliases, id, `${path}.routeAliases`),
     publicId: expectOptionalString(record.publicId, `${path}.publicId`),
     eventKey: expectString(record.eventKey, `${path}.eventKey`),
     assessment: canonicalVersion(selectedAssessment, assessments, `${path}.assessment`, sameAssessment),
@@ -171,11 +182,20 @@ export function decodeDataset(value: unknown): Dataset {
   if (source !== undefined && source !== 'postgresql' && source !== 'fixture') {
     throw new Error('dataset.source must be postgresql or fixture.');
   }
+  const incidents = expectArray(record.incidents, 'dataset.incidents').map(decodeIncident);
+  const claimedRoutes = new Map<string, string>();
+  for (const incident of incidents) {
+    for (const route of [incident.id, ...(incident.routeAliases ?? [])]) {
+      const owner = claimedRoutes.get(route);
+      if (owner) throw new Error(`dataset incident route ${route} is claimed by both ${owner} and ${incident.id}.`);
+      claimedRoutes.set(route, incident.id);
+    }
+  }
   return {
     source,
     generatedAt: expectOptionalString(record.generatedAt, 'dataset.generatedAt'),
     dataUpdatedAt: expectOptionalString(record.dataUpdatedAt, 'dataset.dataUpdatedAt'),
-    incidents: expectArray(record.incidents, 'dataset.incidents').map(decodeIncident),
+    incidents,
     assessmentCount: expectNumber(record.assessmentCount, 'dataset.assessmentCount'),
     editorialCount: expectNumber(record.editorialCount, 'dataset.editorialCount'),
     duplicateCount: expectNumber(record.duplicateCount, 'dataset.duplicateCount'),

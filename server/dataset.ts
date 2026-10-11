@@ -18,6 +18,7 @@ import type {
   Incident,
 } from '../src/lib/types.ts';
 import type { DatabaseHistoryRow, DatabaseSnapshot } from './storage-types.ts';
+import { resolveEventIdentityForest } from './event-identity.ts';
 
 function csvBoolean(value: unknown): string {
   return value === true || value === 'TRUE' ? 'TRUE' : 'FALSE';
@@ -88,20 +89,37 @@ function requireUnique<T>(values: readonly T[], description: string): T {
   return values[0];
 }
 
+const DEFAULT_SELECTION_RATIONALE = 'The only assessment source for this event is canonical.';
+
+function groupedSelectionRationale(original: string, aliasCount: number): string {
+  if (!aliasCount) return original;
+  const grouping = 'Duplicate coverage is grouped under this event; the root event’s selected assessment remains canonical.';
+  return original === DEFAULT_SELECTION_RATIONALE ? grouping : `${grouping} Original selection note: ${original}`;
+}
+
 export function buildDatabaseDataset(
   snapshot: DatabaseSnapshot,
   generatedAt = snapshot.dataUpdatedAt,
 ): Dataset {
+  const identity = resolveEventIdentityForest(snapshot.events, snapshot.eventParents);
+  const eventsById = new Map(snapshot.events.map((event) => [event.id, event]));
+  const slugs = new Set<string>();
+  for (const event of snapshot.events) {
+    if (slugs.has(event.slug)) throw new Error(`Event identity contains duplicate slug ${event.slug}.`);
+    slugs.add(event.slug);
+  }
   const historiesByEvent = new Map<string, DatabaseHistoryRow[]>();
   for (const row of snapshot.history) {
+    if (!eventsById.has(row.event_id)) throw new Error(`History ${row.version_key} references unknown event ${row.event_id}.`);
     const values = historiesByEvent.get(row.event_id) ?? [];
     values.push(row);
     historiesByEvent.set(row.event_id, values);
   }
 
   const diagnostics: string[] = [];
-  const chronological = snapshot.events.map((event) => {
-    const history = historiesByEvent.get(event.id) ?? [];
+  const chronological = snapshot.events.filter((event) => identity.rootByEventId.get(event.id) === event.id).map((event) => {
+    const memberIds = identity.eventIdsByRoot.get(event.id) ?? [event.id];
+    const history = memberIds.flatMap((eventId) => historiesByEvent.get(eventId) ?? []);
     const assessmentRows = history.filter((row) => row.kind === 'assessment');
     const storyRows = history.filter((row) => row.kind === 'story');
     const selectedAssessmentRow = requireUnique(
@@ -126,7 +144,11 @@ export function buildDatabaseDataset(
     if (selectedStoryRow && !linkedAssessment) {
       diagnostics.push(`Event ${event.slug} selected story has no linked assessment version.`);
     }
-    return { event, assessment, assessments, editorial, editorials, linkedAssessment };
+    const routeAliases = memberIds
+      .filter((eventId) => eventId !== event.id)
+      .map((eventId) => eventsById.get(eventId)!.slug)
+      .sort();
+    return { event, routeAliases, assessment, assessments, editorial, editorials, linkedAssessment };
   }).sort((left, right) =>
     left.assessment.date.localeCompare(right.assessment.date) || left.event.slug.localeCompare(right.event.slug));
 
@@ -139,6 +161,7 @@ export function buildDatabaseDataset(
     const clock = calculateClock(cumulativePoints);
     return {
       id: value.event.slug,
+      routeAliases: value.routeAliases,
       publicId: value.event.public_id,
       eventKey: value.event.id,
       assessment: value.assessment,
@@ -150,7 +173,7 @@ export function buildDatabaseDataset(
         ? calculateRiskScore(parseAssessmentHistory(value.linkedAssessment).scores).totalPoints
         : undefined,
       headline: value.editorial?.headline ?? value.assessment.title,
-      selectionRationale: value.event.selection_rationale,
+      selectionRationale: groupedSelectionRationale(value.event.selection_rationale, value.routeAliases.length),
       scoring,
       effectivePoints: scoring.totalPoints,
       gapClosedPercent: calculateGapClosedPercent(scoring.totalPoints),
@@ -183,11 +206,14 @@ function encodeCsv(headers: readonly string[], rows: readonly CsvRecord[]): stri
 }
 
 export function exportDatabaseCsv(snapshot: DatabaseSnapshot, kind: 'assessments' | 'stories'): string {
+  const identity = resolveEventIdentityForest(snapshot.events, snapshot.eventParents);
   const publicIds = new Map(snapshot.events.map((event) => [event.id, event.public_id]));
-  const metadataHeaders = ['event_id', 'public_id', 'source_row_id', 'version_id', 'provenance', 'csv_row_numbers', 'recorded_at'];
+  const metadataHeaders = ['event_id', 'public_id', 'resolved_event_id', 'resolved_public_id', 'source_row_id', 'version_id', 'provenance', 'csv_row_numbers', 'recorded_at'];
   const metadata = (row: DatabaseHistoryRow) => ({
     event_id: row.event_id,
     public_id: publicIds.get(row.event_id) ?? '',
+    resolved_event_id: identity.rootByEventId.get(row.event_id) ?? '',
+    resolved_public_id: publicIds.get(identity.rootByEventId.get(row.event_id) ?? '') ?? '',
     source_row_id: row.source_row_id,
     version_id: row.version_key,
     provenance: row.provenance,

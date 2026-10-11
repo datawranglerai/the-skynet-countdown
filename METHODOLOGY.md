@@ -275,7 +275,7 @@ The same nine-point score at the initial 15:00 baseline would close the same per
 
 ### Current PostgreSQL record
 
-An event is the grouping unit for records describing one development. A new source can receive an event automatically; explicit cross-source grouping requires review. Each event contributes one selected assessment to the clock. Repeated coverage and assessment revisions are preserved as evidence rather than added as independent clock contributions.
+An event is the grouping unit for records describing one development. A new source can receive an event automatically. Cross-source grouping uses an explicit identity decision: very confident matches passing fixed safeguards can be accepted automatically, while uncertain matches require human review. Each resolved event group contributes one selected assessment to the clock. Repeated coverage and assessment revisions are preserved as evidence rather than added as independent clock contributions.
 
 | Table | Role |
 | --- | --- |
@@ -283,12 +283,22 @@ An event is the grouping unit for records describing one development. A new sour
 | `stories` | Latest editorial per `assessment_id`; that foreign key identifies its parent |
 | `events` | Stable event identity, public ID, route slug, selection rationale and canonical assessment/story pointers |
 | `record_history` | Append-only assessment and editorial versions, original payloads, provenance and exact version links |
+| `event_parents` | Current reversible links from duplicate events to their retained parent |
+| `event_identity_decisions` | Append-only classifications, human review decisions, stale proposals and undo actions |
 
 Public IDs use `SKYNET-YYYY-NNNN` formatting and remain attached to their event. The route slug is also stable. Incoming `cve_id` is source metadata: it is neither unique nor a join key.
 
-The exact-source-URL uniqueness rule does not discover all accounts of the same incident. A previously unseen source can create a new event automatically. Different URLs require an explicit shared event identity after review to avoid duplicate counting. The runtime does not perform semantic news deduplication.
+The exact-source-URL uniqueness rule does not discover all accounts of the same incident. A previously unseen source can create a new event automatically. The companion n8n reconciliation workflow compares persisted records and proposes whether two groups describe the same real-world occurrence. It does not choose scores or write SQL. Fixed PostgreSQL functions validate and apply its decisions.
 
-The database accepts an existing `event_id` when inserting another source for that event. The saved n8n assessment mappings and upserts currently omit this field. Passing a reviewed event identity through that route requires extending both the mapping and query, or using a separate reviewed database ingestion step. Existing duplicate groups need an explicit reconciliation procedure that preserves history and valid canonical pointers; there is no merge interface in the app.
+By default, candidate retrieval compares dates within 45 days, ranks title overlap and also considers pairs within seven days without shared title words. It processes up to 20 pairs every six hours, across historical and new records. The date window is the distance between candidate dates, not an age cutoff. Previously classified unchanged pairs are skipped. These bounded rules can miss duplicates, and a newly ingested duplicate may remain visible until a later run.
+
+Candidate and automatic-match date checks use the latest `incident_date` among each group's current assessment rows. The public timeline retains the selected canonical assessment's date. The classifier receives bounded excerpts of stored factual records, not an independent verification of the linked articles.
+
+An automatic match requires `same_event`, model-reported confidence of at least **0.98**, agreement on actor/action/occurrence, no material follow-up, dates within **seven days**, and a verbatim factual excerpt of at least 24 characters from each side. The database rechecks the group's fingerprint and evidence before applying the decision. The evidence contains titles, dates, URLs and factual story text; scoring rationales and analytical takes are excluded. Model confidence is a decision threshold, not a calibrated accuracy estimate or a risk score. Other potential matches are queued for review. Confident differences are recorded without grouping.
+
+Accepted matches add a parent link. The earlier-created root event remains canonical, with identity ID as the tie-breaker; its selected assessment and story stay selected. All original events, source rows and history remain stored, and old slugs resolve to the retained report. An undo removes the exact link, logs the reason and restores the subgroup. Grouping changes do not directly rewrite criterion scores or canonical version pointers.
+
+The database also accepts an existing `event_id` when inserting another source for that event. The saved v1.1/v1.2 ingestion mappings omit this field; the companion workflow reconciles their persisted results instead. Setup, decision functions, queue review, concurrency safeguards and undo are documented in [N8N_DEDUPLICATION.md](N8N_DEDUPLICATION.md). There is no public merge interface.
 
 The runtime resolves the selected assessment by `events.selected_assessment_version_key`. It does not choose the largest score, average variants or select an assessment merely because it is newest. Database triggers advance the selected version when the already selected source row changes. Adding a different source does not automatically replace that selection. New data can therefore update the published record without a separate human approval gate.
 
@@ -304,7 +314,7 @@ With a fixed record, adding a positive score moves the clock closer to midnight;
 
 Source updates append history, including updates that keep a raw total the same but change the underlying payload. No-op updates do not create unnecessary versions. Existing source history is not overwritten to make a recalculation look as if it had always been the only assessment.
 
-Implementation: [server/dataset.ts](server/dataset.ts), [server/postgres.ts](server/postgres.ts) and [the events/history migration](db/001_events_and_history.sql).
+Implementation: [server/dataset.ts](server/dataset.ts), [server/postgres.ts](server/postgres.ts), [event identity resolution](server/event-identity.ts), [the events/history migration](db/001_events_and_history.sql) and [the reconciliation migration](db/002_event_reconciliation.sql).
 
 ### Archived CSV evidence
 
@@ -364,7 +374,7 @@ These fields are still required and validated. Writing a published score of 17 i
 
 Validation failures prevent a fresh API dataset from being published. The dataset adapter returns some issues as diagnostics, including a missing selected story-to-assessment link; `server/http.ts` rejects a snapshot containing any diagnostics before caching or serving it. Source validation also applies to preserved versions, so an invalid alternate assessment can block publication even when it is not selected for scoring. The frontend shows an unavailable/retry state if it has no dataset, or marks the last successfully loaded record as stale if a refresh fails. An empty database has a mathematical baseline of 15:00, but the interface reports an empty record rather than inventing incidents. Data validation does not verify the truth of source claims or the adequacy of a rationale.
 
-The downloadable CSVs are history exports: they contain preserved versions, event/public IDs, provenance and source/version links. They are not just a dump of the latest selected assessments. Consult [records.ts](src/lib/records.ts), [server/dataset.ts](server/dataset.ts) and [server/http.ts](server/http.ts) for these contracts.
+The downloadable CSVs are history exports: they contain preserved versions, original event/public IDs, resolved event/public IDs, provenance and source/version links. They are not just a dump of the latest selected assessments. Consult [records.ts](src/lib/records.ts), [server/dataset.ts](server/dataset.ts) and [server/http.ts](server/http.ts) for these contracts.
 
 ## 12. Collection workflow and known inconsistencies
 
@@ -382,7 +392,7 @@ All three contain the same researcher and scorer system prompts. Inspect named n
 | Scoring instructions | `AI Agent Scorer.parameters.options.systemMessage` contains the rubric and conservative-evidence instructions; `Stories Scoring Parser.parameters.inputSchema` specifies structured output |
 | Manual sources | v1.2 supports manually supplied URLs and nullable Reddit fields; parts of its research instructions still describe Reddit-first discovery |
 | Persistence variants | The original export targets Sheets; v1.1/v1.2 include Neon assessment/story upserts and retain Sheets nodes |
-| Cross-source grouping | The saved assessment mappings and upserts omit `event_id`; grouping through n8n needs an explicit extension to that path |
+| Cross-source grouping | The collection exports omit `event_id`; the separate [Reconcile Events workflow](<n8n/Skynet Countdown - Reconcile Events.json>) groups persisted events through guarded database functions |
 | Clock text | Every export has a configured `current_clock_position` of `11:52` and retained minute recommendations; the app ignores these when calculating its clock |
 
 The prompts retain the unweighted 0–13 export severity table and minute suggestions alongside instructions describing the app's weighted 0–17 score. The current parser expects the former as source metadata; the app applies the latter for publication. This is an integration constraint and a source of possible model confusion.
@@ -394,7 +404,7 @@ The writer prompt asks for a short factual account and a separate analytical tak
 ## 13. Limitations
 
 - **Coverage bias:** more reporting, more sources or a different collection cadence can add points without a corresponding change in the world. There is no denominator for total AI activity or successful safe deployments.
-- **Deduplication limits:** exact source URLs and explicit event groups do not automatically identify every duplicate or dependent development. Event boundaries can affect totals substantially.
+- **Deduplication limits:** candidate windows and model judgements can miss duplicates or group separate developments incorrectly. Automatic confidence is not calibrated accuracy. Decisions are logged and reversible; event boundaries can affect totals substantially.
 - **Assessment uncertainty:** qualitative terms such as significant, sustained and meaningful require judgement. Zero can reflect either absence or insufficient evidence. There are no numeric confidence weights or confidence intervals.
 - **Correlated criteria:** governance, access and autonomy may describe related aspects of one failure. Separate rationales help expose this, but the additive model has no learned correction for correlation beyond the chosen Trifecta weighting.
 - **Different contexts:** a controlled evaluation, observed deployment and hypothetical warning can concern similar capabilities while having different evidential strength and consequences. The present score has no separate experiment-versus-deployment multiplier; the distinction belongs in the source account and rationale.

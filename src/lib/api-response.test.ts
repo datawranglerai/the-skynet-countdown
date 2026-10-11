@@ -55,3 +55,25 @@ test('API decoder accepts legacy records without version IDs using stable conten
 test('API decoder rejects malformed top-level data', () => {
   assert.throws(() => decodeDataset({ incidents: 'nope' }), /dataset.incidents must be an array/);
 });
+
+test('API decoder accepts route aliases and rejects ambiguous routes', () => {
+  const response = JSON.parse(JSON.stringify(fixture));
+  response.incidents[0].routeAliases = ['retired-event-route'];
+  assert.deepEqual(decodeDataset(response).incidents[0].routeAliases, ['retired-event-route']);
+
+  response.incidents.push({
+    ...response.incidents[0],
+    id: 'second-event',
+    eventKey: 'second-event',
+    routeAliases: ['retired-event-route'],
+  });
+  assert.throws(() => decodeDataset(response), /route retired-event-route is claimed by both/);
+});
+
+test('API decoder rejects malformed route aliases', () => {
+  for (const aliases of ['not-an-array', ['', 'valid'], ['duplicate', 'duplicate'], ['test-event']] as unknown[]) {
+    const response = JSON.parse(JSON.stringify(fixture));
+    response.incidents[0].routeAliases = aliases;
+    assert.throws(() => decodeDataset(response), /routeAliases/);
+  }
+});
