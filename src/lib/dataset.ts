@@ -1,8 +1,4 @@
-import {
-  calculateClock,
-  calculateGapClosedPercent,
-  calculateMovementSeconds,
-} from './calibration.ts';
+import { applyClockLedger } from './clock-ledger.ts';
 import { parseCsv, stableContentFingerprint } from './csv.ts';
 import { assessmentFingerprint, sourceDateAlias } from './identity.ts';
 import {
@@ -337,17 +333,15 @@ export function loadDataset(
   }
 
   working.sort((left, right) => left.assessment.date.localeCompare(right.assessment.date) || left.id.localeCompare(right.id));
-  let cumulativePoints = 0;
-  const incidents: Incident[] = working.map((value) => {
+  const ledger = applyClockLedger(working.map((value) => ({
+    id: value.id,
+    date: value.assessment.date,
+    score: calculateRiskScore(value.assessment.scores).totalPoints,
+  })), null);
+  const workingById = new Map(working.map((value) => [value.id, value]));
+  const incidents: Incident[] = ledger.entries.map((clockEntry) => {
+    const value = workingById.get(clockEntry.id)!;
     const scoring = calculateRiskScore(value.assessment.scores);
-    const points = scoring.totalPoints;
-    const priorPoints = cumulativePoints;
-    const nextCumulativePoints = cumulativePoints + points;
-    if (!Number.isSafeInteger(nextCumulativePoints)) {
-      throw new RangeError('Cumulative evidence points must remain a non-negative safe integer');
-    }
-    cumulativePoints = nextCumulativePoints;
-    const clock = calculateClock(cumulativePoints);
     const sortedEditorials = value.editorials.sort((left, right) => left.fingerprint.localeCompare(right.fingerprint));
     const preferredEditorials = sortedEditorials.filter((entry) => entry.preferred);
     if (preferredEditorials.length > 1) {
@@ -373,16 +367,16 @@ export function loadDataset(
       headline: canonicalEditorial?.headline ?? value.assessment.title,
       selectionRationale: value.selectionRationale,
       scoring,
-      effectivePoints: points,
-      gapClosedPercent: calculateGapClosedPercent(points),
-      cumulativePoints,
-      remainingSeconds: clock.remainingSeconds,
-      movementSeconds: calculateMovementSeconds(priorPoints, points),
+      clockPhase: clockEntry.clockPhase,
+      phaseCumulativePoints: clockEntry.phaseCumulativePoints,
+      effectivePoints: clockEntry.effectivePoints,
+      gapClosedPercent: clockEntry.gapClosedPercent,
+      cumulativePoints: clockEntry.cumulativePoints,
+      remainingSeconds: clockEntry.remainingSeconds,
+      movementSeconds: clockEntry.movementSeconds,
     };
     return incident;
   });
-  const clock = calculateClock(cumulativePoints);
-
   return {
     incidents,
     assessmentCount: assessmentRows.length,
@@ -390,9 +384,10 @@ export function loadDataset(
     duplicateCount: assessmentRows.length - incidents.length,
     matchedEditorialCount,
     diagnostics,
-    totalPoints: cumulativePoints,
-    remainingSeconds: clock.remainingSeconds,
-    pressure: clock.pressure,
+    clock: ledger.clock,
+    totalPoints: ledger.totalPoints,
+    remainingSeconds: ledger.remainingSeconds,
+    pressure: ledger.pressure,
     lastUpdated: incidents.reduce((latest, incident) => incident.assessment.date > latest ? incident.assessment.date : latest, ''),
   };
 }

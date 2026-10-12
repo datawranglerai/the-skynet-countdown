@@ -198,7 +198,7 @@ test('loads the audited source snapshot and reproduces exponential calibration v
   assert.equal(dataset.incidents.reduce((sum, incident) => sum + incident.assessment.score, 0), 96);
   assert.equal(dataset.totalPoints, 113);
   assert.equal(dataset.remainingSeconds, calculateClock(113).remainingSeconds);
-  assert.equal(dataset.pressure, calculateGapClosedPercent(113));
+  assert.equal(dataset.pressure, calculateClock(113).pressure);
   assert.equal(dataset.lastUpdated, '2026-09-28');
   assert.deepEqual(dataset.diagnostics, []);
   assert.equal(dataset.incidents.filter((incident) => !incident.editorial).length, 8);
@@ -729,26 +729,29 @@ test('scores all 1,944 valid configurations and all 6,480 amplifier increments',
   assert.equal(transitions, 6480);
 });
 
-test('the 15-minute baseline halves every 1,000 points and never reaches zero', () => {
+test('the approach closes the window above two minutes every 1,000 points without crossing it', () => {
   assert.deepEqual(CALIBRATION, {
     version: '1.0',
-    effectiveDate: '2026-10-07',
+    effectiveDate: '2026-10-11',
     halfwayPoints: 1_000,
     startingSeconds: 900,
+    horizonSeconds: 120,
+    eventHorizonHalfwayPoints: 250,
+    eventHorizonMinimumScore: 10,
   });
   assert.deepEqual(calculateClock(0), { remainingSeconds: 900, pressure: 0 });
-  assert.deepEqual(calculateClock(1_000), { remainingSeconds: 450, pressure: 50 });
-  assert.deepEqual(calculateClock(2_000), { remainingSeconds: 225, pressure: 75 });
-  assert.equal(formatTime(calculateClock(113).remainingSeconds), '13:52');
-  assert.equal(formatPressure(calculateClock(113).pressure), '7.5');
-  assert.equal(formatTime(calculateClock(169).remainingSeconds), '13:21');
-  assert.equal(formatTime(calculateClock(191).remainingSeconds), '13:08');
-  assert.ok(calculateClock(1_000_000).remainingSeconds > 0);
+  assert.deepEqual(calculateClock(1_000), { remainingSeconds: 510, pressure: 43.333333333333336 });
+  assert.deepEqual(calculateClock(2_000), { remainingSeconds: 315, pressure: 65 });
+  assert.equal(formatTime(calculateClock(113).remainingSeconds), '14:01');
+  assert.equal(formatPressure(calculateClock(113).pressure), '6.5');
+  assert.equal(formatTime(calculateClock(169).remainingSeconds), '13:34');
+  assert.equal(formatTime(calculateClock(191).remainingSeconds), '13:23');
+  assert.ok(calculateClock(1_000_000).remainingSeconds > CALIBRATION.horizonSeconds);
   const extreme = calculateClock(Number.MAX_VALUE);
   assert.ok(Number.isFinite(extreme.remainingSeconds));
-  assert.ok(extreme.remainingSeconds > 0);
-  assert.equal(extreme.pressure, 100);
-  assert.equal(formatTime(extreme.remainingSeconds), '<00:01');
+  assert.ok(extreme.remainingSeconds > CALIBRATION.horizonSeconds);
+  assert.ok(extreme.pressure < 100);
+  assert.equal(formatTime(extreme.remainingSeconds), '>02:00');
   assert.equal(calculateGapClosedPercent(0), 0);
   assert.equal(formatGapClosedPercent(0), '0%');
   assert.equal(formatGapClosedPercent(calculateGapClosedPercent(2)), '0.14%');
@@ -761,14 +764,15 @@ test('the 15-minute baseline halves every 1,000 points and never reaches zero', 
   assert.throws(() => formatTime(-0.1), /non-negative finite/);
 });
 
-test('event impact is a constant proportional gap closure independent of prior evidence', () => {
+test('event impact is a constant proportional closure of the gap above the Event Horizon', () => {
   for (const points of [2, 7, 13, 17]) {
     const expectedFraction = calculateGapClosedPercent(points) / 100;
     for (const priorPoints of [0, 50, 191, 500, 1000]) {
       const before = calculateClock(priorPoints).remainingSeconds;
       const after = calculateClock(priorPoints + points).remainingSeconds;
-      assert.ok(Math.abs((before - after) / before - expectedFraction) < 1e-14);
-      assert.ok(Math.abs(calculateMovementSeconds(priorPoints, points) / before - expectedFraction) < 1e-14);
+      const activeGap = before - CALIBRATION.horizonSeconds;
+      assert.ok(Math.abs((before - after) / activeGap - expectedFraction) < 1e-14);
+      assert.ok(Math.abs(calculateMovementSeconds(priorPoints, points) / activeGap - expectedFraction) < 1e-14);
     }
   }
   assert.equal(formatGapClosedPercent(calculateGapClosedPercent(2)), '0.14%');
@@ -782,7 +786,7 @@ test('movement remains positive at the representational floor for every positive
     const movement = calculateMovementSeconds(Number.MAX_VALUE, points);
     assert.ok(Number.isFinite(movement));
     assert.ok(movement > 0);
-    assert.equal(movement, Number.MIN_VALUE);
+    assert.ok(movement < 1e-12);
   }
   assert.equal(formatGapClosedPercent(calculateGapClosedPercent(13)), '0.90%');
   assert.throws(() => calculateMovementSeconds(-1, 1), /non-negative finite/);
@@ -795,13 +799,13 @@ test('chronological deltas reconcile to the full clock movement and event gap pe
   assert.ok(Math.abs(totalMovement - (CALIBRATION.startingSeconds - dataset.remainingSeconds)) < 1e-9);
   let priorRemaining: number = CALIBRATION.startingSeconds;
   for (const incident of dataset.incidents) {
-    const expectedRemaining = 900 * 2 ** (-incident.cumulativePoints / 1_000);
+    const expectedRemaining = 120 + 780 * 2 ** (-incident.cumulativePoints / 1_000);
     assert.ok(Math.abs(incident.remainingSeconds - expectedRemaining) < 1e-9);
     assert.equal(incident.gapClosedPercent, calculateGapClosedPercent(incident.effectivePoints));
     if (incident.effectivePoints === 0) {
       assert.equal(incident.movementSeconds, 0);
     } else {
-      assert.ok(Math.abs(incident.movementSeconds / priorRemaining - incident.gapClosedPercent / 100) < 1e-14);
+      assert.ok(Math.abs(incident.movementSeconds / (priorRemaining - 120) - incident.gapClosedPercent / 100) < 1e-14);
     }
     priorRemaining = incident.remainingSeconds;
   }

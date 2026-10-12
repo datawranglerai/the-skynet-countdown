@@ -22,10 +22,12 @@ const fixture: Dataset = {
     assessment, assessments: [assessment], editorial, editorials: [editorial], editorialMatchesAssessment: true,
     headline: editorial.headline, selectionRationale: 'Selected.',
     scoring: { trifectaCount: 1, trifectaPoints: 1, amplifierPoints: 0, totalPoints: 1, severity: 'CANARY' },
+    clockPhase: 'approach', phaseCumulativePoints: 1,
     effectivePoints: 1, gapClosedPercent: calculateGapClosedPercent(1), cumulativePoints: 1,
     remainingSeconds: calculateClock(1).remainingSeconds, movementSeconds: calculateMovementSeconds(0, 1),
   }],
   assessmentCount: 1, editorialCount: 1, duplicateCount: 0, matchedEditorialCount: 1, diagnostics: [],
+  clock: { phase: 'approach', phasePoints: 1, approval: null, transition: null },
   totalPoints: 1, ...calculateClock(1), lastUpdated: '2026-01-01',
 };
 
@@ -50,6 +52,32 @@ test('API decoder accepts legacy records without version IDs using stable conten
   const decoded = decodeDataset(response);
   assert.equal(decoded.incidents[0].assessment, decoded.incidents[0].assessments[0]);
   assert.equal(decoded.incidents[0].editorial, decoded.incidents[0].editorials[0]);
+});
+
+test('API decoder recalculates legacy clock payloads as approach without inferring approval', () => {
+  const response = JSON.parse(JSON.stringify(fixture));
+  delete response.clock;
+  delete response.incidents[0].clockPhase;
+  delete response.incidents[0].phaseCumulativePoints;
+  response.remainingSeconds = 1;
+  response.pressure = 99;
+  response.incidents[0].remainingSeconds = 1;
+  response.incidents[0].movementSeconds = 899;
+  const decoded = decodeDataset(response);
+  assert.deepEqual(decoded.clock, { phase: 'approach', phasePoints: 1, approval: null, transition: null });
+  assert.equal(decoded.remainingSeconds, calculateClock(1).remainingSeconds);
+  assert.equal(decoded.incidents[0].remainingSeconds, calculateClock(1).remainingSeconds);
+  assert.equal(decoded.incidents[0].clockPhase, 'approach');
+});
+
+test('API decoder rejects inconsistent or incomplete Event Horizon state', () => {
+  const inconsistent = JSON.parse(JSON.stringify(fixture));
+  inconsistent.clock.phasePoints = 2;
+  assert.throws(() => decodeDataset(inconsistent), /inconsistent with the clock ledger/);
+
+  const incomplete = JSON.parse(JSON.stringify(fixture));
+  incomplete.clock.approval = {};
+  assert.throws(() => decodeDataset(incomplete), /approval/);
 });
 
 test('API decoder rejects malformed top-level data', () => {

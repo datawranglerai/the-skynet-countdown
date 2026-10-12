@@ -12,6 +12,29 @@ export interface Criterion {
 
 export type RiskSeverity = 'NO_MOVEMENT' | Severity;
 
+export type ClockPhase = 'approach' | 'event-horizon';
+
+export interface EventHorizonApproval {
+  approvedBy: string;
+  approvedAt: string;
+  effectiveAfter: { date: string; incidentId: string };
+  rationale: string;
+  editorialUrl: string;
+}
+
+export interface ClockTransition {
+  afterIncidentId: string;
+  remainingSecondsBefore: number;
+  adjustmentSeconds: number;
+}
+
+export interface DatasetClock {
+  phase: ClockPhase;
+  phasePoints: number;
+  approval: EventHorizonApproval | null;
+  transition: ClockTransition | null;
+}
+
 export interface RiskScore {
   trifectaCount: number;
   trifectaPoints: number;
@@ -63,6 +86,8 @@ export interface Incident {
   headline: string;
   selectionRationale: string;
   scoring: RiskScore;
+  clockPhase: ClockPhase;
+  phaseCumulativePoints: number;
   effectivePoints: number;
   gapClosedPercent: number;
   cumulativePoints: number;
@@ -80,6 +105,7 @@ export interface Dataset {
   duplicateCount: number;
   matchedEditorialCount: number;
   diagnostics: string[];
+  clock: DatasetClock;
   totalPoints: number;
   remainingSeconds: number;
   pressure: number;

@@ -1,9 +1,13 @@
+import type { ClockPhase } from './types.ts';
+
 export const CALIBRATION = Object.freeze({
   version: '1.0' as const,
-  effectiveDate: '2026-10-07' as const,
-  // One fixed scale for the entire history and every future event.
+  effectiveDate: '2026-10-11' as const,
   halfwayPoints: 1_000,
   startingSeconds: 900,
+  horizonSeconds: 120,
+  eventHorizonHalfwayPoints: 250,
+  eventHorizonMinimumScore: 10,
 });
 
 function requireNonNegativeFinite(value: number, label: string): void {
@@ -12,33 +16,65 @@ function requireNonNegativeFinite(value: number, label: string): void {
   }
 }
 
-export function calculateClock(points: number): { remainingSeconds: number; pressure: number } {
+function requirePhase(phase: ClockPhase): void {
+  if (phase !== 'approach' && phase !== 'event-horizon') {
+    throw new RangeError(`Unknown clock phase: ${String(phase)}`);
+  }
+}
+
+function phaseHalfwayPoints(phase: ClockPhase): number {
+  return phase === 'approach' ? CALIBRATION.halfwayPoints : CALIBRATION.eventHorizonHalfwayPoints;
+}
+
+function phaseEventPoints(points: number, phase: ClockPhase): number {
+  return phase === 'event-horizon' && points < CALIBRATION.eventHorizonMinimumScore ? 0 : points;
+}
+
+function globalPressure(remainingSeconds: number): number {
+  return 100 * (CALIBRATION.startingSeconds - remainingSeconds) / CALIBRATION.startingSeconds;
+}
+
+export function calculateClock(
+  points: number,
+  phase: ClockPhase = 'approach',
+): { remainingSeconds: number; pressure: number } {
   requireNonNegativeFinite(points, 'Points');
-  const exponent = (-Math.LN2 * points) / CALIBRATION.halfwayPoints;
+  requirePhase(phase);
+  const exponent = (-Math.LN2 * points) / phaseHalfwayPoints(phase);
+  if (phase === 'event-horizon') {
+    const remainingSeconds = Math.max(Number.MIN_VALUE, CALIBRATION.horizonSeconds * Math.exp(exponent));
+    return { remainingSeconds, pressure: globalPressure(remainingSeconds) };
+  }
+  const approachWindow = CALIBRATION.startingSeconds - CALIBRATION.horizonSeconds;
   const remainingSeconds = Math.max(
-    Number.MIN_VALUE,
-    CALIBRATION.startingSeconds * Math.exp(exponent),
+    CALIBRATION.horizonSeconds + Number.EPSILON * CALIBRATION.horizonSeconds,
+    CALIBRATION.horizonSeconds + approachWindow * Math.exp(exponent),
   );
-  return {
-    remainingSeconds,
-    pressure: calculateGapClosedPercent(points),
-  };
+  return { remainingSeconds, pressure: globalPressure(remainingSeconds) };
 }
 
-export function calculateGapClosedPercent(points: number): number {
+export function calculateGapClosedPercent(points: number, phase: ClockPhase = 'approach'): number {
   requireNonNegativeFinite(points, 'Points');
-  if (points === 0) return 0;
-  return 100 * -Math.expm1((-Math.LN2 * points) / CALIBRATION.halfwayPoints);
+  requirePhase(phase);
+  const eligiblePoints = phaseEventPoints(points, phase);
+  if (eligiblePoints === 0) return 0;
+  return 100 * -Math.expm1((-Math.LN2 * eligiblePoints) / phaseHalfwayPoints(phase));
 }
 
-export function calculateMovementSeconds(priorPoints: number, eventPoints: number): number {
+export function calculateMovementSeconds(
+  priorPoints: number,
+  eventPoints: number,
+  phase: ClockPhase = 'approach',
+): number {
   requireNonNegativeFinite(priorPoints, 'Prior points');
   requireNonNegativeFinite(eventPoints, 'Event points');
-  if (eventPoints === 0) return 0;
-  const gapFraction = -Math.expm1(
-    (-Math.LN2 * eventPoints) / CALIBRATION.halfwayPoints,
-  );
-  const representedMovement = calculateClock(priorPoints).remainingSeconds * gapFraction;
+  requirePhase(phase);
+  const eligiblePoints = phaseEventPoints(eventPoints, phase);
+  if (eligiblePoints === 0) return 0;
+  const gapFraction = calculateGapClosedPercent(eligiblePoints, phase) / 100;
+  const priorRemaining = calculateClock(priorPoints, phase).remainingSeconds;
+  const activeWindow = phase === 'approach' ? priorRemaining - CALIBRATION.horizonSeconds : priorRemaining;
+  const representedMovement = activeWindow * gapFraction;
   return representedMovement > 0 ? representedMovement : Number.MIN_VALUE;
 }
 
@@ -61,6 +97,7 @@ export function formatPressure(pressure: number): string {
 export function formatTime(seconds: number): string {
   requireNonNegativeFinite(seconds, 'Seconds');
   if (seconds < 1) return '<00:01';
+  if (seconds > CALIBRATION.horizonSeconds && seconds < CALIBRATION.horizonSeconds + 0.5) return '>02:00';
   const rounded = Math.round(seconds);
   const minutes = Math.floor(rounded / 60);
   const remainder = rounded % 60;

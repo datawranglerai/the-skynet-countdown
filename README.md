@@ -50,26 +50,40 @@ From the first incident onward, everything is ours. The scores, the formula, the
 Each incident adds evidence points. The clock converts their cumulative total into symbolic time remaining:
 
 ```text
-remaining seconds = 900 × 2^(-B / 1000)
+remaining seconds = 120 + 780 × 2^(-B / 1000)
 ```
 
-`B` is the cumulative number of published evidence points. Every 1,000 points halve the remaining time: 15 minutes become 7:30, then 3:45. The curve continuously approaches midnight but never reaches it after any finite number of incidents.
+`B` is the cumulative number of published evidence points. Every 1,000 points halve the gap to **Event Horizon**, the boundary at two minutes to midnight: 15:00 becomes 08:30, then 05:15. Incidents keep closing smaller gaps without reaching 02:00. There is no queue or automatic crossing.
 
-An incident with a published score of `s` always closes the same share of the gap that remained immediately before it:
+During the approach, an incident with a published score of `s` closes a fixed share of the gap to Event Horizon:
 
 ```text
 share of remaining gap closed = 100 × (1 − 2^(-s / 1000))
 ```
 
-For example, a two-point incident always closes **0.14%** of the remaining gap, while a 17-point incident always closes **1.17%**. The movement in seconds becomes smaller as midnight approaches because that same share is taken from a smaller remaining interval. The percentage is the stable measure for comparing incident impact; it is not a probability.
+Before Event Horizon, a two-point incident closes **0.14%** of the remaining gap to 02:00, while a 17-point incident closes **1.17%**. The movement in seconds becomes smaller as the boundary approaches because that same share is taken from a smaller interval. Compare proportional impact within the same phase; the percentage is not a probability.
 
-The 1,000-point half-scale is a fixed editorial calibration chosen for gradual accumulation over months of ordinary coverage. It applies uniformly to the entire history and all future events, and does not change as the dataset grows. The 15-minute baseline defines the display window; the half-scale determines the relative impact of every incident. The calendar pace depends on how many evidence points are added. Neither constant is an empirical risk estimate or a target fitted to the current reading.
+The 1,000-point half-scale is a fixed editorial calibration chosen for gradual accumulation over months of ordinary coverage. It applies throughout the approach phase and does not change as the dataset grows. The 15-minute baseline defines the display window; the half-scale determines incident impact within that phase. The calendar pace depends on how many evidence points are added. These constants are editorial choices, not empirical risk estimates.
 
-At 113 evidence points, the calibration leaves **13:52 symbolic minutes** and produces an evidence pressure reading of **7.5/100**. At 191 points, the clock reads **13:08**. Evidence pressure measures the share of the starting gap consumed.
+At 113 evidence points, the calibration leaves **14:01 symbolic minutes** and produces an evidence pressure reading of **6.5/100**. At 191 points, the clock reads **13:23**. Evidence pressure measures the share of the complete 15-minute starting window consumed.
+
+### Event Horizon
+
+The final two minutes represent the project's editorial point of no return: the judgement that meaningful human control has deteriorated so materially that the story has become one of postponement. The name supplies the dramatic framing; the index cannot prove that catastrophe is inevitable.
+
+Entry requires the owner's explicit, published decision, accompanied by an editorial explaining the evidence. That decision places the clock at 02:00 as a separately identified editorial adjustment. It cannot be triggered by a score, a database update or elapsed time. Approval is unset by default in [event-horizon.ts](src/lib/event-horizon.ts).
+
+After entry, only incidents scoring **10/17 or above** move the clock. Lower-scoring incidents remain visible with their assessments and a zero clock contribution. For `E` eligible points strictly after the approved boundary:
+
+```text
+remaining seconds = 120 × 2^(-E / 250)
+```
+
+Every 250 eligible points halves the remaining time. Earlier evidence is not counted again, and the curve continues to approach midnight without reaching it. Scores retain their meaning; movement follows the incident's phase. [METHODOLOGY.md](METHODOLOGY.md#event-horizon-and-the-editorial-transition) documents the rules and [APP.md](APP.md#authorising-event-horizon) explains the deliberate activation procedure.
 
 ## Scoring methodology
 
-Methodology **v1.0**, effective **7 October 2026**, uses two tiers with a maximum published score of 17. The app derives that score directly from the eight criterion values recorded for each selected assessment. [METHODOLOGY.md](METHODOLOGY.md) is the full specification, including evidence rules, calculations, record selection, limitations and handoff guidance; the summary below is kept concise.
+Methodology **v1.0** uses two tiers with a maximum published score of 17. The app derives that score directly from the eight criterion values recorded for each selected assessment. [METHODOLOGY.md](METHODOLOGY.md) is the full specification, including evidence rules, calculations, record selection, limitations and handoff guidance; the summary below is kept concise.
 
 ### Tier 1 — The Lethal Trifecta (0–7 points)
 
@@ -151,7 +165,7 @@ Each incident is published as a **SKYNET CVE**, borrowing the structure of a sec
 - the factual story and our analysis as separate sections;
 - all three Trifecta checks and five amplifier scores;
 - the published score out of 17, its components and rationale;
-- the fixed share of the remaining gap closed by that score;
+- the share of the applicable remaining gap closed under that phase's rule;
 - the clock movement in seconds at that point in the timeline; and
 - the resulting symbolic time remaining.
 

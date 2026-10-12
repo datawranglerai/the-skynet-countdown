@@ -57,12 +57,17 @@ export function ScoreStrip({ incident }: { incident: Incident }) {
 }
 
 export function IncidentCard({ incident, index }: { incident: Incident; index: number }) {
+  const belowHorizonThreshold = incident.clockPhase === 'event-horizon' && incident.effectivePoints === 0;
+  const gapDestination = incident.clockPhase === 'event-horizon' ? 'MIDNIGHT' : 'EVENT HORIZON';
   return <article className="incident-card">
     <div className="card-top"><SeverityBadge severity={incident.scoring.severity} score={incident.scoring.totalPoints} /><time dateTime={incident.assessment.date}>{dateLabel(incident.assessment.date)}</time></div>
     <div className="card-number">FIELD REPORT / {String(index + 1).padStart(2, '0')}</div>
     <h3><a href={`#/incidents/${incident.id}`}>{incident.headline}<span className="card-link-cover" /></a></h3>
     <p>{incident.editorial?.story ?? incident.assessment.title}</p>
-    <div className="card-bottom"><div><ScoreStrip incident={incident} /><span className="mono-label">{incident.scoring.totalPoints}/{MAX_SCORE} RISK SCORE</span></div><span className="card-movement"><span><b>{formatGapClosedPercent(incident.gapClosedPercent)}</b><small>OF REMAINING GAP</small></span><Arrow diagonal /></span></div>
+    <div className="card-bottom"><div><ScoreStrip incident={incident} /><span className="mono-label">{incident.scoring.totalPoints}/{MAX_SCORE} RISK SCORE</span></div><span className={`card-movement${belowHorizonThreshold ? ' no-movement' : ''}`}><span>{belowHorizonThreshold
+      ? <><b>NO MOVEMENT</b><small>BELOW EVENT HORIZON THRESHOLD</small></>
+      : <><b>{formatGapClosedPercent(incident.gapClosedPercent)}</b><small>OF GAP TO {gapDestination}</small></>}
+    </span><Arrow diagonal /></span></div>
   </article>;
 }
 

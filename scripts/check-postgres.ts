@@ -1,6 +1,7 @@
 import { fileURLToPath } from 'node:url';
 import { buildDatabaseDataset } from '../server/dataset.ts';
 import { createPostgresPool, readDatabaseSnapshot } from '../server/postgres.ts';
+import { EVENT_HORIZON_APPROVAL } from '../src/lib/event-horizon.ts';
 
 export async function checkPostgres(connectionString: string): Promise<{
   events: number; assessmentVersions: number; storyVersions: number; totalPoints: number; diagnostics: string[];
@@ -8,7 +9,7 @@ export async function checkPostgres(connectionString: string): Promise<{
   const pool = createPostgresPool(connectionString);
   try {
     const snapshot = await readDatabaseSnapshot(pool);
-    const dataset = buildDatabaseDataset(snapshot);
+    const dataset = buildDatabaseDataset(snapshot, snapshot.dataUpdatedAt, EVENT_HORIZON_APPROVAL);
     return {
       events: dataset.incidents.length,
       assessmentVersions: dataset.assessmentCount,

@@ -1,8 +1,4 @@
-import {
-  calculateClock,
-  calculateGapClosedPercent,
-  calculateMovementSeconds,
-} from '../src/lib/calibration.ts';
+import { applyClockLedger } from '../src/lib/clock-ledger.ts';
 import { type CsvRecord } from '../src/lib/csv.ts';
 import {
   ASSESSMENT_HEADERS,
@@ -15,6 +11,7 @@ import type {
   Assessment,
   Dataset,
   Editorial,
+  EventHorizonApproval,
   Incident,
 } from '../src/lib/types.ts';
 import type { DatabaseHistoryRow, DatabaseSnapshot } from './storage-types.ts';
@@ -100,6 +97,7 @@ function groupedSelectionRationale(original: string, aliasCount: number): string
 export function buildDatabaseDataset(
   snapshot: DatabaseSnapshot,
   generatedAt = snapshot.dataUpdatedAt,
+  approval: EventHorizonApproval | null = null,
 ): Dataset {
   const identity = resolveEventIdentityForest(snapshot.events, snapshot.eventParents);
   const eventsById = new Map(snapshot.events.map((event) => [event.id, event]));
@@ -152,13 +150,16 @@ export function buildDatabaseDataset(
   }).sort((left, right) =>
     left.assessment.date.localeCompare(right.assessment.date) || left.event.slug.localeCompare(right.event.slug));
 
-  let cumulativePoints = 0;
-  const incidents: Incident[] = chronological.map((value) => {
+  const ledger = applyClockLedger(chronological.map((value) => ({
+    id: value.event.slug,
+    routeAliases: value.routeAliases,
+    date: value.assessment.date,
+    score: calculateRiskScore(value.assessment.scores).totalPoints,
+  })), approval);
+  const chronologicalById = new Map(chronological.map((value) => [value.event.slug, value]));
+  const incidents: Incident[] = ledger.entries.map((clockEntry) => {
+    const value = chronologicalById.get(clockEntry.id)!;
     const scoring = calculateRiskScore(value.assessment.scores);
-    const priorPoints = cumulativePoints;
-    cumulativePoints += scoring.totalPoints;
-    if (!Number.isSafeInteger(cumulativePoints)) throw new RangeError('Cumulative evidence points exceed safe integer range');
-    const clock = calculateClock(cumulativePoints);
     return {
       id: value.event.slug,
       routeAliases: value.routeAliases,
@@ -175,14 +176,15 @@ export function buildDatabaseDataset(
       headline: value.editorial?.headline ?? value.assessment.title,
       selectionRationale: groupedSelectionRationale(value.event.selection_rationale, value.routeAliases.length),
       scoring,
-      effectivePoints: scoring.totalPoints,
-      gapClosedPercent: calculateGapClosedPercent(scoring.totalPoints),
-      cumulativePoints,
-      remainingSeconds: clock.remainingSeconds,
-      movementSeconds: calculateMovementSeconds(priorPoints, scoring.totalPoints),
+      clockPhase: clockEntry.clockPhase,
+      phaseCumulativePoints: clockEntry.phaseCumulativePoints,
+      effectivePoints: clockEntry.effectivePoints,
+      gapClosedPercent: clockEntry.gapClosedPercent,
+      cumulativePoints: clockEntry.cumulativePoints,
+      remainingSeconds: clockEntry.remainingSeconds,
+      movementSeconds: clockEntry.movementSeconds,
     };
   });
-  const clock = calculateClock(cumulativePoints);
   return {
     source: 'postgresql',
     generatedAt,
@@ -193,9 +195,10 @@ export function buildDatabaseDataset(
     duplicateCount: Math.max(0, snapshot.history.filter((row) => row.kind === 'assessment').length - incidents.length),
     matchedEditorialCount: incidents.reduce((sum, incident) => sum + incident.editorials.length, 0),
     diagnostics,
-    totalPoints: cumulativePoints,
-    remainingSeconds: clock.remainingSeconds,
-    pressure: clock.pressure,
+    clock: ledger.clock,
+    totalPoints: ledger.totalPoints,
+    remainingSeconds: ledger.remainingSeconds,
+    pressure: ledger.pressure,
     lastUpdated: incidents.reduce((latest, incident) => incident.assessment.date > latest ? incident.assessment.date : latest, ''),
   };
 }

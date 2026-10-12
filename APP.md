@@ -98,7 +98,7 @@ npm run db:check
 
 Back up the database before applying a migration. Schema and data changes run transactionally, preserve historical versions and are checked before commit. Re-running the same import must preserve later live updates and must not reset event selections. CSV imports are a bootstrap operation; the normal publishing path is n8n → PostgreSQL → API.
 
-For the initial migration, verify all 63 CSV assessment rows are accounted for, all 38 CSV stories and eight database rewrites remain recoverable, and all current source rows have an event. The reviewed historical clock baseline is 40 events, 113 points and 13:52 under the current fixed calibration. Preserve the existing event slugs when assigning permanent `SKYNET-YYYY-NNNN` display IDs.
+For the initial migration, verify all 63 CSV assessment rows are accounted for, all 38 CSV stories and eight database rewrites remain recoverable, and all current source rows have an event. The reviewed historical clock baseline is 40 events, 113 points and 14:01 under the current approach calibration. Preserve the existing event slugs when assigning permanent `SKYNET-YYYY-NNNN` display IDs.
 
 For the PostgreSQL checks, set `TEST_DATABASE_URL` to a migrated local copy named `skynet_test` and run `npm run test:postgres`. The separate migration integration test creates and drops its own temporary database, verifies a forced rollback, imports representative existing records, checks all historical version links and tests reruns after new live data. To run just that self-contained rehearsal against an empty local `skynet_test` database, use `node --experimental-strip-types --test server/migration.integration.test.ts`. These tests refuse remote database hosts.
 
@@ -141,20 +141,22 @@ Future assessments must cite separate evidence and rationale for T3 and autonomy
 
 The saved n8n workflow exports include this distinction in the research and scoring prompts. `n8n/Skynet Countdown v1.1.json` contains the PostgreSQL upserts; its approved T3/autonomy guidance is aligned with the original export. The workflow collects binary checks, amplifier ratings and raw summary metadata; the API calculates the published score and severity. Import the chosen saved workflow into n8n to apply its guidance to future collection runs.
 
-For cumulative published evidence points `B`:
+Before Event Horizon, for cumulative published evidence points `B`:
 
 ```text
-symbolic seconds remaining = 900 × 2^(-B / 1000)
-evidence pressure = 100 × (1 − 2^(-B / 1000))
+symbolic seconds remaining = 120 + 780 × 2^(-B / 1000)
+evidence pressure = 100 × (900 − remaining seconds) / 900
 ```
 
-Methodology v1.0, effective 7 October 2026, starts with 900 symbolic seconds. The starting window borrows the [15-minute reading published by IMD's AI Safety Clock in September 2026](https://www.imd.org/ibyimd/artificial-intelligence/imd-ai-safety-clock-moves-to-15-minutes-to-midnight/) as a dated, attributable editorial reference. IMD's reading is itself an editorial judgement. It sets this project's watch once: from the first incident onward, the selected evidence, scores, formula and historical movements are this project's own and do not remain synchronised with IMD. The projects are unaffiliated.
+Methodology v1.0, calibration effective 11 October 2026, starts with 900 symbolic seconds. The starting window borrows the [15-minute reading published by IMD's AI Safety Clock in September 2026](https://www.imd.org/ibyimd/artificial-intelligence/imd-ai-safety-clock-moves-to-15-minutes-to-midnight/) as a dated, attributable editorial reference. IMD's reading is itself an editorial judgement. It sets this project's watch once: from the first incident onward, the selected evidence, scores, formula and historical movements are this project's own and do not remain synchronised with IMD. The projects are unaffiliated.
 
-The fixed 1,000-point parameter halves the remaining symbolic time after every 1,000 evidence points: 15:00 becomes 07:30, then 03:45. It applies to the entire historical record and all future incidents, with no date cutoff or reset. All incident movements, cumulative positions, gap shares and evidence-pressure readings use this same constant. It is an editorial normalisation, not an empirically estimated risk parameter or a fit to a desired current reading. The curve approaches midnight without reaching it and cannot declare that human control has been lost. More coverage can increase the index even if underlying risk has not changed, so the selected sources and inclusion decisions matter.
+The fixed 1,000-point parameter halves the gap above 120 seconds: 15:00 becomes 08:30, then 05:15. It applies to the complete approach history and all future incidents in that phase. The clock remains strictly above 02:00 until a separate, explicit editorial decision authorises Event Horizon. Incidents continue moving it in ever smaller increments; there is no waiting queue or numerical trigger. More coverage can increase the index even if underlying risk has not changed, so the selected sources and inclusion decisions matter.
 
 The API and frontend both import the shared calibration code, so deploy the Railway service and the GitHub Pages frontend together when this constant changes. Clock values are calculated from the selected records whenever the dataset is read; the PostgreSQL rows do not store the authoritative clock ledger, so this recalibration needs no database backfill.
 
-The cumulative point total defines the clock position. The interface shows `<00:01` below one second. At extreme totals, stored seconds are limited to JavaScript's smallest positive number; this is a numeric representation limit. Per-event movement is calculated from the published score and proportional impact, so a positive event is still shown as moving less than one second, rather than as a zero-score event.
+After approval, only post-boundary incidents with published scores of at least 10 contribute. If `E` is the sum of those eligible scores, `T = 120 × 2^(-E / 250)`. Lower-scoring records stay visible. The 250-point half-scale is fixed and separately documented; earlier incidents are not processed again under the new scale. `totalPoints` and per-incident `cumulativePoints` retain all published scores, while `clock.phasePoints`, `phaseCumulativePoints` and `effectivePoints` record the points used for movement.
+
+Near the boundary, the approach readout shows `>02:00`, preserving the distinction between approaching and entering it. After entry, the interface shows `<00:01` below one second. Numeric representation floors preserve a positive distance and eligible movement at extreme totals. The phase marker at 86.67% of the dial refers to the 15-minute display window; it is not a percentage of control lost.
 
 For an incident with a published score of `s`:
 
@@ -162,20 +164,40 @@ For an incident with a published score of `s`:
 share of remaining gap closed = 100 × (1 − 2^(-s / 1000))
 ```
 
-The same point score always closes the same proportion of the remaining gap. A two-point incident closes 0.14%; a 17-point incident closes 1.17%. Its movement in seconds depends on the clock position when it occurs because the remaining interval gets smaller over time. Incident impact should therefore be compared by score and share of gap closed, with seconds shown as the movement in historical context.
+Within the approach phase, a two-point incident closes 0.14% of the gap to Event Horizon; a 17-point incident closes 1.17%. Inside Event Horizon, use 250 as the denominator, with a zero share for scores below ten. A qualifying ten-point incident closes 2.73% of the gap to midnight. Scores remain comparable across phases, while proportional impact and seconds must be interpreted under the labelled phase.
 
 The clock changes with records, not wall time. There is no passive decay or positive-event recovery model. Published improvements can score zero; they do not subtract previous evidence. With selected assessments held fixed, added events have non-negative scores and cannot move the clock away from midnight. Corrections to selected assessments or explicit canonical regrouping can reduce the cumulative score and recalculate history backwards. Scored recovery events would require a defined extension to the methodology.
 
-History sorts events by incident date, then stable ID. Each displayed movement is the difference between the positions before and after that event. Late discoveries and explicit assessment changes recompute the history. The methodology version, latest incident date and database update timestamp are visible in the app.
+History sorts events by incident date, then stable ID. Incident movement excludes the separately labelled adjustment that enters Event Horizon at 02:00. Late discoveries and explicit assessment changes recompute their appropriate phase. The methodology version, latest incident date and database update timestamp are visible in the app.
 
 The `total_score` and `classification` values reflect the workflow's unweighted export format. They, along with `clock_delta_minutes`, `severity_label`, `clock_delta_label` and `updated_clock_position`, are retained as automation metadata. The app derives published scores and severities from the eight criterion columns, then calculates the clock from those published scores.
+
+## Authorising Event Horizon
+
+The current value of `EVENT_HORIZON_APPROVAL` in [src/lib/event-horizon.ts](src/lib/event-horizon.ts) is `null`. Keep it that way until the owner makes the explicit editorial judgement. Neither the public site, a calculator preview, a score, a timestamp nor n8n can activate it.
+
+To authorise entry deliberately:
+
+1. Publish an editorial explaining the evidence for a material deterioration in meaningful human control, including the uncertainty and reasons for the decision.
+2. Identify the last incident that belongs to the approach phase. Record its stable route ID and selected assessment date from the API. These form the frozen `effectiveAfter` key; that incident itself is not counted again after entry.
+3. Replace the null approval with an `EventHorizonApproval` containing `approvedBy`, `approvedAt` (UTC ISO timestamp), `effectiveAfter: { date, incidentId }`, `rationale` and `editorialUrl`. Use the actual published editorial URL and actual approval details. This repository change is the deliberate activation operation.
+4. Run tests, lint, build and `npm run db:check` against the intended live data. Inspect the transition adjustment, which places the clock at exactly 02:00 separately from incident movement. If the selected anchor is missing or its date has changed, resolve that discrepancy explicitly before deployment.
+5. Deploy the API and frontend. The API publishes the decision metadata with the clock; the site shows the phase and editorial link. There is no database backfill or schema migration for activation.
+
+The chronology key is date followed by route ID. Later-discovered records before that key remain in the approach phase. Later records after it use the ten-point threshold individually; several smaller scores never combine into an eligible incident. A preserved route alias can identify a merged anchor, but its date must still match. Every selected event contributes at most once. A correction can recompute its movement; a changed anchor date requires a renewed editorial decision rather than silently moving the boundary.
+
+The pure ledger and archived fixtures default to an unapproved approach phase. Production API startup and the live database check explicitly load the approval policy. This keeps frozen migration rehearsals usable after a future live approval.
+
+To revoke a mistaken entry, publish the correction, record the reason in the repository history and return the approval to `null`. The clock then recalculates the approach history from the preserved records. This corrects the editorial judgement; it does not introduce negative-scoring safety news or automatic recovery.
+
+During deployment, the frontend can read an older API payload by recalculating its selected scores under the unapproved approach rule. New payloads carry explicit phase and approval metadata that must agree with the ledger. Deploy both services together for a new approval; the browser cannot authorise one locally.
 
 ## CSV migration baseline
 
 - 63 assessment rows, containing 51 distinct assessments grouped into 40 events.
 - 38 editorial reports cover 32 events; eight events have no editorial copy.
 - 113 published evidence points derived from the selected criterion values.
-- 13:52 symbolic minutes remaining; 7.5/100 evidence pressure.
+- 14:01 symbolic minutes remaining; 6.5/100 evidence pressure.
 - Latest recorded event: 28 September 2026.
 
 Historical conflicting assessments use explicitly reviewed, conservative selections. Original editorial text remains available and is labelled when written for a different assessment version. Machine citation markers are removed from display; original source links and raw downloadable CSVs are preserved.
