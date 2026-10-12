@@ -89,6 +89,45 @@ test('merged events count the root score once while retaining every version and 
   assert.match(exported, /2,SKYNET-2026-0002,1,SKYNET-2026-0001/);
 });
 
+test('database datasets bind clock entries by identity when a frozen alias changes same-day ordering', () => {
+  const rootAssessment = {
+    ...assessmentRows[0], incident_date: '2026-01-02', source_url: 'https://example.com/renamed-root',
+  };
+  const childAssessment = {
+    ...assessmentRows[1], incident_date: '2026-01-02', source_url: 'https://example.com/old-anchor',
+  };
+  const middleAssessment = {
+    ...assessmentRows[2], incident_date: '2026-01-02', source_url: 'https://example.com/middle',
+  };
+  const root = event('1', 'renamed-root', 'assessment:1:1', 'story:unused');
+  const child = event('2', 'bravo', 'assessment:2:1', 'story:unused');
+  const middle = event('3', 'middle', 'assessment:3:1', 'story:unused');
+  for (const value of [root, child, middle]) {
+    value.selected_story_id = null;
+    value.selected_story_version_key = null;
+  }
+  const snapshot: DatabaseSnapshot = {
+    events: [root, child, middle], assessments: [], stories: [], eventParents: [parent('2', '1')],
+    history: [
+      history('1', 'assessment', '1', 'assessment:1:1', rootAssessment),
+      history('2', 'assessment', '2', 'assessment:2:1', childAssessment),
+      history('3', 'assessment', '3', 'assessment:3:1', middleAssessment),
+    ],
+    dataUpdatedAt: '2026-01-03T00:00:00.000Z',
+  };
+  const dataset = buildDatabaseDataset(snapshot, snapshot.dataUpdatedAt, {
+    approvedBy: 'The editor', approvedAt: '2026-01-03T12:00:00.000Z',
+    effectiveAfter: { date: '2026-01-02', incidentId: 'bravo' },
+    rationale: 'Published evidence establishes the phase transition.',
+    editorialUrl: '#/reports/event-horizon-entry',
+  });
+  assert.deepEqual(dataset.incidents.map((incident) => incident.id), ['renamed-root', 'middle']);
+  assert.deepEqual(dataset.incidents.map((incident) => incident.clockPhase), ['approach', 'event-horizon']);
+  assert.equal(dataset.clock.transition?.afterIncidentId, 'renamed-root');
+  assert.equal(dataset.incidents[0].remainingSeconds, dataset.clock.transition?.remainingSecondsBefore);
+  assert.ok(dataset.incidents[1].remainingSeconds <= 120);
+});
+
 test('pre-deduplication schemas read as an empty parent forest', async () => {
   const queries: string[] = [];
   const client = {

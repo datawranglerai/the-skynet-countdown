@@ -1,6 +1,6 @@
 # The Skynet Countdown: methodology
 
-**Methodology v1.0 · Calibration effective 7 October 2026 · Document checked against the repository on 9 October 2026**
+**Methodology v1.0 · Calibration effective 11 October 2026 · Document checked against the repository on 11 October 2026**
 
 This document explains how a source becomes an assessment, how an assessment becomes a score, and how scores move the clock. It also records the assumptions and implementation boundaries that a future maintainer needs to evaluate or improve the method.
 
@@ -53,14 +53,16 @@ The runtime calculation is implemented in [scoring.ts](src/lib/scoring.ts), [cal
 | Published score | 0–17 |
 | Full Trifecta | At least 7 points, therefore at least CRITICAL |
 | Starting window, `T₀` | 900 seconds: 15 symbolic minutes |
-| Sensitivity, `H` | 1,000 cumulative evidence points halve the remaining window |
-| Clock | `T(B) = 900 × 2^(−B / 1000)` |
-| Stable incident impact | `100 × (1 − 2^(−s / 1000))` per cent of the remaining gap |
+| Approach sensitivity, `H` | 1,000 evidence points halve the gap above Event Horizon |
+| Event Horizon | Reserved final 120 seconds; entry requires the owner’s explicit published decision |
+| Approach clock | `T(B) = 120 + 780 × 2^(−B / 1000)` |
+| After entry | `T(E) = 120 × 2^(−E / 250)`; only individual scores ≥10 contribute to `E` |
+| Incident impact | Phase-specific share of the gap to Event Horizon, then to midnight |
 | Leading-indicator flag | Explanatory metadata; awards no extra points |
 | Recovery | No negative scores, passive decay or credit for improvements |
 | Corrections | Recalculate the affected historical ledger; the displayed position can change in either direction |
 
-The same calculation applies to the complete history and future records. There is no cutoff at the IMD publication date and no automatic rebasing as the dataset grows.
+The approach calculation applies to the complete history until an explicit Event Horizon decision defines a boundary. There is no cutoff at the IMD publication date and no automatic rebasing as the dataset grows. A score or elapsed time cannot authorise entry.
 
 ## 3. Evidence and assessment
 
@@ -170,58 +172,78 @@ The [IMD project](https://www.imd.org/centers/digital-ai-transformation-center/a
 
 ## 8. Clock calculation
 
-### Constants and cumulative evidence
+### Approach to Event Horizon
 
-For the selected events in chronological order, let:
-
-- `sᵢ` be event `i`'s published score;
-- `Bᵢ = Σ sⱼ` for events through `i`;
-- `B₀ = 0` before the first event;
-- `T₀ = 900` symbolic seconds;
-- `H = 1000` evidence points.
+For selected events in chronological order, `sᵢ` is each published score and `B` is their cumulative sum. The starting window is `T₀ = 900` seconds, the reserved boundary is `L = 120` seconds, and the approach half-scale is `H = 1000` points.
 
 ```text
-Remaining time:       T(B) = T₀ × 2^(−B / H)
-Incident gap share:   g(s) = 1 − 2^(−s / H)
-Movement in seconds:  ΔTᵢ = T(Bᵢ₋₁) × g(sᵢ)
-Evidence pressure:   P(B) = 100 × (1 − 2^(−B / H))
+Remaining time:       T_A(B) = 120 + 780 × 2^(−B / 1000)
+Incident gap share:   g_A(s) = 1 − 2^(−s / 1000)
+Incident movement:    ΔT = [T_A(B_before) − 120] × g_A(s)
+Evidence pressure:   P(T) = 100 × (900 − T) / 900
 ```
 
-Mathematically, `ΔTᵢ = T(Bᵢ₋₁) − T(Bᵢ)`. The implementation calculates movement using the proportional expression to preserve very small positive movements without subtracting nearly equal numbers.
+Every 1,000 points halves the gap above 02:00. Any finite total leaves the mathematical time strictly greater than 120 seconds. All positive-scoring approach incidents keep contributing, even as their absolute movements become very small. There is no holding position, approval queue or automatic numerical trigger.
 
-### What the constants do
+The 1,000-point constant is an editorial calibration chosen for gradual accumulation over months of ordinary coverage. It does not guarantee a calendar pace, estimate an empirical risk parameter or adjust itself as the dataset grows.
 
-`T₀` sets the display window. `H` sets sensitivity: every further 1,000 points halves whatever time remains. Keeping `H` fixed means scores have the same proportional effect throughout the history.
-
-The 1,000-point scale was chosen for gradual accumulation over months of ordinary coverage. It does not guarantee a calendar pace; the pace depends on which events are included and how they are scored. It is not automatically adjusted to keep the clock near a preferred reading.
-
-| Cumulative points | Symbolic time remaining | Evidence pressure |
+| Approach points | Symbolic time remaining | Evidence pressure |
 | ---: | --- | ---: |
 | 0 | 15:00 | 0.0/100 |
-| 113 | 13:52 | 7.5/100 |
-| 191 | 13:08 | 12.4/100 |
-| 1,000 | 07:30 | 50.0/100 |
-| 2,000 | 03:45 | 75.0/100 |
+| 113 | 14:01 | 6.5/100 |
+| 191 | 13:23 | 10.7/100 |
+| 1,000 | 08:30 | 43.3/100 |
+| 2,000 | 05:15 | 65.0/100 |
 
-These are reference calculations, not a claim about the current size of the live database. The 113-point case also corresponds to the archived migration fixture.
+These are reference calculations, not live database totals. The 113-point case corresponds to the archived migration fixture.
 
-### Comparing incidents
+### Event Horizon and the editorial transition
 
-Use the score and percentage of the remaining gap closed to compare incident impact. A two-point event always closes about 0.14% of the remaining gap; a 17-point event always closes about 1.17%.
+Event Horizon is the reserved final two minutes. Its point-of-no-return language expresses an editorial judgement that meaningful human control has materially deteriorated: within that framing, intervention can postpone the outcome while the route back has closed. The score cannot establish physical inevitability, predict a catastrophe or determine that real-world loss of control has occurred.
 
-An event's seconds depend on its position in the ledger. An equally scored event later in the history moves fewer seconds because the remaining interval is smaller. At sufficiently different starting positions, a larger score can move fewer seconds than a smaller earlier score. This is a property of the curve; seconds are historical context, not the stable severity comparison.
+The two-minute boundary is a clear editorial division of the display window, not a measured tipping point. The owner must explicitly authorise entry and publish an accompanying editorial explaining the evidence, interpretation and uncertainty. No score, n8n action, database row or passage of time can authorise it.
 
-For fixed selected scores, the final time depends only on their sum, not their order. Reordering changes each event's attributed seconds. Grouping matters because it determines which events and assessments contribute to that sum.
+The approval record includes the approver, UTC approval timestamp, rationale, editorial URL and a frozen `effectiveAfter` key consisting of an incident date and stable route ID. The named event is the last approach event. A matching preserved alias can identify it after grouping, but its selected date must still agree; a missing or changed anchor fails validation and requires explicit review.
 
-The red clock arc and evidence-pressure number represent `P(B)`: the share of the 15-minute starting window consumed. They are not estimates of the percentage of human control lost. The history chart spans 0–15 symbolic minutes. No quarter or stage classifications are assigned to the dial.
+Entry sets the clock to **02:00**. The difference from the previous approach reading is a separate editorial adjustment. It is recorded and displayed independently of incident movement, so no incident receives credit for that adjustment. Entry does not depend on first reaching a numerical proximity to 02:00; the owner must explain the timing in the decision.
+
+Only events strictly after the frozen chronology key use the final-phase rules. Earlier evidence is not charged again. Late-discovered events are assigned using their recorded date and stable ID relative to that key. There is no backlog waiting for approval: until a decision exists, every record is evaluated under the approach rule.
+
+### Movement after entry
+
+Define the eligible contribution of each post-boundary incident individually:
+
+```text
+q(s) = s, if the published score s is at least 10
+q(s) = 0, otherwise
+E = sum of q(s) for events strictly after the approved boundary
+
+Remaining time:       T_H(E) = 120 × 2^(−E / 250)
+Incident gap share:   g_H(s) = 1 − 2^(−q(s) / 250)
+Incident movement:    ΔT = T_H(E_before) × g_H(s)
+```
+
+The half-scale is fixed at **250 eligible points**. At entry, ten points close 2.73% of the gap to midnight and move about 3.281 seconds; seventeen points close 4.60% and move about 5.525 seconds. Every 250 eligible points halves the final window: 02:00 becomes 01:00, then 00:30. This increases sensitivity per eligible point; it is an editorial parameter, not a measurement of accelerated real-world risk.
+
+Scores, criteria and severity bands remain unchanged. A score of 9 is still CRITICAL, but it contributes zero clock points in this phase. Lower-scoring records remain in the archive and retain their full assessments, sources and published scores. Several lower scores cannot combine to meet the ten-point incident threshold.
+
+`totalPoints` and per-incident `cumulativePoints` retain all published evidence scores. `effectivePoints` records the contribution used for that incident's clock movement; `phaseCumulativePoints` and `clock.phasePoints` drive the relevant phase formula. The API publishes the current phase, approval record and separate transition adjustment.
+
+### Comparisons, corrections and pressure
+
+Within the approach phase, a two-point event closes 0.14% of the remaining gap to Event Horizon; a seventeen-point event closes 1.17%. Inside Event Horizon, eligibility and the 250-point scale change those shares. Compare ratings across phases using the unchanged 0–17 score; compare proportional clock impact under the named phase. The same score no longer promises one proportional impact across both phases.
+
+Within a fixed phase and fixed set of eligible scores, final time depends on the point sum. Ordering changes per-incident seconds. The approved chronology boundary determines which phase applies. Corrections and grouping recompute the affected ledger; a correction to the approval anchor's date requires a renewed decision. A mistaken entry can be revoked through a published correction and a deliberate policy change, restoring the approach calculation from the preserved records. This is not passive recovery or a negative score for constructive news.
+
+The dial and pressure index always use `P(T)`, the fraction of the original 900-second display window consumed. The 02:00 boundary sits at 86.67% around the dial. Before approval the underlying reading remains below that position; a rounded pressure label may read 86.7 while the clock still reads `>02:00`. The final phase covers the remaining arc. Neither pressure nor arc position measures the percentage of human control lost.
 
 ### Numerical and display behaviour
 
-[calibration.ts](src/lib/calibration.ts) uses `Math.exp` for time and `Math.expm1` for proportional shares, retaining accuracy for small changes. It rejects negative or non-finite inputs. Dataset builders also reject cumulative point totals beyond JavaScript's safe integer range.
+[calibration.ts](src/lib/calibration.ts) uses `Math.exp` and `Math.expm1`, rejects negative/non-finite inputs and retains positive numerical floors. Approach values remain representably greater than 120 even when the exponential underflows. Final-phase values remain greater than zero. Zero contributions produce exactly zero movement. Cumulative ledgers must remain safe integers.
 
-For finite evidence totals, the mathematical curve stays above zero. Floating-point underflow is handled by retaining at least `Number.MIN_VALUE`; positive-event movement also retains a positive representation floor. A zero-score event remains exactly zero.
+Calculations use unrounded values. Ordinary time labels round to the nearest second, except an approach value that would round to 02:00 displays as **`>02:00`**. Below one second after entry, the display reads **`<00:01`**. Pressure at or above 99.95 displays as `<100`. Small eligible movements may display as less than a second; equal rounded clock labels do not imply that the unrounded contribution was zero.
 
-Calculations use unrounded values. Time is rounded to the nearest second for display; anything below one second displays as `<00:01`. Incident shares display to two decimal places, and evidence pressure to one. Pressure at or above 99.95 displays as `<100` to avoid claiming that the endpoint has been reached. Small positive movements can display as less than one second, and rounded before/after clock labels can occasionally be identical despite a positive movement.
+The approval policy is [event-horizon.ts](src/lib/event-horizon.ts), unset by default. [clock-ledger.ts](src/lib/clock-ledger.ts) applies the shared chronology and phase rules. The Methodology calculator can preview either phase locally without authorising the live transition. [APP.md](APP.md#authorising-event-horizon) documents activation and reversal.
 
 ## 9. Worked examples
 
@@ -246,16 +268,16 @@ E demonstrates why raw workflow classifications must not supply published severi
 
 ### Scores to movement
 
-Each row below is an independent hypothetical addition to the same starting evidence base of **191 points**, where the unrounded remaining time is approximately **788.398 seconds**, displayed as **13:08**. The rows are not a sequence.
+Each row below is an independent hypothetical addition to the same starting evidence base of **191 points**, where the unrounded remaining time is approximately **803.279 seconds**, displayed as **13:23**, before Event Horizon. The rows are not a sequence.
 
-| Example | Added score | Remaining gap closed | Movement, seconds | Resulting clock |
+| Example | Added score | Gap to Event Horizon closed | Movement, seconds | Resulting clock |
 | --- | ---: | ---: | ---: | --- |
-| A | 0 | 0% | 0.000 | 13:08 |
-| B | 2 | 0.14% | 1.092 | 13:07 |
-| C | 7 | 0.48% | 3.816 | 13:05 |
-| D | 9 | 0.62% | 4.903 | 13:03 |
-| E | 13 | 0.90% | 7.072 | 13:01 |
-| F | 17 | 1.17% | 9.236 | 12:59 |
+| A | 0 | 0.00% | 0.000 | 13:23 |
+| B | 2 | 0.14% | 0.947 | 13:22 |
+| C | 7 | 0.48% | 3.307 | 13:20 |
+| D | 9 | 0.62% | 4.249 | 13:19 |
+| E | 13 | 0.90% | 6.129 | 13:17 |
+| F | 17 | 1.17% | 8.004 | 13:15 |
 
 For D:
 
@@ -265,11 +287,11 @@ W(k) = 7
 A = 2
 s = 9
 g(9) = 1 − 2^(−9/1000) ≈ 0.0062189067
-ΔT = 788.3984836 × g(9) ≈ 4.903 seconds
-T(191 + 9) = 900 × 2^(−200/1000) ≈ 783.496 seconds → 13:03
+ΔT = (803.2786858 − 120) × g(9) ≈ 4.249 seconds
+T_A(191 + 9) = 120 + 780 × 2^(−200/1000) ≈ 799.029 seconds → 13:19
 ```
 
-The same nine-point score at the initial 15:00 baseline would close the same percentage of the gap but a larger number of seconds.
+The same nine-point score at the initial 15:00 baseline would close the same percentage of the gap to Event Horizon but a larger number of seconds. After entry, it would remain visible with zero movement because it falls below ten points.
 
 ## 10. Events, revisions and chronology
 
@@ -310,7 +332,7 @@ The API reads a repeatable-read, read-only database snapshot. It orders events b
 
 The date may reflect publication or disclosure rather than the original occurrence. A late-discovered event is inserted into its historical position. It can change later per-event seconds even when those later scores remain the same.
 
-With a fixed record, adding a positive score moves the clock closer to midnight; adding zero leaves it unchanged. Changes to selected ratings, canonical selection or duplicate grouping can reduce the cumulative total and move the recalculated clock away from midnight. That is a correction to the record, not a negative-scoring recovery event. A changed date alone can reorder event movements while leaving the final total unchanged.
+With a fixed record and phase policy, adding an eligible positive score moves the clock closer to its current boundary; a zero or ineligible score leaves it unchanged. Changes to selected ratings, canonical selection or duplicate grouping can reduce the cumulative total and move the recalculated clock away from midnight. That is a correction to the record, not a negative-scoring recovery event. A changed date alone can reorder event movements while leaving the final total unchanged.
 
 Source updates append history, including updates that keep a raw total the same but change the underlying payload. No-op updates do not create unnecessary versions. Existing source history is not overwritten to make a recalculation look as if it had always been the only assessment.
 
@@ -322,7 +344,7 @@ The CSVs in `data/` and [manifest.ts](src/lib/manifest.ts) support migration and
 
 The legacy importer validates rows, collapses identical assessment content, uses audited historical identities and explicit links to group records, and rejects unresolved revisions or ambiguous joins. Its URL normalisation and historical CVE fallbacks are importer rules; they should not be mistaken for runtime PostgreSQL matching rules.
 
-The audited fixture contains 63 assessment rows, 51 distinct assessments, 40 events and 38 editorial reports covering 32 events. Its selected assessments total 113 published points, yielding 13:52. These fixed counts are regression evidence, not expected totals for the live system.
+The audited fixture contains 63 assessment rows, 51 distinct assessments, 40 events and 38 editorial reports covering 32 events. Its selected assessments total 113 published points, yielding 14:01 before Event Horizon. These fixed counts are regression evidence, not expected totals for the live system.
 
 ## 11. Source fields and validation
 
@@ -411,7 +433,7 @@ The writer prompt asks for a short factual account and a separate analytical tak
 - **Leading indicators:** early institutional changes can matter while scoring modestly. Their flag preserves context but gives no additional movement.
 - **No recovery model:** improvements receive no negative points. Corrections can revise the ledger, but they are not a formal measure of restored control.
 - **Automation:** a structurally valid AI assessment can still contain an unsupported claim, fabricated connection or poor interpretation. Human fact-checking and inter-rater agreement are not guaranteed by the software.
-- **Symbolic calibration:** the IMD reference, Trifecta weights, severity bands and 1,000-point sensitivity are editorial choices. Reproducibility makes them inspectable; it does not establish predictive validity.
+- **Symbolic calibration:** the IMD reference, Trifecta weights, severity bands, two-minute boundary and phase sensitivities are editorial choices. Reproducibility makes them inspectable; it does not establish predictive validity.
 - **No terminal test:** the asymptote cannot determine that loss of control has occurred, and the present method has no separate empirical rule that declares midnight.
 
 ## 14. Reproducing and checking the method
@@ -458,12 +480,12 @@ console.log({
 NODE
 ```
 
-Expected values: score **9**, severity **CRITICAL**, gap **0.62%**, movement **4.903 seconds**, resulting clock **13:03**. This check needs no database connection.
+Expected values: score **9**, severity **CRITICAL**, gap **0.62%**, movement **4.249 seconds**, resulting clock **13:19**. This check needs no database connection.
 
 ### Verification coverage
 
 - `npm test` checks the data engine and API, including all 1,944 valid component configurations and 6,480 possible single-point amplifier increments.
-- Calibration tests cover the baseline, halvings, fixed gap shares, historical reconciliation, zero scores, invalid inputs and extreme numeric limits.
+- Calibration and ledger tests cover both asymptotes, halvings, phase eligibility, explicit approval, separate transition movement, invalid metadata, frozen chronology/aliases, corrections, zero scores and extreme numeric limits.
 - Data tests cover duplicates, revisions, canonical selection, version references and newly appended evidence.
 - `npm run lint` and `npm run build` check source quality, types and the static bundle.
 - `npm run test:e2e` checks the rendered clock, history scale, incident views, calculator, source links and data refresh behaviour on desktop and mobile.

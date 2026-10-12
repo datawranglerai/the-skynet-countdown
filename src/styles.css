@@ -85,15 +85,27 @@ svg { flex-shrink: 0; }
 .monitoring i { width: 4px; height: 4px; background: currentColor; border-radius: 50%; box-shadow: 0 0 10px #b1c49f33; }
 .clock-instrument { position: relative; width: 100%; }
 .clock-svg { display: block; width: 100%; }
+.event-horizon-arc { fill: none; stroke: #a54837; stroke-width: 2; stroke-dasharray: 3 8; opacity: .78; }
+.event-horizon-tick { stroke: var(--accent); stroke-width: 3; filter: drop-shadow(0 0 5px rgb(241 91 64 / .34)); }
 .dial-label { font: 400 10px var(--mono); fill: #adb59f; letter-spacing: .12em; }
 .clock-readout { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); text-align: center; width: 73%; }
 .clock-eyebrow { font: 8px var(--mono); letter-spacing: .12em; margin-bottom: 14px; color: var(--muted); }
 .clock-eyebrow > span { display: inline-block; width: 4px; height: 4px; margin-right: 7px; background: var(--accent); }
 .clock-digits { font: 600 clamp(94px, 12.2vw, 175px)/.88 var(--display); font-variant-numeric: tabular-nums; letter-spacing: -.04em; color: var(--accent); }
+.clock-digits.is-boundary { transform: scale(.82); }
 .clock-unit { font: 8px var(--mono); margin-top: 16px; letter-spacing: .14em; color: var(--muted); }
 .clock-pressure { display: flex; align-items: center; justify-content: center; gap: 6px; font: 11px var(--mono); margin-top: 27px; }
 .clock-pressure > span:last-child { color: var(--muted); font-size: 7px; }
 .pressure-dot { width: 5px; height: 5px; background: var(--accent); }
+.event-horizon-status { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px 12px; min-height: 36px; margin-top: -5px; padding: 0 12px 9px; font: 9px/1.5 var(--mono); letter-spacing: .055em; color: var(--muted); }
+.event-horizon-status > a:first-child { display: inline-flex; align-items: center; gap: 8px; min-height: 32px; color: var(--ink); }
+.event-horizon-status > a:first-child span { color: var(--accent); }
+.event-horizon-status > a:first-child strong { font: 500 12px var(--display); letter-spacing: .02em; }
+.event-horizon-status > a:first-child:hover, .event-horizon-editorial:hover { color: var(--accent); }
+.event-horizon-state { display: inline-flex; align-items: center; gap: 6px; padding-left: 12px; border-left: 1px solid var(--line); }
+.event-horizon-state i { width: 4px; height: 4px; background: currentColor; }
+.event-horizon-status.is-active .event-horizon-state { color: var(--accent); }
+.event-horizon-editorial { min-height: 32px; display: inline-flex; align-items: center; color: var(--ink); }
 .clock-panel-bottom { border-top: 1px solid var(--line); padding: 14px 0 0; font-size: 7px; letter-spacing: .04em; }
 .clock-panel-bottom a { padding-block: 8px; color: var(--ink); }
 .clock-panel-bottom a:hover { color: var(--accent); }
@@ -124,6 +136,11 @@ svg { flex-shrink: 0; }
 .chart-key i { height: 2px; width: 12px; background: var(--accent); }
 .timeline-chart { display: block; width: 100%; height: auto; margin-top: 20px; }
 .chart-axis { font: 10px var(--mono); fill: #a0a79b; }
+.timeline-horizon-line { stroke: #9a493b; stroke-width: 1; stroke-dasharray: 2 6; opacity: .7; }
+.timeline-horizon-label { font: 7px var(--mono); letter-spacing: .04em; fill: #c26958; }
+.timeline-transition-marker line { stroke: #eeeee7; stroke-width: 1.5; stroke-dasharray: 3 3; }
+.timeline-transition-marker circle { fill: #101210; stroke: #eeeee7; stroke-width: 1.25; }
+.timeline-transition-marker text { font: 7px var(--mono); letter-spacing: .035em; fill: #eeeee7; }
 .timeline-selected { background: #171b16; border-left: 1px solid var(--line); padding: 24px; display: flex; flex-direction: column; }
 .timeline-selected .eyebrow { color: var(--accent); font-size: 9px; }
 .timeline-time { font: 600 59px/1 var(--display); margin-top: 12px; }
@@ -134,6 +151,7 @@ svg { flex-shrink: 0; }
 .timeline-event-bottom > span { font: 7px/1.8 var(--mono); color: var(--muted); }
 .timeline-event-bottom b { margin-left: 8px; color: var(--accent); font-weight: 400; }
 .timeline-event-bottom .timeline-gap { display: block; margin: 0 0 6px; font-size: 10px; }
+.timeline-event-bottom .timeline-gap.no-movement { max-width: 210px; color: var(--muted); font-size: 8px; line-height: 1.5; }
 .timeline-event-bottom small { display: block; font: 7px/1.6 var(--mono); }
 .timeline-event-bottom > a { display: grid; place-items: center; min-height: 44px; min-width: 44px; border: 1px solid #434b3b; }
 .timeline-event-bottom > a:hover { color: var(--accent); }
@@ -164,6 +182,9 @@ svg { flex-shrink: 0; }
 .card-movement { display: flex; align-items: center; gap: 16px; font: 10px var(--mono); color: var(--accent); }
 .card-movement b { display: block; font-size: 15px; font-weight: 400; }
 .card-movement small { display: block; margin-top: 5px; font: 6px/1.5 var(--mono); color: var(--muted); }
+.card-movement.no-movement { color: var(--muted); text-align: right; }
+.card-movement.no-movement b { font-size: 11px; }
+.card-movement.no-movement small { max-width: 110px; }
 .manifesto-feature {
   position: relative;
   display: grid;
@@ -310,6 +331,7 @@ input::placeholder { color: var(--muted); }
 .archive-score > strong > span { color: var(--muted); font: 10px var(--mono); margin-left: 3px; }
 .archive-score .mono-label { font-size: 8px; color: var(--accent); }
 .archive-score .mono-label > small { display: block; margin-top: 3px; color: var(--muted); font-size: 6px; }
+.archive-score.no-movement .mono-label { color: var(--muted); }
 .archive-score .score-strip { gap: 2px; }
 .archive-score .score-strip > span { width: 7px; height: 3px; }
 .archive-open { width: 44px; height: 44px; border: 1px solid var(--line); display: grid; place-items: center; }
@@ -343,6 +365,7 @@ input::placeholder { color: var(--muted); }
 .report-metrics small { margin-left: 7px; color: var(--muted); font: 7px var(--mono); }
 .report-metrics .movement-context { display: block; margin: 7px 0 0; line-height: 1.5; }
 .impact-explainer { margin: 16px 0 0; max-width: 750px; color: var(--muted); font-size: 11px; }
+.impact-explainer.no-movement { padding-left: 12px; border-left: 1px solid var(--accent); }
 .report-metrics > div:nth-child(3) strong { color: var(--accent); }
 .report-body { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(300px, .8fr); gap: 10%; margin-top: 55px; align-items: start; }
 .report-prose h2 { font-size: 29px; font-weight: 400; letter-spacing: -.025em; margin: 13px 0 25px; }

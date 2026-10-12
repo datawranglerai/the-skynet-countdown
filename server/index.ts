@@ -1,6 +1,7 @@
 import { createApiServer } from './http.ts';
 import { createPostgresPool, readDatabaseSnapshot } from './postgres.ts';
 import { buildDatabaseDataset, exportDatabaseCsv } from './dataset.ts';
+import { EVENT_HORIZON_APPROVAL } from '../src/lib/event-horizon.ts';
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) throw new Error('DATABASE_URL is required to start the API');
@@ -19,7 +20,7 @@ const server = createApiServer({
   loadSnapshot: async () => {
     const snapshot = await readDatabaseSnapshot(pool);
     return {
-      dataset: buildDatabaseDataset(snapshot),
+      dataset: buildDatabaseDataset(snapshot, snapshot.dataUpdatedAt, EVENT_HORIZON_APPROVAL),
       assessmentsCsv: exportDatabaseCsv(snapshot, 'assessments'),
       storiesCsv: exportDatabaseCsv(snapshot, 'stories'),
     };
