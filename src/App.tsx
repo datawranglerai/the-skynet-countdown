@@ -101,7 +101,7 @@ export default function App() {
     window.dispatchEvent(new HashChangeEvent('hashchange'));
   }, [incident, incidentRoute]);
   useEffect(() => {
-    document.title = `${incident?.headline ?? (isMethodologyRoute(route) ? 'The Methodology' : route === '/incidents' ? 'The Incident Archive' : 'The future is not set.')} — The Skynet Countdown`;
+    document.title = `${incident?.headline ?? (isMethodologyRoute(route) ? 'The Methodology' : route === '/incidents' ? 'The Incident Archive' : 'The future is not set.')} | The Skynet Countdown`.replaceAll('—', '|');
   }, [route, incident]);
   let page;
   if (!dataset && loading) page = <section className="container empty-state data-state" aria-live="polite"><div className="eyebrow">LIVE RECORD / CONNECTING</div><h1>Loading the evidence.</h1><p>The latest incident record is being retrieved.</p><span className="data-state-pulse" aria-hidden="true" /></section>;

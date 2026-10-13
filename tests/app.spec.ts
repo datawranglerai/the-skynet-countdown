@@ -137,7 +137,7 @@ test('Event Horizon is marked on the clock and opens its focused methodology sec
   await expect(page.locator('.event-horizon-arc')).toBeVisible();
   await expect(page.locator('.event-horizon-band')).toBeVisible();
   await expect(page.locator('.event-horizon-tick')).toBeVisible();
-  await expect(page.locator('.event-horizon-status')).toContainText('HUMAN APPROVAL REQUIRED');
+  await expect(page.locator('.event-horizon-status')).toHaveCount(0);
   await expect(page.locator('.clock-visual')).toHaveAttribute('aria-label', /Crossing it requires a published human decision/);
   await expect(page.locator('.event-horizon-callout')).toContainText('POINT OF NO RETURN');
   const callout = page.getByRole('link', { name: /Event Horizon at 02:00/ });
@@ -330,6 +330,11 @@ test('main pages render with local assets and unknown links recover', async ({ p
   expect(await page.evaluate(() => document.fonts.check('600 24px "Barlow Condensed"'))).toBe(true);
   await expect(page.locator('body')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+  await page.locator('.manifesto-feature').scrollIntoViewIfNeeded();
+  await expect(page.locator('.manifesto-portrait img')).toHaveJSProperty('complete', true);
+  await expect(page.locator('.manifesto-portrait img')).not.toHaveJSProperty('naturalWidth', 0);
+  await page.locator('.manifesto-feature').screenshot({ path: testInfo.outputPath('framework.png') });
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
   await page.screenshot({ path: testInfo.outputPath('home.png'), fullPage: true });
   await page.goto('/#/incidents');
   await page.screenshot({ path: testInfo.outputPath('archive.png'), fullPage: true });

@@ -32,7 +32,7 @@ export default function Clock({ dataset }: { dataset: Dataset }) {
     ? 'The Event Horizon phase is active following a published human decision.'
     : 'The clock is approaching the Event Horizon at 02:00. Crossing it requires a published human decision.';
   return <div className={`clock-panel${horizonActive ? ' has-entered-horizon' : ''}`}>
-    <div className="clock-panel-top"><span>HUMAN CONTROL MONITOR</span><span className="monitoring"><i /> OBSERVING</span></div>
+    <div className="clock-panel-top"><span>HUMAN CONTROL MONITOR</span></div>
     <div className="clock-instrument">
       <div className="clock-visual" role="img" aria-label={`${clockLabel} symbolic minutes to midnight, from a starting position of ${formatTime(CALIBRATION.startingSeconds)}. The red sector shows progress; the bright arc and diamond mark the current position. Editorial pressure index ${formatPressure(dataset.pressure)} out of 100. ${phaseDescription} The hatched danger zone marks the final two minutes.`}>
       <svg className="clock-svg" viewBox="0 0 600 600" fill="none" aria-hidden="true">
@@ -84,10 +84,10 @@ export default function Clock({ dataset }: { dataset: Dataset }) {
         <span className="event-horizon-callout-caption">POINT OF NO RETURN</span>
       </a>
     </div>
-    <div className={`event-horizon-status${horizonActive ? ' is-active' : ''}`}>
-      <span className="event-horizon-state"><i />{horizonActive ? 'PHASE ACTIVE' : 'HUMAN APPROVAL REQUIRED'}</span>
-      {horizonActive && dataset.clock.approval?.editorialUrl && <a className="event-horizon-editorial" href={dataset.clock.approval.editorialUrl}>READ THE DECISION ↗</a>}
-    </div>
-    <div className="clock-panel-bottom"><span>DRIVEN BY EVIDENCE. NOT ELAPSED TIME.</span><a href="#/methodology">SHOW THE WORKING ↗</a></div>
+    {horizonActive && <div className="event-horizon-status is-active">
+      <span className="event-horizon-state"><i />PHASE ACTIVE</span>
+      {dataset.clock.approval?.editorialUrl && <a className="event-horizon-editorial" href={dataset.clock.approval.editorialUrl}>READ THE DECISION ↗</a>}
+    </div>}
+    <div className="clock-panel-bottom"><a href="#/methodology">SHOW THE WORKING ↗</a></div>
   </div>;
 }
