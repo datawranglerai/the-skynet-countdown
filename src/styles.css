@@ -83,26 +83,44 @@ svg { flex-shrink: 0; }
 .clock-panel-top { padding-inline: 12px; }
 .monitoring { display: flex; align-items: center; gap: 7px; color: #b1c49f; }
 .monitoring i { width: 4px; height: 4px; background: currentColor; border-radius: 50%; box-shadow: 0 0 10px #b1c49f33; }
-.clock-instrument { position: relative; width: 100%; }
+.clock-instrument { position: relative; width: 100%; margin-top: 12px; }
 .clock-svg { display: block; width: 100%; }
-.event-horizon-arc { fill: none; stroke: #a54837; stroke-width: 2; stroke-dasharray: 3 8; opacity: .78; }
-.event-horizon-tick { stroke: var(--accent); stroke-width: 3; filter: drop-shadow(0 0 5px rgb(241 91 64 / .34)); }
+.clock-progress-glow { fill: none; stroke: #c9422e; stroke-width: 7; opacity: .2; filter: blur(3px); }
+.clock-progress-arc { fill: none; stroke: #cf5a43; stroke-width: 3.5; }
+.clock-start-marker { fill: var(--bg); stroke: #fff0de; stroke-width: 1.5; }
+.clock-position-halo { fill: #ffd6a51a; stroke: #ffd6a544; stroke-width: 1; }
+.clock-position-backplate { fill: var(--bg); stroke: #ffac75; stroke-width: 1; }
+.clock-position-diamond { fill: #fff4e5; filter: drop-shadow(0 0 5px #ffdab580); }
+.event-horizon-bloom { opacity: .42; }
+.event-horizon-band { stroke: #9f3528; stroke-width: .75; }
+.event-horizon-arc { fill: none; stroke: #e45b42; stroke-width: 1.5; }
+.event-horizon-inner-edge { fill: none; stroke: #a83e2d; stroke-width: 1; }
+.event-horizon-tick { stroke: #f56848; stroke-width: 6; filter: drop-shadow(0 0 8px #f14a2c99); }
+.event-horizon-gate-core { stroke: #ffd6bd; stroke-width: 1.5; }
+.event-horizon-connector { fill: none; stroke: #ce735c; stroke-width: 1; }
+.event-horizon-callout { position: absolute; left: 2%; top: 13%; transform: translateY(-100%); display: flex; flex-direction: column; align-items: flex-start; gap: 3px; padding: 3px 6px 5px; color: var(--ink); text-decoration: none; }
+.event-horizon-callout-title { font: 500 11px/1.2 var(--mono); letter-spacing: .06em; }
+.event-horizon-callout strong { font: 600 36px/.9 var(--display); letter-spacing: -.015em; color: #ff7253; text-shadow: 0 0 18px #ff4d2826; }
+.event-horizon-callout-caption { font: 400 9px/1.3 var(--mono); letter-spacing: .055em; color: #d9917c; }
+.event-horizon-callout:hover .event-horizon-callout-title, .event-horizon-callout:focus-visible .event-horizon-callout-title { color: #ff9474; }
+.event-horizon-callout:focus-visible { outline: 1px solid var(--accent); outline-offset: 5px; }
+.has-entered-horizon .event-horizon-band { stroke: #f16d4a; }
+.has-entered-horizon .event-horizon-bloom { opacity: .7; }
 .dial-label { font: 400 10px var(--mono); fill: #adb59f; letter-spacing: .12em; }
 .clock-readout { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); text-align: center; width: 73%; }
-.clock-eyebrow { font: 8px var(--mono); letter-spacing: .12em; margin-bottom: 14px; color: var(--muted); }
-.clock-eyebrow > span { display: inline-block; width: 4px; height: 4px; margin-right: 7px; background: var(--accent); }
+.clock-eyebrow { font: 8px var(--mono); letter-spacing: .12em; margin-bottom: 14px; color: #e3d9cc; }
+.clock-eyebrow > span { display: inline-block; width: 5px; height: 5px; margin-right: 8px; background: #fff0de; transform: rotate(45deg); }
 .clock-digits { font: 600 clamp(94px, 12.2vw, 175px)/.88 var(--display); font-variant-numeric: tabular-nums; letter-spacing: -.04em; color: var(--accent); }
 .clock-digits.is-boundary { transform: scale(.82); }
-.clock-unit { font: 8px var(--mono); margin-top: 16px; letter-spacing: .14em; color: var(--muted); }
+.clock-origin { display: flex; align-items: baseline; justify-content: center; gap: 7px; margin-top: 16px; font: 9px/1.4 var(--mono); letter-spacing: .06em; color: #aaa99c; }
+.clock-origin strong { font: 500 17px/1 var(--display); letter-spacing: .025em; color: #eee7db; }
+.clock-unit { font: 7px var(--mono); margin-left: 5px; padding-left: 10px; border-left: 1px solid #545549; letter-spacing: .08em; color: var(--muted); }
 .clock-pressure { display: flex; align-items: center; justify-content: center; gap: 6px; font: 11px var(--mono); margin-top: 27px; }
 .clock-pressure > span:last-child { color: var(--muted); font-size: 7px; }
 .pressure-dot { width: 5px; height: 5px; background: var(--accent); }
 .event-horizon-status { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px 12px; min-height: 36px; margin-top: -5px; padding: 0 12px 9px; font: 9px/1.5 var(--mono); letter-spacing: .055em; color: var(--muted); }
-.event-horizon-status > a:first-child { display: inline-flex; align-items: center; gap: 8px; min-height: 32px; color: var(--ink); }
-.event-horizon-status > a:first-child span { color: var(--accent); }
-.event-horizon-status > a:first-child strong { font: 500 12px var(--display); letter-spacing: .02em; }
-.event-horizon-status > a:first-child:hover, .event-horizon-editorial:hover { color: var(--accent); }
-.event-horizon-state { display: inline-flex; align-items: center; gap: 6px; padding-left: 12px; border-left: 1px solid var(--line); }
+.event-horizon-editorial:hover { color: var(--accent); }
+.event-horizon-state { display: inline-flex; align-items: center; gap: 6px; }
 .event-horizon-state i { width: 4px; height: 4px; background: currentColor; }
 .event-horizon-status.is-active .event-horizon-state { color: var(--accent); }
 .event-horizon-editorial { min-height: 32px; display: inline-flex; align-items: center; color: var(--ink); }
@@ -435,6 +453,7 @@ summary::-webkit-details-marker { display: none; }
   .hero-actions { gap: 16px; flex-wrap: wrap; }
   .hero-description { max-width: 310px; }
   .clock-digits { font-size: 13.1vw; }
+  .clock-instrument { margin-top: 34px; }
   .clock-panel-top { font-size: 7px; }
   .clock-panel-bottom { align-items: flex-start; font-size: 6px; }
   .clock-pressure { margin-top: 21px; }
@@ -463,9 +482,15 @@ summary::-webkit-details-marker { display: none; }
   .hero-footnote { font-size: 7px; }
   .hero-copy .eyebrow { font-size: 7px; }
   .clock-panel-top { font-size: 6px; padding-inline: 0; }
+  .event-horizon-callout { gap: 2px; padding-inline: 3px; }
+  .event-horizon-callout-title { font-size: 10px; }
+  .event-horizon-callout strong { font-size: 30px; }
+  .event-horizon-callout-caption { font-size: 8px; letter-spacing: .04em; }
   .clock-panel-bottom { flex-direction: column; gap: 2px; align-items: center; }
   .clock-eyebrow { font-size: 6px; margin-bottom: 9px; }
-  .clock-unit { font-size: 6px; margin-top: 10px; }
+  .clock-origin { font-size: 8px; gap: 5px; margin-top: 10px; }
+  .clock-origin strong { font-size: 15px; }
+  .clock-unit { font-size: 6px; margin-left: 2px; padding-left: 7px; }
   .clock-pressure { margin-top: 17px; font-size: 9px; }
   .clock-pressure > span:last-child { font-size: 5px; }
   .stats-strip { grid-template-columns: 1fr 1fr; row-gap: 24px; }
@@ -530,7 +555,8 @@ summary::-webkit-details-marker { display: none; }
   .clock-panel-top { font-size: 7px; }
   .clock-digits { font-size: clamp(110px, 29vw, 157px); }
   .clock-eyebrow { font-size: 7px; margin-bottom: 12px; }
-  .clock-unit { font-size: 7px; margin-top: 12px; }
+  .clock-origin { margin-top: 12px; }
+  .clock-unit { font-size: 7px; }
   .clock-pressure { font-size: 10px; margin-top: 22px; }
   .clock-pressure > span:last-child { font-size: 6px; }
   .clock-panel-bottom { flex-direction: row; align-items: center; font-size: 6px; }
