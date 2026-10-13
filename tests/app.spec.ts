@@ -29,7 +29,10 @@ test('clock, archive filters, direct report links, and scoring evidence', async 
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
   await expect(page.locator('.clock-digits')).toHaveText('14:01');
-  await expect(page.locator('.clock-svg')).toContainText('BASELINE 15:00');
+  await expect(page.locator('.clock-origin')).toContainText('FROM15:00');
+  await expect(page.locator('.clock-eyebrow')).toContainText('CURRENT POSITION');
+  await expect(page.locator('.clock-position-marker')).toBeVisible();
+  await expect(page.locator('.clock-progress-sector')).toBeVisible();
   await expect(page.locator('.timeline-chart')).toHaveAttribute('aria-label', /Starting at 15 symbolic minutes/);
   await expect(page.locator('.timeline-chart > g .chart-axis')).toHaveText(['0m', '5m', '10m', '15m']);
   const latestPointY = Number(await page.locator('.timeline-chart > circle').last().getAttribute('cy'));

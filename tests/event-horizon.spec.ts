@@ -130,4 +130,27 @@ test('near the boundary the clock stays above two minutes and its longer readout
   expect(arcLength).toBeLessThan(215); // Only the reserved 48-degree outer arc is marked.
   await page.locator('.clock-panel').screenshot({ path: testInfo.outputPath('near-boundary-clock.png') });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+
+  // At the left/right of the dial, the endpoint must not cover the time readout.
+  for (const count of [29, 170]) {
+    const sideIncidents = incidents.slice(0, count);
+    const sideLedger = applyClockLedger(sideIncidents.map(incident => ({ id: incident.id, date: incident.assessment.date, score: incident.scoring.totalPoints })), null);
+    Object.assign(data, {
+      clock: sideLedger.clock, totalPoints: sideLedger.totalPoints, remainingSeconds: sideLedger.remainingSeconds, pressure: sideLedger.pressure,
+      assessmentCount: count,
+      incidents: sideIncidents.map((incident, index) => ({ ...incident, ...sideLedger.entries[index], routeAliases: undefined })),
+    });
+    await page.reload();
+    await expect(page.locator('.clock-digits')).toHaveText(formatTime(data.remainingSeconds));
+    await page.evaluate(() => document.fonts.ready);
+    const overlaps = await page.evaluate(() => {
+      const range = document.createRange();
+      range.selectNodeContents(document.querySelector('.clock-digits')!);
+      const digits = range.getBoundingClientRect();
+      const marker = document.querySelector('.clock-position-backplate')!.getBoundingClientRect();
+      return digits.left < marker.right && digits.right > marker.left && digits.top < marker.bottom && digits.bottom > marker.top;
+    });
+    expect(overlaps, `Position marker must clear ${formatTime(data.remainingSeconds)}`).toBe(false);
+    await page.locator('.clock-panel').screenshot({ path: testInfo.outputPath(`side-position-${count}.png`) });
+  }
 });
