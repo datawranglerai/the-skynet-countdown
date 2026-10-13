@@ -81,6 +81,29 @@ The workflow uses Node.js 24, installs dependencies, runs lint and tests, and bu
 
 `index.html` includes `<meta name="robots" content="noindex, nofollow">`. A deployment check verifies the directive is present in the built HTML. API responses also include `X-Robots-Tag: noindex, nofollow`. These directives request exclusion from search results; they do not make the site or records private.
 
+## Analytics
+
+The frontend loads GoatCounter's official `https://gc.zgo.at/count.js` script and sends pageviews and native events to `https://skynetcountdown.goatcounter.com/count`. Reports are available in the [GoatCounter dashboard](https://skynetcountdown.goatcounter.com/). No API key, Railway change or build secret is required.
+
+[src/analytics.ts](src/analytics.ts) enables tracking only in production builds served at `skynetcountdown.org` or `www.skynetcountdown.org`. Local development, local previews and other hostnames do not load the script. Do Not Track also prevents loading; the native client's `skipgc` opt-out remains supported. Script failures or blockers leave the site usable.
+
+Pageviews use the site's actual hash routes: `/`, `/#/incidents`, `/#/methodology` and `/#/incidents/<canonical-event-id>`. The Event Horizon section belongs to the methodology page. Automatic GoatCounter pageviews are disabled so they cannot duplicate the app's counts. Data refreshes and alias redirects do not add pageviews; returning to a page through navigation does. Page titles are captured after the route resolves, and a short bounded queue handles a slow-loading analytics script.
+
+| Event path | Interaction |
+| --- | --- |
+| `click/<area>/<destination>` | Links in the header, clock, timeline, recent incidents, archive, incident report, methodology and footer. Includes report opens, original sources, GitHub, contributions, donations, image credits and CSV downloads. |
+| `archive/severity/<value>`, `archive/sort/<value>`, `archive/leading/on` or `off` | Archive filter and sort changes. |
+| `timeline/explore` | First change to the selected timeline incident during a visit to the clock. |
+| `methodology/worked-example` | Selecting an assessment in the worked examples. |
+| `calculator/use`, `calculator/phase/<phase>`, `calculator/reset` | First calculator use during a methodology visit, phase switches and resets. |
+| `soundtrack/on`, `soundtrack/off` | Requests to enable or disable the soundtrack; these count toggle actions, not successful playback. |
+
+For example, `click/footer/github.com/datawranglerai/skynet-countdown-scoring-methodology` identifies the footer's repository link, while `click/archive/incidents/<event-id>` identifies an archive report link. Titles give each event a readable label; the referrer identifies the page where it happened. Events use `event: true` and `no_session: true` so repeat interactions are counted separately from pageviews. Keyboard activation and middle-click links are covered. A download event records the click, not proof that the transfer completed.
+
+The integration does not send search text, calculator inputs, outbound query strings or outbound fragments. It adds no cookies or custom visitor identifiers. Existing links are tracked through delegation, so newly fetched incidents need no separate analytics wiring. Add `data-analytics-area` to a container to distinguish a new group of links, or call `trackEvent()` for a deliberate non-link interaction. Avoid calling it from renders or data refreshes.
+
+Browser analytics tests intercept the script and dataset while serving the local build under the production hostname. They send nothing to the live counter. See GoatCounter's [SPA integration](https://www.goatcounter.com/help/spa), [JavaScript API](https://www.goatcounter.com/help/js) and [native events](https://www.goatcounter.com/help/events) documentation for the underlying API.
+
 ## Migrating the archived CSV records
 
 The importer uses the reviewed manifest to preserve incident grouping, selected assessments and old report URLs. It retains existing PostgreSQL row identities and database-authored story rewrites. Exact source URLs determine current assessment rows; `stories.assessment_id` determines their parent. Upstream `cve_id` values are retained as metadata and never used as database join keys.

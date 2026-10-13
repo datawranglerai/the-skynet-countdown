@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
+import { trackEvent } from '../analytics';
 import robotPortrait from '../../assets/optimized/futuristic-robot-head.webp';
 import robotPortraitLarge from '../../assets/optimized/futuristic-robot-head-large.webp';
 import ImageCredit from '../components/ImageCredit';
@@ -73,6 +74,10 @@ function ExampleInspector({ incidents }: { incidents: Incident[] }) {
   const initialId = exampleIds[0] ?? incidents[0]?.id ?? '';
   const [selectedId, setSelectedId] = useState(initialId);
   const incident = incidents.find((item) => item.id === selectedId) ?? incidents[0];
+  const selectExample = (id: string) => {
+    setSelectedId(id);
+    trackEvent('methodology/worked-example', 'Select a worked example');
+  };
 
   if (!incident) return <p className="method-empty">No assessments are available.</p>;
 
@@ -83,7 +88,7 @@ function ExampleInspector({ incidents }: { incidents: Incident[] }) {
         <select
           id="worked-example"
           value={incident.id}
-          onChange={(event) => setSelectedId(event.target.value)}
+          onChange={(event) => selectExample(event.target.value)}
         >
           {incidents.map((item) => (
             <option key={item.id} value={item.id}>
@@ -98,7 +103,7 @@ function ExampleInspector({ incidents }: { incidents: Incident[] }) {
                 className={incident.id === id ? 'is-active' : ''}
                 key={id}
                 type="button"
-                onClick={() => setSelectedId(id)}
+                onClick={() => selectExample(id)}
               >
                 Example {String(index + 1).padStart(2, '0')}
               </button>
@@ -175,6 +180,7 @@ function ExampleInspector({ incidents }: { incidents: Incident[] }) {
 function IncidentCalculator({ dataset }: { dataset: Dataset }) {
   const initialScores = Object.fromEntries(CRITERIA.map(({ key }) => [key, 0]));
   const [scores, setScores] = useState<CalculatorScores>(initialScores);
+  const used = useRef(false);
   const [previewPhase, setPreviewPhase] = useState<ClockPhase>(dataset.clock.phase);
   const scoring = calculateRiskScore(scores);
   const previewPhasePoints = previewPhase === dataset.clock.phase ? dataset.clock.phasePoints : 0;
@@ -194,7 +200,14 @@ function IncidentCalculator({ dataset }: { dataset: Dataset }) {
   const gapClosedPercent = calculateGapClosedPercent(effectivePreviewPoints, previewPhase);
   const severityLabel = scoring.totalPoints === 0 ? 'NO MOVEMENT' : scoring.severity;
 
+  const markUsed = () => {
+    if (used.current) return;
+    used.current = true;
+    trackEvent('calculator/use', 'Use the hypothetical incident calculator');
+  };
+
   const updateScore = (key: string, value: number) => {
+    markUsed();
     setScores((current) => ({ ...current, [key]: value }));
   };
 
@@ -211,7 +224,11 @@ function IncidentCalculator({ dataset }: { dataset: Dataset }) {
                   type="radio"
                   name="calculator-clock-phase"
                   checked={previewPhase === phase}
-                  onChange={() => setPreviewPhase(phase)}
+                  onChange={() => {
+                    markUsed();
+                    setPreviewPhase(phase);
+                    trackEvent(`calculator/phase/${phase}`, `Calculator phase: ${phaseLabel(phase)}`);
+                  }}
                 />
                 <span>{phaseLabel(phase)}</span>
               </label>
@@ -287,7 +304,10 @@ function IncidentCalculator({ dataset }: { dataset: Dataset }) {
           <p className="method-output-zero">Recorded and still visible, but scores below {CALIBRATION.eventHorizonMinimumScore}/{MAX_SCORE} do not move the clock after Event Horizon.</p>
         )}
         <p className="method-preview-note">Local preview only. It has no effect on the live clock or the published Event Horizon decision.</p>
-        <button type="button" className="button" onClick={() => setScores(initialScores)}>Reset controls</button>
+        <button type="button" className="button" onClick={() => {
+          setScores(initialScores);
+          trackEvent('calculator/reset', 'Reset calculator controls');
+        }}>Reset controls</button>
       </aside>
     </div>
   );
@@ -297,7 +317,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
   const assessmentsUrl = getDatasetExportUrl('assessments');
   const storiesUrl = getDatasetExportUrl('stories');
   return (
-    <div className="method-page">
+    <div className="method-page" data-analytics-area="methodology">
       <section className="method-hero container" aria-labelledby="method-title">
         <div className="method-hero-heading">
           <p className="eyebrow">Methodology · v{CALIBRATION.version}</p>

@@ -1,13 +1,21 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { trackEvent } from '../analytics';
 import type { Dataset, Incident } from '../lib/types';
 import { CALIBRATION, formatTime, formatGapClosedPercent } from '../lib/calibration';
 import { Arrow, dateLabel, movementLabel } from './Shared';
 
 export default function Timeline({ incidents, clock, currentRemainingSeconds }: { incidents: Incident[]; clock?: Dataset['clock']; currentRemainingSeconds?: number }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const explored = useRef(false);
   const selectedIndex = selectedId ? incidents.findIndex((incident) => incident.id === selectedId) : -1;
   const selected = selectedIndex >= 0 ? selectedIndex : incidents.length - 1;
-  const select = (index: number) => setSelectedId(index === incidents.length - 1 ? null : incidents[index]?.id ?? null);
+  const select = (index: number) => {
+    if (!explored.current && index !== selected) {
+      explored.current = true;
+      trackEvent('timeline/explore', 'Explore the clock history');
+    }
+    setSelectedId(index === incidents.length - 1 ? null : incidents[index]?.id ?? null);
+  };
   const event = incidents[selected];
   if (!event) return <p>No evidence has been recorded yet.</p>;
   const start = new Date(`${incidents[0].assessment.date}T00:00:00Z`).getTime() - 86400000;
@@ -24,7 +32,7 @@ export default function Timeline({ incidents, clock, currentRemainingSeconds }: 
   const monthNames = Array.from({ length: 5 }, (_, index) => dateLabel(new Date(start + (end - start) * index / 4).toISOString().slice(0, 10)));
   const belowHorizonThreshold = event.clockPhase === 'event-horizon' && event.effectivePoints === 0;
   const gapDestination = event.clockPhase === 'event-horizon' ? 'MIDNIGHT' : 'EVENT HORIZON';
-  return <div className="timeline-layout">
+  return <div className="timeline-layout" data-analytics-area="timeline">
     <div className="timeline-chart-wrap">
       <div className="chart-key"><span><i /> SYMBOLIC DISTANCE TO MIDNIGHT</span><span>CALCULATED FROM INCIDENT SCORES</span></div>
       <svg className="timeline-chart" viewBox="0 0 930 240" role="img" aria-label={`Clock history from ${dateLabel(incidents[0].assessment.date)} to ${dateLabel(incidents.at(-1)!.assessment.date)}. Starting at ${startingSeconds / 60} symbolic minutes, the clock reaches ${formatTime(currentRemainingSeconds ?? incidents.at(-1)!.remainingSeconds)}.${clock?.transition ? ' The human-approved Event Horizon entry is marked separately from incident movement.' : ''} Use the slider below to inspect each event.`}>

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { trackEvent } from '../analytics';
 import soundtrackUrl from '../../assets/sounds/Kepler Harmony of the Worlds.mp3';
 
 export default function Soundtrack() {
@@ -22,6 +23,7 @@ export default function Soundtrack() {
     if (!player) return;
     const currentAttempt = ++attempt.current;
     requested.current = !requested.current;
+    trackEvent(`soundtrack/${requested.current ? 'on' : 'off'}`, `${requested.current ? 'Enable' : 'Disable'} soundtrack`);
 
     if (!requested.current) {
       player.pause();
