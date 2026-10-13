@@ -19,6 +19,8 @@ Open the local URL printed by Vite. `npm run build` checks types, produces `dist
 
 GitHub Actions deploys to GitHub Pages when changes reach `main`. The site includes a `noindex` directive, checked before each deployment. See [deployment and indexing](APP.md#github-pages-deployment) for details.
 
+GoatCounter records pageviews and key interactions on the production site. Local development is excluded. The [analytics guide](APP.md#analytics) documents the tracked events and how to maintain them.
+
 ## What is this?
 
 The clock tracks the accumulated weight of technical, commercial and political decisions that reduce the distance between today's AI systems and a world where meaningful human oversight becomes structurally impossible.
