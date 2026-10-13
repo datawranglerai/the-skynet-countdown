@@ -127,7 +127,7 @@ test('near the boundary the clock stays above two minutes and its longer readout
   });
   expect(readoutFits).toBe(true);
   const arcLength = await page.locator('.event-horizon-arc').evaluate(element => (element as SVGPathElement).getTotalLength());
-  expect(arcLength).toBeLessThan(180); // Only the reserved 48-degree arc is marked.
+  expect(arcLength).toBeLessThan(215); // Only the reserved 48-degree outer arc is marked.
   await page.locator('.clock-panel').screenshot({ path: testInfo.outputPath('near-boundary-clock.png') });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
 });

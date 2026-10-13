@@ -132,10 +132,24 @@ test('Event Horizon is marked on the clock and opens its focused methodology sec
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto('/');
   await expect(page.locator('.event-horizon-arc')).toBeVisible();
+  await expect(page.locator('.event-horizon-band')).toBeVisible();
   await expect(page.locator('.event-horizon-tick')).toBeVisible();
   await expect(page.locator('.event-horizon-status')).toContainText('HUMAN APPROVAL REQUIRED');
-  await expect(page.locator('.clock-instrument')).toHaveAttribute('aria-label', /Crossing it requires a published human decision/);
-  await page.getByRole('link', { name: /EVENT HORIZON 02:00/ }).click();
+  await expect(page.locator('.clock-visual')).toHaveAttribute('aria-label', /Crossing it requires a published human decision/);
+  await expect(page.locator('.event-horizon-callout')).toContainText('POINT OF NO RETURN');
+  const callout = page.getByRole('link', { name: /Event Horizon at 02:00/ });
+  for (const width of [1440, 1024, 768, 375, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.evaluate(() => document.fonts.ready);
+    const labelBox = await callout.boundingBox();
+    const headerBox = await page.locator('.clock-panel-top').boundingBox();
+    expect(labelBox!.y, `Callout clearance at ${width}px`).toBeGreaterThanOrEqual(headerBox!.y + headerBox!.height + 3);
+    expect(labelBox!.height).toBeGreaterThanOrEqual(44);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true);
+  }
+  await callout.focus();
+  await expect(callout).toBeFocused();
+  await callout.press('Enter');
   await expect(page).toHaveURL(/#\/methodology\/event-horizon$/);
   await expect(page.locator('#event-horizon')).toBeFocused();
   await expect(page.getByRole('heading', { name: 'Event Horizon.' })).toBeVisible();
