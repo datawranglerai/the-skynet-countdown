@@ -50,7 +50,7 @@ test('calculator previews the ten-point boundary without activating the live clo
   await expect(output).toContainText('Local preview only');
   await page.getByRole('link', { name: 'The clock', exact: true }).click();
   await expect(page.locator('.clock-digits')).toHaveText('14:01');
-  await expect(page.locator('.event-horizon-state')).toHaveText('HUMAN APPROVAL REQUIRED');
+  await expect(page.locator('.event-horizon-status')).toHaveCount(0);
   await page.locator('.clock-panel').screenshot({ path: testInfo.outputPath('approach-clock.png') });
 });
 
@@ -118,7 +118,7 @@ test('near the boundary the clock stays above two minutes and its longer readout
   await page.route('https://api.skynetcountdown.org/dataset', route => route.fulfill({ json: data }));
   await page.goto('/');
   await expect(page.locator('.clock-digits')).toHaveText('>02:00');
-  await expect(page.locator('.event-horizon-state')).toHaveText('HUMAN APPROVAL REQUIRED');
+  await expect(page.locator('.event-horizon-status')).toHaveCount(0);
   await page.evaluate(() => document.fonts.ready);
   const readoutFits = await page.locator('.clock-digits').evaluate(element => {
     const range = document.createRange();

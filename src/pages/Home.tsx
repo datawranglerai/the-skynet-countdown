@@ -11,7 +11,7 @@ export default function Home({ dataset }: { dataset: Dataset }) {
   const recent = [...dataset.incidents].reverse().filter((incident) => incident.editorial).slice(0, 3);
   return <>
     <section className="hero container">
-      <div className="hero-copy"><div className="eyebrow"><span className="tiny-square" /> A FIELD GUIDE TO LOSING CONTROL</div><h1>THE FUTURE<br />IS NOT <span>SET.</span></h1><p className="hero-subheading">But we’re keeping score.</p><p className="hero-description">A living record of the AI developments bringing us closer to a world beyond meaningful human control. Every score explained. Every judgement open to question.</p><div className="hero-actions"><a className="button button-primary" href="#/incidents">Explore the incidents <Arrow /></a><a className="text-link" href="#/methodology">How the clock works <Arrow diagonal /></a></div><div className="hero-footnote"><span>↳</span> THE TERMINATOR REFERENCE IS A JOKE.<br /><span className="footnote-second">THE FOOTNOTES AREN’T.</span></div></div>
+      <div className="hero-copy"><h1>THE FUTURE<br />IS NOT <span>SET.</span></h1><p className="hero-subheading">But we’re keeping score.</p><p className="hero-description">A living record of the AI developments bringing us closer to a world beyond meaningful human control. Every score explained. Every judgement open to question.</p><div className="hero-actions"><a className="button button-primary" href="#/incidents">Explore the incidents <Arrow /></a><a className="text-link" href="#/methodology">How the clock works <Arrow diagonal /></a></div><div className="hero-footnote"><span>↳</span> THE TERMINATOR REFERENCE IS A JOKE.<br /><span className="footnote-second">THE FOOTNOTES AREN’T.</span></div></div>
       <Clock dataset={dataset} />
     </section>
     <section className="stats-strip container" aria-label="Dataset summary">
@@ -53,11 +53,6 @@ export default function Home({ dataset }: { dataset: Dataset }) {
         </a>
       </div>
       <div className="manifesto-framework">
-        <ul className="manifesto-conditions" aria-label="The three framework conditions" role="list">
-          <li>Ungoverned access</li>
-          <li><span aria-hidden="true">+</span>Untrusted input</li>
-          <li><span aria-hidden="true">+</span>Autonomous action</li>
-        </ul>
         <a className="text-link" href="#/methodology">Explore the methodology <Arrow diagonal /></a>
       </div>
     </section>
