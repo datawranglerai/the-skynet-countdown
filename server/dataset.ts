@@ -94,6 +94,14 @@ function groupedSelectionRationale(original: string, aliasCount: number): string
   return original === DEFAULT_SELECTION_RATIONALE ? grouping : `${grouping} Original selection note: ${original}`;
 }
 
+function compareHistoryCapture(left: DatabaseHistoryRow, right: DatabaseHistoryRow): number {
+  const timestampOrder = Date.parse(left.recorded_at) - Date.parse(right.recorded_at);
+  if (timestampOrder) return timestampOrder;
+  const leftId = BigInt(left.id);
+  const rightId = BigInt(right.id);
+  return leftId < rightId ? -1 : leftId > rightId ? 1 : 0;
+}
+
 export function buildDatabaseDataset(
   snapshot: DatabaseSnapshot,
   generatedAt = snapshot.dataUpdatedAt,
@@ -124,6 +132,8 @@ export function buildDatabaseDataset(
       assessmentRows.filter((row) => row.version_key === event.selected_assessment_version_key),
       `Event ${event.slug} selected assessment`,
     );
+    const firstAssessmentRow = assessmentRows.reduce((earliest, row) =>
+      compareHistoryCapture(row, earliest) < 0 ? row : earliest, selectedAssessmentRow);
     const assessment = parseAssessmentHistory(selectedAssessmentRow);
     const assessments = assessmentRows.map(parseAssessmentHistory)
       .sort((left, right) => left.date.localeCompare(right.date) || (left.versionId ?? '').localeCompare(right.versionId ?? ''));
@@ -146,7 +156,16 @@ export function buildDatabaseDataset(
       .filter((eventId) => eventId !== event.id)
       .map((eventId) => eventsById.get(eventId)!.slug)
       .sort();
-    return { event, routeAliases, assessment, assessments, editorial, editorials, linkedAssessment };
+    const lastUpdatedAt = [
+      ...history.map((row) => row.recorded_at),
+      ...memberIds.map((eventId) => eventsById.get(eventId)!.updated_at),
+    ].reduce((latest, timestamp) => Date.parse(timestamp) > Date.parse(latest) ? timestamp : latest);
+    const recordSummary = {
+      firstRecordedAt: firstAssessmentRow.recorded_at,
+      initialScore: calculateRiskScore(parseAssessmentHistory(firstAssessmentRow).scores).totalPoints,
+      lastUpdatedAt,
+    };
+    return { event, routeAliases, assessment, assessments, editorial, editorials, linkedAssessment, recordSummary };
   }).sort((left, right) =>
     left.assessment.date.localeCompare(right.assessment.date) || left.event.slug.localeCompare(right.event.slug));
 
@@ -175,6 +194,7 @@ export function buildDatabaseDataset(
         : undefined,
       headline: value.editorial?.headline ?? value.assessment.title,
       selectionRationale: groupedSelectionRationale(value.event.selection_rationale, value.routeAliases.length),
+      recordSummary: value.recordSummary,
       scoring,
       clockPhase: clockEntry.clockPhase,
       phaseCumulativePoints: clockEntry.phaseCumulativePoints,

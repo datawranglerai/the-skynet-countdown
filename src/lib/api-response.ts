@@ -1,14 +1,16 @@
 import { applyClockLedger } from './clock-ledger.ts';
 import type {
   Assessment, ClockPhase, Dataset, DatasetClock, Editorial, EventHorizonApproval,
-  Incident, RiskScore, RiskSeverity, Severity,
+  Incident, IncidentRecordSummary, RiskScore, RiskSeverity, Severity,
 } from './types.ts';
+import { MAX_SCORE } from './scoring.ts';
 
 type JsonRecord = Record<string, unknown>;
 
 const isRecord = (value: unknown): value is JsonRecord =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 const SEVERITIES = new Set<Severity>(['CANARY', 'NOTABLE', 'SIGNIFICANT', 'CRITICAL', 'EXISTENTIAL']);
+const ISO_TIMESTAMP_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/;
 
 function expectRecord(value: unknown, path: string): JsonRecord {
   if (!isRecord(value)) throw new Error(`${path} must be an object.`);
@@ -23,6 +25,16 @@ function expectString(value: unknown, path: string): string {
 function expectOptionalString(value: unknown, path: string): string | undefined {
   if (value === undefined) return undefined;
   return expectString(value, path);
+}
+
+function expectTimestamp(value: unknown, path: string): string {
+  const timestamp = expectString(value, path);
+  const parsed = new Date(timestamp);
+  if (!ISO_TIMESTAMP_PATTERN.test(timestamp) || Number.isNaN(parsed.getTime())
+    || parsed.toISOString().slice(0, 19) !== timestamp.slice(0, 19)) {
+    throw new Error(`${path} must be a valid UTC ISO timestamp.`);
+  }
+  return timestamp;
 }
 
 function expectNumber(value: unknown, path: string): number {
@@ -123,6 +135,21 @@ function decodeRiskScore(value: unknown, path: string): RiskScore {
   };
 }
 
+function decodeRecordSummary(value: unknown, path: string): IncidentRecordSummary | undefined {
+  if (value === undefined) return undefined;
+  const record = expectRecord(value, path);
+  const firstRecordedAt = expectTimestamp(record.firstRecordedAt, `${path}.firstRecordedAt`);
+  const lastUpdatedAt = expectTimestamp(record.lastUpdatedAt, `${path}.lastUpdatedAt`);
+  const initialScore = expectNumber(record.initialScore, `${path}.initialScore`);
+  if (!Number.isInteger(initialScore) || initialScore < 0 || initialScore > MAX_SCORE) {
+    throw new Error(`${path}.initialScore must be an integer between 0 and ${MAX_SCORE}.`);
+  }
+  if (Date.parse(firstRecordedAt) > Date.parse(lastUpdatedAt)) {
+    throw new Error(`${path}.firstRecordedAt must not be later than ${path}.lastUpdatedAt.`);
+  }
+  return { firstRecordedAt, initialScore, lastUpdatedAt };
+}
+
 const sameAssessment = (left: Assessment, right: Assessment) =>
   left.cveId === right.cveId && left.date === right.date && left.sourceUrl === right.sourceUrl
   && left.title === right.title && left.score === right.score;
@@ -176,6 +203,7 @@ function decodeIncident(value: unknown, index: number): Incident {
       : expectNumber(record.editorialAssessmentScore, `${path}.editorialAssessmentScore`),
     headline: expectString(record.headline, `${path}.headline`),
     selectionRationale: expectString(record.selectionRationale, `${path}.selectionRationale`),
+    recordSummary: decodeRecordSummary(record.recordSummary, `${path}.recordSummary`),
     scoring: decodeRiskScore(record.scoring, `${path}.scoring`),
     clockPhase: record.clockPhase === undefined ? 'approach' : expectClockPhase(record.clockPhase, `${path}.clockPhase`),
     phaseCumulativePoints: record.phaseCumulativePoints === undefined

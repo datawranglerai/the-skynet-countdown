@@ -21,6 +21,10 @@ const fixture: Dataset = {
     id: 'test-event', publicId: 'SKYNET-2026-0041', eventKey: 'test-event',
     assessment, assessments: [assessment], editorial, editorials: [editorial], editorialMatchesAssessment: true,
     headline: editorial.headline, selectionRationale: 'Selected.',
+    recordSummary: {
+      firstRecordedAt: '2026-09-20T08:30:00.000Z', initialScore: 1,
+      lastUpdatedAt: '2026-09-29T11:00:00.000Z',
+    },
     scoring: { trifectaCount: 1, trifectaPoints: 1, amplifierPoints: 0, totalPoints: 1, severity: 'CANARY' },
     clockPhase: 'approach', phaseCumulativePoints: 1,
     effectivePoints: 1, gapClosedPercent: calculateGapClosedPercent(1), cumulativePoints: 1,
@@ -35,6 +39,29 @@ test('API decoder rebinds selected assessment and editorial versions after JSON 
   const decoded = decodeDataset(JSON.parse(JSON.stringify(fixture)));
   assert.equal(decoded.incidents[0].assessment, decoded.incidents[0].assessments[0]);
   assert.equal(decoded.incidents[0].editorial, decoded.incidents[0].editorials[0]);
+  assert.deepEqual(decoded.incidents[0].recordSummary, fixture.incidents[0].recordSummary);
+});
+
+test('API decoder accepts records without a record summary', () => {
+  const response = JSON.parse(JSON.stringify(fixture));
+  delete response.incidents[0].recordSummary;
+  assert.equal(decodeDataset(response).incidents[0].recordSummary, undefined);
+});
+
+test('API decoder rejects invalid record summaries', () => {
+  const invalidSummaries = [
+    null,
+    { firstRecordedAt: 'not-a-date', initialScore: 1, lastUpdatedAt: '2026-09-29T11:00:00.000Z' },
+    { firstRecordedAt: '2026-09-20T08:30:00.000Z', initialScore: -1, lastUpdatedAt: '2026-09-29T11:00:00.000Z' },
+    { firstRecordedAt: '2026-09-20T08:30:00.000Z', initialScore: 1.5, lastUpdatedAt: '2026-09-29T11:00:00.000Z' },
+    { firstRecordedAt: '2026-09-20T08:30:00.000Z', initialScore: 18, lastUpdatedAt: '2026-09-29T11:00:00.000Z' },
+    { firstRecordedAt: '2026-09-30T00:00:00.000Z', initialScore: 1, lastUpdatedAt: '2026-09-29T11:00:00.000Z' },
+  ];
+  for (const recordSummary of invalidSummaries) {
+    const response = JSON.parse(JSON.stringify(fixture));
+    response.incidents[0].recordSummary = recordSummary;
+    assert.throws(() => decodeDataset(response), /recordSummary/);
+  }
 });
 
 test('API decoder rejects a selected version that is absent from history', () => {
