@@ -72,6 +72,12 @@ export interface Editorial {
   take: string;
 }
 
+export interface IncidentRecordSummary {
+  firstRecordedAt: string;
+  initialScore: number;
+  lastUpdatedAt: string;
+}
+
 export interface Incident {
   id: string;
   routeAliases?: string[];
@@ -85,6 +91,7 @@ export interface Incident {
   editorialAssessmentScore?: number;
   headline: string;
   selectionRationale: string;
+  recordSummary?: IncidentRecordSummary;
   scoring: RiskScore;
   clockPhase: ClockPhase;
   phaseCumulativePoints: number;

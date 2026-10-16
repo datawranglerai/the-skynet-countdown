@@ -1,7 +1,7 @@
 # Design
 
 ## Source of truth
-Active · 13 October 2026. Surfaces: clock, incident archive, individual reports, methodology. Evidence: README.md, both source CSVs, the n8n prompts, the user's Event Horizon rules, approved hazard-band direction and visual feedback. The visual direction uses the original open clock, the supplied Anta font for H1/H2 headings and two credited robot images sparingly. Reference assets inspected: the six supplied JPEGs and assets/sources.json, the previous Terminator PNGs, public/fonts/Anta/Anta-Regular.ttf and its OFL licence, and the supplied soundtrack MP3 and attribution.
+Active · 16 October 2026. Surfaces: clock, incident archive, individual reports, methodology. Evidence: README.md, both source CSVs, the n8n prompts, the user's Event Horizon rules, approved hazard-band direction, visual feedback and the request for current-only incident reports with a short record summary. The visual direction uses the original open clock, the supplied Anta font for H1/H2 headings and two credited robot images sparingly. Reference assets inspected: the six supplied JPEGs and assets/sources.json, the previous Terminator PNGs, public/fonts/Anta/Anta-Regular.ttf and its OFL licence, and the supplied soundtrack MP3 and attribution.
 
 ## Brand
 An independent practitioner's field journal: technically literate, dry, curious, occasionally darkly funny. Terminator influences appear in the instruments, warning red, Anta headings and two considered images. Earn trust through linked sources, visible reasoning, explicit limitations and separate facts/analysis. Avoid panic, faux classified information, invented scientific certainty and decorative glitches. The imagery is a framing device; it must not crowd the evidence or obscure text.
@@ -15,7 +15,7 @@ Success: calculations and joins have regression coverage; all reports and method
 Technical peers inspect the evidence and disagree with individual scores. Senior decision-makers scan the trend and read a concise explanation. Both need immediate context without having to decode a dashboard.
 
 ## Information architecture
-Header navigation: The clock, Incident archive, Methodology. Hash routes work on static hosts without rewrite rules: /#/, /#/incidents, /#/incidents/:id, /#/methodology. Home: proposition and clock, current evidence summary, interactive history, recent reports, then one closing framework section combining the manifesto, supporting copy and a single methodology invitation. Archive: searchable/filterable reports. Detail: factual account, editorial take, all eight criterion ratings, weighted published score out of 17, source and assessment variants. Methodology: formula, Trifecta weighting, amplifier anchors, interactive worked examples, sourcing, limitations and raw downloads.
+Header navigation: The clock, Incident archive, Methodology. Hash routes work on static hosts without rewrite rules: /#/, /#/incidents, /#/incidents/:id, /#/methodology. Home: proposition and clock, current evidence summary, interactive history, recent reports, then one closing framework section combining the manifesto, supporting copy and a single methodology invitation. Archive: searchable/filterable reports. Detail: current factual account, editorial take, all eight current criterion ratings, weighted published score out of 17, original source and a compact record summary. Previous assessments and editorials remain in the source downloads. Methodology: formula, Trifecta weighting, amplifier anchors, interactive worked examples, sourcing, limitations and raw downloads.
 
 ## Design principles
 Make the clock the visual anchor. Use large typography and whitespace to pace a dense subject. Use color to support text labels. Show editorial judgement as judgement. Reuse source content faithfully, removing machine citation markers only. Never confuse missing editorial copy with an authored report.
@@ -40,6 +40,8 @@ Methodology uses a layered editorial hero: itsiken’s “Futuristic Robot Head.
 Place a quiet 10px monospace “Image: artist / Unsplash” credit immediately beneath each image, using assets/sources.json as the source of truth. Link the artist name to their profile and Unsplash to the exact image page, with visible keyboard focus and accessible new-tab labels. Preserve all supplied source images; serve WebP copies in assets/optimized (960 × 1440 for Home; responsive 680 × 850 and 1280 × 1600 sizes for Methodology, encoded at quality 0.86 without baked-in grading). Images have explicit dimensions; load the Methodology hero eagerly and the lower Home image lazily. The previous Terminator PNGs are not used as editorial images in the interface.
 
 ## Components
+Incident reports show the selected current assessment and editorial once. Remove the assessment-version accordions, alternate editorials and version counts from the report. In the closing record section, use a quiet monospace note with a slim red left border: first-recorded date, initial published score out of 17, and last-updated date. Dates use semantic time elements, remain readable and wrap on mobile. "First recorded" means the earliest stored assessment capture, which may be the import date for archived records; do not substitute the incident date or dataset refresh time. Omit the note if the API has not supplied its summary. Keep the eight expandable current criteria, a concise disclosure if the selected editorial describes an earlier score, and access to the full history through source downloads.
+
 The homepage hero opens with its headline, without an eyebrow. The clock retains “HUMAN CONTROL MONITOR” and its Event Horizon callout; omit the decorative “OBSERVING” status, inactive approval reminder and evidence-versus-time footer line. Remove their empty layout rows and keep “SHOW THE WORKING” aligned to the right below the dial.
 
 The shared header contains three elements: the logo, primary navigation and soundtrack switch.
@@ -61,6 +63,8 @@ Target WCAG 2.2 AA. Semantic landmarks and headings; skip link; visible focus; l
 
 ## Responsive behavior
 Desktop: broad two-column hero, data strip, spacious report grid. Below 900px: stacked hero and two-column cards. Below 600px: compact header, single-column reports, legible dial, wrap filters, full-width controls. No hover-only information or horizontal page overflow at 375px.
+
+When report prose and the assessment panel stack at 850px, use a fixed 32px grid gap. A percentage row gap can overflow an automatically sized grid and overlap the closing record section.
 
 Home’s numbered section eyebrows share the container’s left edge, typography and top spacing (65px on desktop, 45px on mobile). Place “03 / THE FRAMEWORK” in its own full-width row above the inset manifesto artwork; keep the overlapping title and robot composition independent of the section label.
 

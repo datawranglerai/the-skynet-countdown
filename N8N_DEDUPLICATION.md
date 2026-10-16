@@ -159,7 +159,7 @@ ORDER BY id DESC
 LIMIT 30;
 ```
 
-After accepted matches, check the site and `npm run db:check`. The API cache can take 30 seconds to expire; a visible browser tab refreshes every 60 seconds. The retained report should contain both sources' histories, and old links should open that same report. The incident count and clock points may fall; the assessment and editorial history counts should remain intact.
+After accepted matches, check the site and `npm run db:check`. The API cache can take 30 seconds to expire; a visible browser tab refreshes every 60 seconds. The retained report shows its current selected assessment and editorial; both sources' histories remain in the API and CSV exports. Old links should open that same report. The incident count and clock points may fall; the assessment and editorial history counts should remain intact.
 
 ## 5. Review uncertain pairs
 

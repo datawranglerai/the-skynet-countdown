@@ -23,11 +23,12 @@ function event(id: string, slug: string, assessmentVersion: string, storyVersion
 function history(
   id: string, kind: 'assessment' | 'story', eventId: string, versionKey: string,
   payload: Record<string, unknown>, assessmentVersionKey: string | null = null,
+  recordedAt = '2026-01-01T00:00:00.000Z',
 ): DatabaseHistoryRow {
   return {
     id, kind, source_row_id: id, event_id: eventId, version_key: versionKey,
     assessment_version_key: assessmentVersionKey, payload, provenance: 'test',
-    provenance_details: {}, import_key: null, recorded_at: '2026-01-01T00:00:00.000Z',
+    provenance_details: {}, import_key: null, recorded_at: recordedAt,
   };
 }
 
@@ -87,6 +88,54 @@ test('merged events count the root score once while retaining every version and 
   const exported = exportDatabaseCsv(snapshot, 'assessments');
   assert.match(exported, /event_id,public_id,resolved_event_id,resolved_public_id/);
   assert.match(exported, /2,SKYNET-2026-0002,1,SKYNET-2026-0001/);
+});
+
+test('record summaries use grouped capture history, weighted initial score, and source update times', () => {
+  const currentAssessment: Record<string, unknown> = {
+    ...assessmentRows[0], incident_date: '2026-01-03', source_url: 'https://example.com/current',
+    t1_score: '1', t2_score: '1', t3_score: '1', full_trifecta: 'TRUE', total_score: '5', classification: 'CRITICAL',
+    amp_governance_vacuum_score: '2', amp_autonomy_score: '0', amp_capability_erosion_score: '0',
+    amp_sentience_score: '0', amp_physical_score: '0',
+  };
+  const initialAssessment: Record<string, unknown> = {
+    ...currentAssessment, incident_date: '2026-01-01', source_url: 'https://example.com/initial',
+    total_score: '4', amp_governance_vacuum_score: '1',
+  };
+  const tiedLaterIdAssessment: Record<string, unknown> = {
+    ...initialAssessment, source_url: 'https://example.com/tied-later-id',
+    t3_score: '0', full_trifecta: 'FALSE', total_score: '3', classification: 'NOTABLE',
+  };
+  const currentStory = { ...storyRows[0], cve_id: currentAssessment.cve_id, headline: 'New editorial' };
+  const root = event('1', 'canonical-root', 'assessment:1:current', 'story:1:current');
+  root.updated_at = '2026-02-03T00:00:00.000Z';
+  const child = event('2', 'grouped-child', 'assessment:2:initial', 'story:unused');
+  child.selected_story_id = null;
+  child.selected_story_version_key = null;
+  child.updated_at = '2026-02-04T00:00:00.000Z';
+  const snapshot: DatabaseSnapshot = {
+    events: [root, child], assessments: [], stories: [], eventParents: [parent('2', '1')],
+    history: [
+      history('30', 'story', '1', 'story:1:current', currentStory, 'assessment:1:current', '2026-02-05T12:00:00.000Z'),
+      history('40', 'assessment', '1', 'assessment:1:current', currentAssessment, null, '2026-02-02T00:00:00.000Z'),
+      history('10', 'assessment', '2', 'assessment:2:tied', tiedLaterIdAssessment, null, '2026-02-01T00:00:00.000Z'),
+      history('2', 'assessment', '2', 'assessment:2:initial', initialAssessment, null, '2026-02-01T00:00:00.000Z'),
+    ],
+    dataUpdatedAt: '2026-02-06T00:00:00.000Z',
+  };
+
+  const firstBuild = buildDatabaseDataset(snapshot, '2026-03-01T00:00:00.000Z');
+  const refreshedBuild = buildDatabaseDataset(snapshot, '2026-04-01T00:00:00.000Z');
+  assert.equal(firstBuild.incidents[0].scoring.totalPoints, 9);
+  assert.deepEqual(firstBuild.incidents[0].recordSummary, {
+    firstRecordedAt: '2026-02-01T00:00:00.000Z',
+    initialScore: 8,
+    lastUpdatedAt: '2026-02-05T12:00:00.000Z',
+  });
+  assert.deepEqual(refreshedBuild.incidents[0].recordSummary, firstBuild.incidents[0].recordSummary);
+
+  child.updated_at = '2026-02-07T09:00:00.000Z';
+  const selectionUpdatedBuild = buildDatabaseDataset(snapshot, '2026-04-01T00:00:00.000Z');
+  assert.equal(selectionUpdatedBuild.incidents[0].recordSummary?.lastUpdatedAt, '2026-02-07T09:00:00.000Z');
 });
 
 test('database datasets bind clock entries by identity when a frozen alias changes same-day ordering', () => {

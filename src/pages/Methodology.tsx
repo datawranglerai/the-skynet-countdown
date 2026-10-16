@@ -580,7 +580,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
           <article>
             <h3>Reconciliation policy</h3>
             <p>
-              Assessment revisions and repeated coverage remain auditable, while each grouped event contributes to the clock once. A canonical assessment version supplies the published score.
+              Each incident page shows its current assessment and editorial. Earlier versions remain in the downloadable records, while each grouped event contributes to the clock once. A canonical assessment version supplies the published score.
             </p>
             <p>
               AI compares factual records across sources. Very confident matches passing evidence and date checks are grouped automatically; uncertain matches require human review. Every grouping is logged and reversible. Permanent event IDs drive the public record; legacy CVE labels remain upstream references rather than unique keys.

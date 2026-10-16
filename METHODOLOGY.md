@@ -326,6 +326,8 @@ The runtime resolves the selected assessment by `events.selected_assessment_vers
 
 Stories retain the assessment version they were written against. A story linked to an older valid assessment can remain available with a visible version note. A selected story whose referenced assessment is missing is a validation problem. Missing editorial copy is permitted: an assessment-only event still has a score and clock contribution.
 
+Incident pages display the current selected assessment and editorial, with earlier versions available in the source exports. A short record note gives the earliest stored assessment capture date, that assessment's published score under the current weighting, and the latest record update date. These dates come from stored history and event metadata, not the incident date or API refresh time. For imported records, the first capture can be the import date. Showing a simpler report does not remove evidence from the audit history or change which assessment contributes to the clock.
+
 ### Ordering and corrections
 
 The API reads a repeatable-read, read-only database snapshot. It orders events by the selected assessment's recorded date, then by the stable event slug, and recomputes cumulative points from zero.

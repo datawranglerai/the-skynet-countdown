@@ -8,6 +8,8 @@ The Vite/React frontend runs on GitHub Pages. It fetches `https://api.skynetcoun
 
 The files in `data/` and `src/lib/manifest.ts` are migration evidence and test fixtures. The production browser bundle does not import them or fall back to them when the API is unavailable.
 
+Incident pages show the selected current assessment and editorial. Earlier versions remain in the database, API and CSV history exports. An optional `recordSummary` supplies the earliest stored assessment capture time, its weighted initial score and the latest record update time. The API derives these three fields from the history and event metadata it already reads and caches, with no extra SQL queries or migration. "First recorded" is a capture date, which can be the import date for archived records; it is not the incident's occurrence or publication date. Routine API refreshes do not change it. Deploy both the API and frontend to show the note; older API responses remain supported and simply omit it.
+
 ## Local development
 
 Use Node.js 24 LTS and npm:
