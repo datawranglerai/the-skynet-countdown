@@ -70,7 +70,7 @@ test('approved state publishes its decision and keeps lower-scoring incidents vi
   await expect(belowRow).toContainText('BELOW 10/17');
   await page.getByRole('button', { name: 'NO MOVEMENT', exact: true }).click();
   await expect(belowRow).toBeVisible();
-  await page.getByRole('button', { name: 'ALL SIGNALS', exact: true }).click();
+  await page.getByRole('button', { name: 'ALL INCIDENTS', exact: true }).click();
   await page.getByLabel('SORT BY').selectOption('score');
   const shownScores = await page.locator('.archive-score > strong').allTextContents();
   const numericScores = shownScores.map(score => Number(score.split('/')[0]));

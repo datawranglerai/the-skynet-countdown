@@ -54,7 +54,7 @@ export default function Timeline({ incidents, clock, currentRemainingSeconds }: 
       </svg>
       <label className="timeline-slider-label" htmlFor="history-range">EXPLORE THE RECORD <span>{selected + 1} / {incidents.length}</span></label>
       <input id="history-range" className="history-range" type="range" min="0" max={incidents.length - 1} value={selected} onChange={(event) => select(Number(event.target.value))} aria-valuetext={`${dateLabel(event.assessment.date, true)}: ${event.headline}. ${formatTime(event.remainingSeconds)} remaining.`} />
-      <p className="chart-footnote">Ordered by assessment date. Incident markers show the position after each record; flat periods add no clock-eligible points.{clock?.transition ? ' Event Horizon entry is shown as a separate human-approved adjustment.' : ''}</p>
+      <p className="chart-footnote">Ordered by assessment date. Each marker shows the clock after that assessment. The line stays flat when no points qualify to move it.{clock?.transition ? ' Event Horizon entry is shown as a separate human-approved adjustment.' : ''}</p>
     </div>
     <div className="timeline-selected" aria-live="polite">
       <div className="eyebrow">{dateLabel(event.assessment.date, true)}</div>

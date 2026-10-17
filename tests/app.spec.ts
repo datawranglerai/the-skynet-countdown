@@ -61,7 +61,7 @@ test('clock, archive filters, direct report links, and scoring evidence', async 
   await expect(page.locator('.archive-row')).toHaveCount(5);
   await expect(page.locator('.archive-row').filter({hasText:'The Staging Agent Found Prod and Deleted the Lifeboats'})).toHaveCount(1);
   await page.getByRole('searchbox', { name: 'Search incidents' }).fill('does-not-exist-in-the-record');
-  await expect(page.getByRole('heading', { name: 'No matching developments.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'No matching incidents.' })).toBeVisible();
   await page.getByRole('button', { name: 'Clear filters' }).click();
   await expect(page.locator('.archive-row')).toHaveCount(40);
   await page.getByRole('searchbox', { name: 'Search incidents' }).fill('The Models Found');
@@ -226,10 +226,10 @@ test('live dataset failures can recover without inventing a fallback record', as
     else await route.fulfill({ json: fixture, headers: { 'access-control-allow-origin': '*' } });
   });
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'The record is temporarily out of reach.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Couldn’t load the incident record.' })).toBeVisible();
   await expect(page.locator('.clock-digits')).toHaveCount(0);
   available = true;
-  await page.getByRole('button', { name: 'Retry connection' }).click();
+  await page.getByRole('button', { name: 'Try again' }).click();
   await expect(page.locator('.clock-digits')).toHaveText('14:01');
 });
 
@@ -246,7 +246,7 @@ test('an empty live dataset is reported without rendering a clock', async ({ pag
     }, headers: { 'access-control-allow-origin': '*' } });
   });
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'No incidents are on the record yet.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'No incidents recorded yet.' })).toBeVisible();
   await expect(page.locator('.clock-digits')).toHaveCount(0);
 });
 
@@ -341,7 +341,7 @@ test('main pages render with local assets and unknown links recover', async ({ p
   await expect(page.locator('body')).not.toContainText(/METHOD 02|Version 2\.0|LEGACY WORKFLOW|EXCLUDED FROM V2|methodology v2/i);
   await page.screenshot({ path: testInfo.outputPath('methodology.png'), fullPage: true });
   await page.goto('/#/incidents/not-a-real-record');
-  await expect(page.getByRole('heading', { name: 'This report isn’t on the record.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Report not found.' })).toBeVisible();
   await page.getByRole('link', { name: 'Return to the archive' }).click();
   await expect(page.locator('.archive-row')).toHaveCount(40);
   expect(failed).toEqual([]);
