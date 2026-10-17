@@ -163,7 +163,7 @@ function ExampleInspector({ incidents }: { incidents: Incident[] }) {
 
         {(incident.assessment.notes || incident.assessment.leadingNote) && (
           <div className="method-assessor-note">
-            <strong>Source assessment note · workflow metadata</strong>
+            <strong>Assessment workflow note</strong>
             <p>{incident.assessment.leadingNote || incident.assessment.notes}</p>
           </div>
         )}
@@ -216,7 +216,7 @@ function IncidentCalculator({ dataset }: { dataset: Dataset }) {
       <form className="method-controls" onSubmit={(event) => event.preventDefault()}>
         <fieldset className="method-phase-control">
           <legend>Clock phase</legend>
-          <p>Preview the same assessment under either published movement rule. This does not alter the live phase or clock.</p>
+          <p>Compare how the two clock phases handle the same score. This preview leaves the live clock unchanged.</p>
           <div>
             {(['approach', 'event-horizon'] as const).map((phase) => (
               <label key={phase}>
@@ -289,7 +289,7 @@ function IncidentCalculator({ dataset }: { dataset: Dataset }) {
           <div><dt>Total score</dt><dd>{scoring.totalPoints} / {MAX_SCORE}</dd></div>
           <div className="method-calculator-severity"><dt>Classification</dt><dd>{severityLabel}</dd></div>
           <div><dt>Preview phase</dt><dd>{phaseLabel(previewPhase)}</dd></div>
-          <div><dt>Phase evidence base</dt><dd>{previewPhasePoints} pts</dd></div>
+          <div><dt>Points already in this phase</dt><dd>{previewPhasePoints} pts</dd></div>
           <div><dt>Projected clock</dt><dd>{formatTime(projectedSeconds)}</dd></div>
           <div><dt>Time change here</dt><dd>{formatMovement(movementSeconds)}</dd></div>
         </dl>
@@ -303,7 +303,7 @@ function IncidentCalculator({ dataset }: { dataset: Dataset }) {
         {previewPhase === 'event-horizon' && scoring.totalPoints > 0 && effectivePreviewPoints === 0 && (
           <p className="method-output-zero">Recorded and still visible, but scores below {CALIBRATION.eventHorizonMinimumScore}/{MAX_SCORE} do not move the clock after Event Horizon.</p>
         )}
-        <p className="method-preview-note">Local preview only. It has no effect on the live clock or the published Event Horizon decision.</p>
+        <p className="method-preview-note">Local preview only. It does not change the live clock or the published Event Horizon decision.</p>
         <button type="button" className="button" onClick={() => {
           setScores(initialScores);
           trackEvent('calculator/reset', 'Reset calculator controls');
@@ -336,17 +336,17 @@ export default function Methodology({ dataset }: MethodologyProps) {
           <ImageCredit filename="Futuristic Robot Head.jpg" />
         </figure>
         <div className="method-hero-copy">
-          <p className="method-deck">The Skynet Countdown tracks developments that move AI systems further from meaningful human control. It's an editorial index, which means we choose what counts, and we publish the reasons.</p>
-          <p>Each incident is scored against eight published criteria. The scores add up to a single number, and a formula converts that number into symbolic minutes remaining on a clock.</p>
-          <p>The clock is a gauge. It measures how much evidence has accumulated. It doesn't forecast anything. The exact number is arbitrary. The direction of travel isn't.</p>
-          <p>The title means what it says. Every score publishes its working, the criteria, the rationale, the sources, so if you think we got one wrong, you already know where to start.</p>
+          <p className="method-deck">The Skynet Countdown tracks AI developments that put meaningful human control at risk. We choose which incidents to include and publish the reasons behind each score.</p>
+          <p>We score each incident against eight published criteria. The formula converts accumulated qualifying points into symbolic minutes to midnight.</p>
+          <p>The scale is an editorial choice. The clock tracks recorded evidence; it does not forecast when anything will happen.</p>
+          <p>We publish the criteria, rationales and sources so you can check a score or challenge it.</p>
         </div>
       </section>
 
       <section className="method-score-section container" aria-labelledby="scoring-title">
         <div className="section-heading">
           <p className="eyebrow">01 · Assessment</p>
-          <h2 id="scoring-title">How a score gets its points.</h2>
+          <h2 id="scoring-title">How incidents are scored.</h2>
           <p>Score what happened, not the most dramatic thing that could happen next.</p>
         </div>
 
@@ -354,7 +354,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
           <section className="method-tier method-tier-trifecta">
             <header><span>Tier 01</span><strong>0–7 points</strong></header>
             <h3>The Lethal Trifecta</h3>
-            <p>Each condition is binary and needs direct evidence. Their combination is weighted because access, hostile input and permission to act externally create more risk together than their simple sum suggests.</p>
+            <p>Each condition is binary and needs direct evidence. We weight combinations more heavily because access, hostile input and permission to act externally pose more risk together than their individual scores suggest.</p>
             <div className="method-criteria-list">
               {CRITERIA.filter(({ tier }) => tier === 'trifecta').map((criterion) => (
                 <article key={criterion.key}>
@@ -375,7 +375,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
           <section className="method-tier method-tier-amplifiers">
             <header><span>Tier 02</span><strong>0–10 points</strong></header>
             <h3>Risk amplifiers</h3>
-            <p>Broader conditions that increase the significance of the incident: 0 absent, 1 present, 2 significantly present. Each point is added to the Trifecta score.</p>
+            <p>These five criteria capture broader risks. Each scores 0 (absent), 1 (present) or 2 (significantly present). Add their points to the Trifecta score.</p>
             <div className="method-criteria-list">
               {CRITERIA.filter(({ tier }) => tier === 'amplifier').map((criterion) => (
                 <article key={criterion.key}>
@@ -414,8 +414,8 @@ export default function Methodology({ dataset }: MethodologyProps) {
             <p className="eyebrow">02 · Calibration</p>
             <h2 id="formula-title">Within each phase, the same score closes the same share.</h2>
             <div className="method-calibration-intro">
-              <p>The clock starts at {CALIBRATION.startingSeconds / 60} symbolic minutes to midnight, the reading <a href="https://www.imd.org/ibyimd/artificial-intelligence/imd-ai-safety-clock-moves-to-15-minutes-to-midnight/">IMD's AI Safety Clock</a> published in September 2026. We could have picked any number. Sixty minutes would have been a tidy invention with nothing behind it; IMD's figure is dated, attributable and checkable by anyone who wants to look. Their reading is itself an editorial judgement, but a published one from an independent body, which is more purchase than a number chosen in the dark.</p>
-              <p>From the first incident onward, everything is ours. The scores, the formula, the movement of the hands, all of it comes from our own assessments and our own arithmetic. We set our watch from IMD's once. It doesn't stay synchronised.</p>
+              <p>The clock starts at {CALIBRATION.startingSeconds / 60} symbolic minutes to midnight, the reading <a href="https://www.imd.org/ibyimd/artificial-intelligence/imd-ai-safety-clock-moves-to-15-minutes-to-midnight/">IMD's AI Safety Clock</a> published in September 2026. We chose an independent, dated assessment that readers can check. It is still an editorial judgement.</p>
+              <p>After that starting point, our own assessments and formula determine every movement. The clock does not stay synchronised with IMD’s.</p>
             </div>
           </div>
           <div className="method-formula-card">
@@ -435,10 +435,10 @@ export default function Methodology({ dataset }: MethodologyProps) {
               Every {CALIBRATION.halfwayPoints.toLocaleString('en-GB')} evidence points halves the gap between the hand and Event Horizon: {formatTime(CALIBRATION.startingSeconds)} becomes {formatTime(CALIBRATION.horizonSeconds + (CALIBRATION.startingSeconds - CALIBRATION.horizonSeconds) / 2)}, then {formatTime(CALIBRATION.horizonSeconds + (CALIBRATION.startingSeconds - CALIBRATION.horizonSeconds) / 4)}. This fixed editorial constant sets the clock’s sensitivity during the Approach phase. It is not a probability or a scientifically estimated risk parameter.
             </p>
             <p>
-              An incident with score <strong>s</strong> closes <strong>1 − 2<sup>−s/{CALIBRATION.halfwayPoints}</sup></strong> of the remaining gap to Event Horizon. That share is persistent within this phase: a two-point event always closes {formatGapClosedPercent(calculateGapClosedPercent(2, 'approach'))}; a {MAX_SCORE}-point event always closes {formatGapClosedPercent(calculateGapClosedPercent(MAX_SCORE, 'approach'))}. The raw number of seconds depends on the clock position, so seconds are context rather than a severity comparison.
+              An incident with score <strong>s</strong> closes <strong>1 − 2<sup>−s/{CALIBRATION.halfwayPoints}</sup></strong> of the remaining gap to Event Horizon. That share stays the same throughout this phase: a two-point event always closes {formatGapClosedPercent(calculateGapClosedPercent(2, 'approach'))}; a {MAX_SCORE}-point event always closes {formatGapClosedPercent(calculateGapClosedPercent(MAX_SCORE, 'approach'))}. The number of seconds also depends on the clock’s position, so it cannot be used on its own to compare severity.
             </p>
             <p>
-              During the Approach, the curve closes in on {formatTime(CALIBRATION.horizonSeconds)} without reaching it. There is no queue or hold: each qualifying incident still moves the hand by a smaller absolute amount as the gap narrows. There is no passive ticking, decay or recovery model. Corrections to scores or event grouping can revise the historical position. The historical chart follows database record dates; these can be publication or disclosure dates rather than the date an underlying event first occurred.
+              During the Approach, the curve gets closer to {formatTime(CALIBRATION.horizonSeconds)} without reaching it. Each qualifying incident moves the hand without queuing, by fewer seconds as the gap narrows. There is no passive ticking, decay or recovery model. Corrections to scores or event grouping can change past positions. The chart uses database record dates, which may be publication or disclosure dates rather than the dates the events occurred.
             </p>
           </div>
           <div className="method-impact-comparison" aria-label="Examples of persistent incident impact during the Approach phase">
@@ -446,7 +446,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
             <div><span>Total score</span><strong>{MAX_SCORE}</strong><b>{formatGapClosedPercent(calculateGapClosedPercent(MAX_SCORE, 'approach'))}</b><small>of gap to Event Horizon</small></div>
           </div>
           <aside className="method-baseline-note" aria-label="Starting point and attribution">
-            <p><strong>An editorial starting point.</strong> The {CALIBRATION.startingSeconds / 60}-minute window is our choice for communicating urgency. Midnight represents loss of meaningful human control over AI. Event Horizon marks the reserved final phase of that symbolic journey.</p>
+            <p><strong>An editorial starting point.</strong> The {CALIBRATION.startingSeconds / 60}-minute window is our choice for communicating urgency. Midnight represents loss of meaningful human control over AI. Event Horizon marks the clock’s final phase.</p>
             <p>Our starting window takes inspiration from the <a href="https://www.imd.org/centers/digital-ai-transformation-center/aisafetyclock/">IMD AI Safety Clock</a> and its <a href="https://www.imd.org/ibyimd/artificial-intelligence/imd-ai-safety-clock-moves-to-15-minutes-to-midnight/">16 September 2026 assessment</a>. Our historical ledger and formula remain our own. The projects are unaffiliated, and their readings are not directly comparable.</p>
           </aside>
         </div>
@@ -464,10 +464,10 @@ export default function Methodology({ dataset }: MethodologyProps) {
         </div>
 
         <div className="method-horizon-copy">
-          <p className="method-horizon-deck">Event Horizon is the final two symbolic minutes. It marks the point of no return, the phase where we judge that meaningful human control has materially deteriorated.</p>
-          <p>The name is deliberately dramatic. It's our editorial reading of the boundary, not scientific proof that catastrophe has become inevitable. Two minutes is a clean final interval on a fifteen-minute clock. No risk model sits behind that number.</p>
-          <p>Inside the horizon, intervention can still buy time. It cannot buy the way back.</p>
-          <p>The Approach formula can push the hand closer and closer to {formatTime(CALIBRATION.horizonSeconds)}, but no volume of incidents crosses that line on its own. Crossing requires an explicit decision by the project owner, published with the evidence and reasoning behind it. There is no waiting queue at the boundary. Until that decision is made, each incident keeps closing a fixed share of an ever-smaller gap.</p>
+          <p className="method-horizon-deck">Event Horizon is the final two symbolic minutes. We use it to mark the point of no return: our judgement that meaningful human control has materially deteriorated.</p>
+          <p>The name is deliberately dramatic. It expresses an editorial judgement, not scientific proof that catastrophe is inevitable. We chose two minutes as the final interval on a fifteen-minute clock; the number does not come from a risk model.</p>
+          <p>Intervention may still buy time after entry. It does not reverse the crossing.</p>
+          <p>The Approach formula gets closer to {formatTime(CALIBRATION.horizonSeconds)} without crossing it. The project owner must explicitly approve entry and publish the evidence and reasoning. Until then, each incident closes a fixed share of the remaining gap. Incidents do not wait in a queue at the boundary.</p>
 
           {dataset.clock.approval ? (
             <aside className="method-horizon-decision" aria-label="Event Horizon decision record">
@@ -500,17 +500,17 @@ export default function Methodology({ dataset }: MethodologyProps) {
           </article>
           <article>
             <span>02</span>
-            <h3>A stronger response</h3>
+            <h3>Faster clock movement</h3>
             <p>The qualifying score closes a share of the remaining gap to midnight using a {CALIBRATION.eventHorizonHalfwayPoints}-point half-scale. At the boundary, a 10-point incident moves the hand about {calculateMovementSeconds(0, 10, 'event-horizon').toFixed(2)} seconds; a {MAX_SCORE}-point incident about {calculateMovementSeconds(0, MAX_SCORE, 'event-horizon').toFixed(2)} seconds.</p>
           </article>
           <article>
             <span>03</span>
-            <h3>Midnight stays asymptotic</h3>
+            <h3>The formula never reaches midnight</h3>
             <p>After entry, T(E) = {CALIBRATION.horizonSeconds} × 2<sup>−E/{CALIBRATION.eventHorizonHalfwayPoints}</sup>, where E is the cumulative eligible evidence recorded since entry. Qualifying incidents can bring the hand indefinitely close to midnight, but the formula never declares that loss of control has occurred.</p>
           </article>
           <article>
             <span>04</span>
-            <h3>The crossing stands alone</h3>
+            <h3>A separate entry adjustment</h3>
             <p>Any editorial adjustment used to cross the boundary is recorded separately from incident movement. Earlier incidents are not rescored under the faster formula, and corrections or event regrouping remain possible.</p>
           </article>
         </div>
@@ -525,7 +525,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
         <div className="section-heading">
           <p className="eyebrow">04 · Evidence</p>
           <h2 id="examples-title">Inspect a worked assessment.</h2>
-          <p>Every point has a rationale. Choose any event to see its phase-specific share of the relevant gap, score and position-dependent clock movement.</p>
+          <p>Choose an incident to see the reasons for its score, the share of the gap it closed and the seconds it moved the clock at that position.</p>
         </div>
         <ExampleInspector incidents={dataset.incidents} />
       </section>
@@ -535,7 +535,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
           <div className="section-heading">
             <p className="eyebrow">05 · Calculator</p>
             <h2 id="calculator-title">Try a hypothetical incident.</h2>
-            <p>Set the eight criteria to see how another event would move the current dataset position.</p>
+            <p>Set the eight criteria to see the score and resulting clock movement.</p>
           </div>
           <IncidentCalculator dataset={dataset} />
         </div>
@@ -548,8 +548,8 @@ export default function Methodology({ dataset }: MethodologyProps) {
             <h2 id="open-method-title">The method is open<span>.</span></h2>
           </div>
           <div className="method-open-source-copy">
-            <p>The clock is one application of this scoring method. The method itself lives in a public repo: the eight criteria, the trifecta table, the amplifier anchors, the formula, written down properly so you can point it at your own records. Your own incident log, your own deployment decisions, your own governance failures. Whatever you're tracking, the criteria should transfer.</p>
-            <p>Adapt it. Change what doesn't fit. And if you think we mis-scored something on this site, the repo is where that conversation belongs.</p>
+            <p>The public repository documents the method used here: eight criteria, the Trifecta scoring table, amplifier scoring guides and the clock formula. You can adapt it for your own incident log, deployment decisions or governance failures.</p>
+            <p>Change what doesn't fit. Use the repository to propose changes or challenge a score on this site.</p>
             <div className="method-open-source-actions">
               <a className="button button-outline" href={FRAMEWORK_REPOSITORY_URL} target="_blank" rel="noopener noreferrer" aria-label="Read the method on GitHub (opens in a new tab)">Read the method on GitHub <Arrow diagonal /></a>
               <a className="text-link" href={`${FRAMEWORK_REPOSITORY_URL}/blob/main/CONTRIBUTING.md`} target="_blank" rel="noopener noreferrer" aria-label="Propose a change on GitHub (opens in a new tab)">Propose a change <Arrow diagonal /></a>
@@ -562,13 +562,13 @@ export default function Methodology({ dataset }: MethodologyProps) {
       <section className="container method-provenance" aria-labelledby="provenance-title">
         <div className="section-heading">
           <p className="eyebrow">07 · Provenance</p>
-          <h2 id="provenance-title">From signal to published record.</h2>
+          <h2 id="provenance-title">How records are produced.</h2>
         </div>
         <ol className="method-pipeline">
-          <li><span>01</span><strong>Scan</strong><p>Twenty-one AI and technology subreddits, plus manually supplied links, provide discovery signals.</p></li>
+          <li><span>01</span><strong>Scan</strong><p>Discovery starts with twenty-one AI and technology subreddits, plus manually supplied links.</p></li>
           <li><span>02</span><strong>Research</strong><p>The workflow reads the original sources behind qualifying developments.</p></li>
-          <li><span>03</span><strong>Assess</strong><p>An AI scoring pass applies the eight criteria and records a rationale for each.</p></li>
-          <li><span>04</span><strong>Edit</strong><p>Separate factual and analytical copy is produced for incident reports.</p></li>
+          <li><span>03</span><strong>Assess</strong><p>AI scores each incident against the eight criteria and gives a reason for each score.</p></li>
+          <li><span>04</span><strong>Edit</strong><p>The workflow writes the factual account and analysis as separate parts of each report.</p></li>
         </ol>
 
         <div className="method-audit-grid">
@@ -578,17 +578,17 @@ export default function Methodology({ dataset }: MethodologyProps) {
             <p>{dataset.assessmentCount} assessments · {dataset.editorialCount} reports covering {dataset.incidents.filter((item) => item.editorial).length} events · {dataset.incidents.filter((item) => !item.editorial).length} assessment-only events · {dataset.incidents.filter((item) => item.scoring.trifectaCount === 3).length} full-Trifecta events.</p>
           </article>
           <article>
-            <h3>Reconciliation policy</h3>
+            <h3>How records are grouped</h3>
             <p>
-              Each incident page shows its current assessment and editorial. Earlier versions remain in the downloadable records, while each grouped event contributes to the clock once. A canonical assessment version supplies the published score.
+              Each incident page shows the current assessment and report. Earlier versions stay in the downloads. A grouped event counts once towards the clock, using the score from its selected assessment version.
             </p>
             <p>
-              AI compares factual records across sources. Very confident matches passing evidence and date checks are grouped automatically; uncertain matches require human review. Every grouping is logged and reversible. Permanent event IDs drive the public record; legacy CVE labels remain upstream references rather than unique keys.
+              AI compares factual records from different sources. Matches are grouped automatically only when confidence is high and evidence and date checks pass. Uncertain matches need human review. Every grouping is logged and can be reversed. Permanent event IDs identify the public records; older CVE labels are kept as source references.
             </p>
           </article>
           <article>
             <h3>Download the records</h3>
-            <p>These exports contain the preserved assessment and editorial versions, with event and source links. Their total-score, classification, clock and timing fields are workflow audit metadata; the app calculates its published 0–{MAX_SCORE} score and clock from the individual criterion values. New records appear here as the live dataset updates.</p>
+            <p>The downloads preserve assessment and report versions, with links to events and sources. Their total scores, classifications, clock readings and timings record what the workflow produced. The site calculates its published 0–{MAX_SCORE} scores and clock from the individual criterion values. New records appear as the live dataset updates.</p>
             <div className="method-downloads">
               <a className="button button-primary" href={assessmentsUrl} download>Assessment CSV</a>
               <a className="button" href={storiesUrl} download>Editorial CSV</a>
@@ -606,12 +606,12 @@ export default function Methodology({ dataset }: MethodologyProps) {
           </div>
           <div className="method-limitations-grid">
             <p><strong>Coverage changes the reading.</strong> More reporting or a wider source list can add evidence points without an equivalent change in underlying risk. Identity checks help avoid double counting, but automated matching can miss duplicates or group separate developments incorrectly.</p>
-            <p><strong>It cannot determine loss of control.</strong> The clock is a consistent editorial lens on selected evidence. It is not a measurement of actual human control, extinction risk or time remaining.</p>
-            <p><strong>The records are automated.</strong> The supplied assessments and reports were produced by an AI workflow and have not been independently fact-checked. Follow the original source before relying on a claim.</p>
-            <p><strong>Judgement remains.</strong> Criteria make disagreement inspectable, not impossible. Scores reflect interpretation and the framework tends to underweight early governance signals.</p>
+            <p><strong>It cannot determine loss of control.</strong> The clock is an editorial judgement based on selected evidence. It does not measure actual human control, extinction risk or time remaining.</p>
+            <p><strong>The records are automated.</strong> The assessments and reports come from an AI workflow and have not been independently fact-checked. Check the original source before relying on a claim.</p>
+            <p><strong>Judgement remains.</strong> The criteria let you inspect the reasoning behind a score, but they cannot settle disagreements. Scores depend on interpretation, and the framework tends to underweight early governance signals.</p>
             <p><strong>No recovery credit.</strong> The index awards no negative scores or credit for improvements. Corrections to scores or event grouping can change the recalculated clock in either direction.</p>
           </div>
-          <p className="method-closing">Transparent methodology does not make a clock objective. It makes the argument available for inspection.</p>
+          <p className="method-closing">The method is public so you can check the reasoning behind our judgements.</p>
         </div>
       </section>
     </div>

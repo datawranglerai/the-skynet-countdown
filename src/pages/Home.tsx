@@ -11,7 +11,7 @@ export default function Home({ dataset }: { dataset: Dataset }) {
   const recent = [...dataset.incidents].reverse().filter((incident) => incident.editorial).slice(0, 3);
   return <>
     <section className="hero container">
-      <div className="hero-copy"><h1>THE FUTURE<br />IS NOT <span>SET.</span></h1><p className="hero-subheading">But we’re keeping score.</p><p className="hero-description">A living record of the AI developments bringing us closer to a world beyond meaningful human control. Every score explained. Every judgement open to question.</p><div className="hero-actions"><a className="button button-primary" href="#/incidents">Explore the incidents <Arrow /></a><a className="text-link" href="#/methodology">How the clock works <Arrow diagonal /></a></div><div className="hero-footnote"><span>↳</span> THE TERMINATOR REFERENCE IS A JOKE.<br /><span className="footnote-second">THE FOOTNOTES AREN’T.</span></div></div>
+      <div className="hero-copy"><h1>THE FUTURE<br />IS NOT <span>SET.</span></h1><p className="hero-subheading">But we’re keeping score.</p><p className="hero-description">We track AI developments that put human control at risk. Each incident has a score, with the reasons and sources published alongside it.</p><div className="hero-actions"><a className="button button-primary" href="#/incidents">Browse the archive <Arrow /></a><a className="text-link" href="#/methodology">How the clock works <Arrow diagonal /></a></div><div className="hero-footnote"><span>↳</span> THE TERMINATOR REFERENCE IS A JOKE.<br /><span className="footnote-second">THE FOOTNOTES AREN’T.</span></div></div>
       <Clock dataset={dataset} />
     </section>
     <section className="stats-strip container" aria-label="Dataset summary">
@@ -20,8 +20,8 @@ export default function Home({ dataset }: { dataset: Dataset }) {
       <div><span className="stat-number stat-accent">{String(dataset.incidents.filter((incident) => incident.assessment.fullTrifecta).length).padStart(2, '0')}</span><span className="stat-caption">FULL TRIFECTA<br />DETECTED</span></div>
       <div className="stat-latest"><span className="stat-caption">LATEST RECORDED EVENT</span><span className="stat-date">{dateLabel(dataset.lastUpdated, true).toUpperCase()}</span><span className="stat-caption">UPDATED AS EVIDENCE ARRIVES</span></div>
     </section>
-    <section className="section container" id="trajectory"><div className="section-heading"><div><div className="eyebrow">01 / THE TRAJECTORY</div><h2>A little closer. One decision at a time.</h2></div><a className="text-link" href="#/methodology">Understand the scale <Arrow diagonal /></a></div><Timeline incidents={dataset.incidents} clock={dataset.clock} currentRemainingSeconds={dataset.remainingSeconds} /></section>
-    <section className="section section-records container" data-analytics-area="recent-incidents"><div className="section-heading"><div><div className="eyebrow">02 / RECENT FIELD REPORTS</div><h2>What moved the needle.</h2></div><a className="text-link" href="#/incidents">All {dataset.incidents.length} developments <Arrow /></a></div><div className="incident-grid">{recent.map((incident, index) => <IncidentCard incident={incident} index={index} key={incident.id} />)}</div></section>
+    <section className="section container" id="trajectory"><div className="section-heading"><div><div className="eyebrow">01 / THE TRAJECTORY</div><h2>How the clock has moved.</h2></div><a className="text-link" href="#/methodology">Understand the scale <Arrow diagonal /></a></div><Timeline incidents={dataset.incidents} clock={dataset.clock} currentRemainingSeconds={dataset.remainingSeconds} /></section>
+    <section className="section section-records container" data-analytics-area="recent-incidents"><div className="section-heading"><div><div className="eyebrow">02 / RECENT REPORTS</div><h2>The latest incidents.</h2></div><a className="text-link" href="#/incidents">All {dataset.incidents.length} developments <Arrow /></a></div><div className="incident-grid">{recent.map((incident, index) => <IncidentCard incident={incident} index={index} key={incident.id} />)}</div></section>
     <section className="manifesto-feature container" aria-labelledby="manifesto-title">
       <div className="eyebrow manifesto-eyebrow">03 / THE FRAMEWORK</div>
       <div className="manifesto-copy">
@@ -34,7 +34,7 @@ export default function Home({ dataset }: { dataset: Dataset }) {
         <ImageCredit filename="Black and White Robot Photo.jpg" />
       </figure>
       <div className="manifesto-note">
-        <p>Three checks. Five amplifiers.<br />Every score explained.</p>
+        <p>Three conditions and five amplifiers.<br />See how each is scored.</p>
         <a className="text-link manifesto-source-link" href={FRAMEWORK_REPOSITORY_URL} target="_blank" rel="noopener noreferrer" aria-label="Read the method on GitHub (opens in a new tab)">
           <svg className="manifesto-source-glow" viewBox="0 0 320 120" preserveAspectRatio="none" fill="none" aria-hidden="true" focusable="false">
             <defs>
@@ -53,7 +53,7 @@ export default function Home({ dataset }: { dataset: Dataset }) {
         </a>
       </div>
       <div className="manifesto-framework">
-        <a className="text-link" href="#/methodology">Explore the methodology <Arrow diagonal /></a>
+        <a className="text-link" href="#/methodology">Read the methodology <Arrow diagonal /></a>
       </div>
     </section>
   </>;
