@@ -81,13 +81,16 @@ test('queues the original titles and referrers when the script loads after sever
   await page.getByRole('link', { name: 'Incident archive', exact: true }).click();
   await page.getByRole('link', { name: 'Methodology', exact: true }).click();
   await expect(page.locator('.method-page')).toBeVisible();
+  await page.getByRole('link', { name: 'Manifesto', exact: true }).click();
+  await expect(page.getByRole('article', { name: 'The future is not set.' })).toBeVisible();
   expect(await hits(page)).toEqual([]);
   release();
-  await expect.poll(() => pageviews(page)).toHaveLength(3);
+  await expect.poll(() => pageviews(page)).toHaveLength(4);
   expect((await pageviews(page)).map(({ path, title, referrer }) => ({ path, title, referrer }))).toEqual([
     { path: '/', title: 'The future is not set. | The Skynet Countdown', referrer: '' },
     { path: '/#/incidents', title: 'The Incident Archive | The Skynet Countdown', referrer: `${SITE}/` },
     { path: '/#/methodology', title: 'The Methodology | The Skynet Countdown', referrer: `${SITE}/#/incidents` },
+    { path: '/#/manifesto', title: 'The Manifesto | The Skynet Countdown', referrer: `${SITE}/#/methodology` },
   ]);
 });
 

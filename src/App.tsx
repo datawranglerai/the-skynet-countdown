@@ -8,6 +8,7 @@ import Home from './pages/Home';
 import Archive from './pages/Archive';
 import Incident from './pages/Incident';
 import Methodology from './pages/Methodology';
+import Manifesto from './pages/Manifesto';
 
 function readRoute() { return window.location.hash.slice(1) || '/'; }
 function isMethodologyRoute(route: string) { return route === '/methodology' || route === '/methodology/event-horizon'; }
@@ -59,9 +60,9 @@ export default function App() {
     return () => window.removeEventListener('hashchange', onHashChange);
   }, []);
 
-  const datasetAvailable = Boolean(dataset);
+  const pageReady = route === '/manifesto' || Boolean(dataset);
   useEffect(() => {
-    if (route === '/methodology/event-horizon' && datasetAvailable) {
+    if (route === '/methodology/event-horizon' && pageReady) {
       window.requestAnimationFrame(() => {
         const target = document.getElementById('event-horizon');
         target?.scrollIntoView({ block: 'start' });
@@ -71,7 +72,7 @@ export default function App() {
     }
     window.scrollTo({ top: 0 });
     main.current?.focus({ preventScroll: true });
-  }, [route, datasetAvailable]);
+  }, [route, pageReady]);
 
   useEffect(() => {
     void refreshDataset();
@@ -102,7 +103,7 @@ export default function App() {
     window.dispatchEvent(new HashChangeEvent('hashchange'));
   }, [incident, incidentRoute]);
   useEffect(() => {
-    document.title = `${incident?.headline ?? (isMethodologyRoute(route) ? 'The Methodology' : route === '/incidents' ? 'The Incident Archive' : 'The future is not set.')} | The Skynet Countdown`.replaceAll('—', '|');
+    document.title = `${incident?.headline ?? (route === '/manifesto' ? 'The Manifesto' : isMethodologyRoute(route) ? 'The Methodology' : route === '/incidents' ? 'The Incident Archive' : 'The future is not set.')} | The Skynet Countdown`.replaceAll('—', '|');
   }, [route, incident]);
   useEffect(() => {
     // Resolve direct report links and aliases before counting them. Refreshing data
@@ -111,12 +112,13 @@ export default function App() {
     if (incident && incidentRoute !== incident.id) return;
     const pageRoute = incident ? `/incidents/${incident.id}`
       : isMethodologyRoute(route) ? '/methodology'
-      : route === '/' || route === '/incidents' ? route
+      : route === '/' || route === '/incidents' || route === '/manifesto' ? route
       : '/not-found';
     trackPageView(pageRoute, document.title);
   }, [route, incidentRoute, incident, dataset, loading]);
   let page;
-  if (!dataset && loading) page = <section className="container empty-state data-state" aria-live="polite"><div className="eyebrow">LIVE RECORD / CONNECTING</div><h1>Loading incidents.</h1><p>The clock will appear when the records have loaded.</p><span className="data-state-pulse" aria-hidden="true" /></section>;
+  if (route === '/manifesto') page = <Manifesto />;
+  else if (!dataset && loading) page = <section className="container empty-state data-state" aria-live="polite"><div className="eyebrow">LIVE RECORD / CONNECTING</div><h1>Loading incidents.</h1><p>The clock will appear when the records have loaded.</p><span className="data-state-pulse" aria-hidden="true" /></section>;
   else if (!dataset && loadError === EMPTY_DATASET_ERROR) page = <section className="container empty-state data-state" role="status"><div className="eyebrow">LIVE RECORD / EMPTY</div><h1>No incidents recorded yet.</h1><p>The clock will appear when the first reviewed event is available.</p><button className="button button-primary" type="button" onClick={() => void refreshDataset()}>Check again <Arrow /></button></section>;
   else if (!dataset) page = <section className="container empty-state data-state" role="alert"><div className="eyebrow">LIVE RECORD / UNAVAILABLE</div><h1>Couldn’t load the incident record.</h1><p>Try again to load the records and show the clock.</p><button className="button button-primary" type="button" onClick={() => void refreshDataset()}>Try again <Arrow /></button></section>;
   else if (dataset.diagnostics.length) page = <section className="container empty-state"><div className="eyebrow">DATA VALIDATION</div><h1>The records need checking.</h1><p>The database contains unresolved records. The clock is withheld until the data passes validation.</p><details><summary>Review {dataset.diagnostics.length} source import issue{dataset.diagnostics.length === 1 ? '' : 's'}</summary><ul>{dataset.diagnostics.map((diagnostic, index) => <li key={index}>{diagnostic}</li>)}</ul></details></section>;
@@ -125,5 +127,5 @@ export default function App() {
   else if (incident) page = <Incident incident={incident} />;
   else if (isMethodologyRoute(route)) page = <Methodology dataset={dataset} />;
   else page = <section className="container empty-state"><div className="eyebrow">404 / NO SIGNAL</div><h1>Report not found.</h1><p>This link may be out of date. You can look for the report in the archive.</p><a className="button button-primary" href="#/incidents">Return to the archive <Arrow /></a></section>;
-  return <><a className="skip-link" href="#main-content" onClick={(event) => { event.preventDefault(); main.current?.focus(); }}>Skip to content</a><header className="site-header" data-analytics-area="header"><div className="container header-inner"><Logo /><nav aria-label="Main navigation"><a href="#/" aria-current={route === '/' ? 'page' : undefined}>The clock</a><a href="#/incidents" aria-current={route.startsWith('/incidents') ? 'page' : undefined}>Incident archive</a><a href="#/methodology" aria-current={isMethodologyRoute(route) ? 'page' : undefined}>Methodology</a></nav><Soundtrack /></div></header><main data-analytics-area="clock" id="main-content" ref={main} tabIndex={-1}>{dataset && loadError && <aside className="data-stale-notice" role="alert"><div><strong>Live update unavailable.</strong><span>Showing the last successfully loaded record{dataset.dataUpdatedAt ? `, current to ${new Date(dataset.dataUpdatedAt).toLocaleString('en-GB')}` : ''}.</span></div><button type="button" onClick={() => void refreshDataset()} disabled={refreshing}>{refreshing ? 'Retrying…' : 'Retry now'}</button></aside>}{page}</main><footer className="site-footer" data-analytics-area="footer"><div className="container footer-main"><div><Logo /><p>A practitioner’s record of AI incidents<br />and human oversight.</p><SupportLink /></div><div className="footer-links"><a href="#/incidents">The evidence <Arrow diagonal /></a><a href="#/methodology">The methodology <Arrow diagonal /></a><a href={FRAMEWORK_REPOSITORY_URL} target="_blank" rel="noopener noreferrer" aria-label="Framework on GitHub (opens in a new tab)">Framework on GitHub <Arrow diagonal /></a><span>BUILT BY HUMANS. SO FAR.</span></div></div><SoundtrackCredit /><div className="container footer-bottom"><span>© 2026 THE SKYNET COUNTDOWN</span><span>THE CLOCK SHOWS OUR JUDGEMENT. IT DOESN’T ESTIMATE ODDS OR PREDICT EVENTS.</span><span>NO AFFILIATION WITH THE ROBOT APOCALYPSE.</span></div></footer></>;
+  return <><a className="skip-link" href="#main-content" onClick={(event) => { event.preventDefault(); main.current?.focus(); }}>Skip to content</a><header className="site-header" data-analytics-area="header"><div className="container header-inner"><Logo /><nav aria-label="Main navigation"><a href="#/" aria-current={route === '/' ? 'page' : undefined}>The clock</a><a href="#/incidents" aria-current={route.startsWith('/incidents') ? 'page' : undefined}>Incident archive</a><a href="#/methodology" aria-current={isMethodologyRoute(route) ? 'page' : undefined}>Methodology</a><a href="#/manifesto" aria-current={route === '/manifesto' ? 'page' : undefined}>Manifesto</a></nav><Soundtrack /></div></header><main data-analytics-area="clock" id="main-content" ref={main} tabIndex={-1}>{route !== '/manifesto' && dataset && loadError && <aside className="data-stale-notice" role="alert"><div><strong>Live update unavailable.</strong><span>Showing the last successfully loaded record{dataset.dataUpdatedAt ? `, current to ${new Date(dataset.dataUpdatedAt).toLocaleString('en-GB')}` : ''}.</span></div><button type="button" onClick={() => void refreshDataset()} disabled={refreshing}>{refreshing ? 'Retrying…' : 'Retry now'}</button></aside>}{page}</main><footer className="site-footer" data-analytics-area="footer"><div className="container footer-main"><div><Logo /><p>A practitioner’s record of AI incidents<br />and human oversight.</p><SupportLink /></div><div className="footer-links"><a href="#/incidents">The evidence <Arrow diagonal /></a><a href="#/methodology">The methodology <Arrow diagonal /></a><a href="#/manifesto">The manifesto <Arrow diagonal /></a><a href={FRAMEWORK_REPOSITORY_URL} target="_blank" rel="noopener noreferrer" aria-label="Framework on GitHub (opens in a new tab)">Framework on GitHub <Arrow diagonal /></a><span>BUILT BY HUMANS. SO FAR.</span></div></div><SoundtrackCredit /><div className="container footer-bottom"><span>© 2026 THE SKYNET COUNTDOWN</span><span>THE CLOCK SHOWS OUR JUDGEMENT. IT DOESN’T ESTIMATE ODDS OR PREDICT EVENTS.</span><span>NO AFFILIATION WITH THE ROBOT APOCALYPSE.</span></div></footer></>;
 }
