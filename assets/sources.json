@@ -34,5 +34,17 @@
 		"artist_name": "Arturo Mendez",
 		"artist_page": "https://unsplash.com/@arturomendez",
 		"url": "https://unsplash.com/photos/grayscale-photo-of-motorcycle-in-a-dark-room-_Itku5P5lfE"
+	},
+	{
+		"filename": "Terminator Photo.jpg",
+		"artist_name": "Coral Grandbois",
+		"artist_page": "https://www.pexels.com/@crgrandbois/",
+		"url": "https://www.pexels.com/photo/futuristic-metal-robot-with-detailed-anatomy-34222354/"
+	},
+	{
+		"filename": "Dark Hallway Red Light.jpg",
+		"artist_name": "cheng feng",
+		"artist_page": "https://unsplash.com/@chengfengrecord",
+		"url": "https://unsplash.com/photos/a-dark-hallway-with-a-red-light-at-the-end-MhKXrKqmtJk?utm_source=unsplash&utm_medium=referral&utm_content=creditShareLink"
 	}
 ]

@@ -509,10 +509,10 @@ summary::-webkit-details-marker { display: none; }
   .report-metrics .mono-label { font-size: 8px; }
   .footer-bottom { flex-wrap: wrap; row-gap: 12px; }
 }
-@media (max-width: 760px) {
+@media (max-width: 900px) {
   .site-header { height: 110px; }
   .header-inner { display: grid; grid-template-columns: 1fr auto; grid-template-rows: 44px 44px; gap: 8px 12px; padding-top: 14px; }
-  .header-inner nav { grid-column: 1 / -1; grid-row: 2; justify-content: center; gap: 32px; height: 44px; }
+  .header-inner nav { grid-column: 1 / -1; grid-row: 2; justify-content: space-between; gap: clamp(10px, 3vw, 32px); height: 44px; }
   .header-inner > .soundtrack { grid-column: 2; grid-row: 1; }
   .soundtrack-message:not(:empty) { top: calc(100% + 52px); }
 }
