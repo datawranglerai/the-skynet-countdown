@@ -48,7 +48,6 @@ export default function Manifesto() {
         <div className="manifesto-paragraphs">
           {paragraphs.map((paragraph, index) => (
             <div className={`manifesto-passage${index === 5 ? ' manifesto-passage-turn' : ''}`} key={paragraph}>
-              <span className="manifesto-passage-number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
               <p>{paragraph}</p>
             </div>
           ))}
