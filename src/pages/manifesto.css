@@ -2,6 +2,7 @@
   position: relative;
   isolation: isolate;
   --manifesto-gutter: clamp(56px, 8vw, 112px);
+  --manifesto-line-offset: 10px;
   --manifesto-bleed: 56px;
 }
 
@@ -107,7 +108,7 @@
   position: absolute;
   top: 13px;
   bottom: 0;
-  left: 10px;
+  left: var(--manifesto-line-offset);
   width: 1px;
   background: var(--line);
   content: '';
@@ -116,18 +117,8 @@
 .manifesto-passage { position: relative; padding-bottom: 40px; }
 .manifesto-passage:last-child { padding-bottom: 0; }
 
-.manifesto-passage-number {
-  position: relative;
-  align-self: start;
-  justify-self: start;
-  padding-block: 6px 12px;
-  background: var(--bg);
-  color: var(--muted);
-  font: 10px/1.6 var(--mono);
-  letter-spacing: .06em;
-}
-
 .manifesto-passage p {
+  grid-column: 2;
   margin: 0;
   color: #c8cdc3;
   font-size: clamp(17px, 1.45vw, 20px);
@@ -137,9 +128,19 @@
 
 .manifesto-passage:first-child p { color: var(--ink); font-size: clamp(19px, 1.6vw, 22px); line-height: 1.75; }
 
-.manifesto-passage-turn { padding-top: 32px; }
-.manifesto-passage-turn p { padding-top: 32px; border-top: 1px solid var(--accent); color: var(--ink); }
-.manifesto-passage-turn .manifesto-passage-number { margin-top: 32px; color: var(--accent); }
+.manifesto-passage-turn { padding-top: 64px; }
+.manifesto-passage-turn p { position: relative; color: var(--ink); }
+
+.manifesto-passage-turn p::before {
+  position: absolute;
+  top: .925em;
+  left: calc(var(--manifesto-line-offset) - var(--manifesto-gutter));
+  width: 7px;
+  height: 7px;
+  background: var(--accent);
+  transform: translate(-50%, -50%) rotate(45deg);
+  content: '';
+}
 
 .manifesto-endmark {
   display: flex;
@@ -175,7 +176,7 @@
 }
 
 @media (max-width: 600px) {
-  .manifesto-page { --manifesto-gutter: 32px; --manifesto-bleed: 20px; }
+  .manifesto-page { --manifesto-gutter: 32px; --manifesto-line-offset: 7px; --manifesto-bleed: 20px; }
   .manifesto-hero { padding-top: 36px; }
   .manifesto-kicker { font-size: 9px; }
   .manifesto-hero h1 { margin-block: 32px 0; font-size: clamp(44px, 11.8vw, 70px); line-height: 1.08; }
@@ -187,14 +188,10 @@
   .manifesto-deck { grid-template-columns: 1fr; margin-bottom: 36px; }
   .manifesto-margin-mark { display: none; }
   .manifesto-deck h2 { font-size: clamp(26px, 6.8vw, 38px); }
-  .manifesto-paragraphs::before { left: 7px; }
   .manifesto-passage { padding-bottom: 32px; }
-  .manifesto-passage-number { font-size: 9px; }
   .manifesto-passage p { font-size: 17px; line-height: 1.8; }
   .manifesto-passage:first-child p { font-size: 18px; }
-  .manifesto-passage-turn { padding-top: 16px; }
-  .manifesto-passage-turn p { padding-top: 24px; }
-  .manifesto-passage-turn .manifesto-passage-number { margin-top: 24px; }
+  .manifesto-passage-turn { padding-top: 40px; }
   .manifesto-endmark { margin-top: 40px; }
   .manifesto-next .text-link { font-size: 12px; }
 }
