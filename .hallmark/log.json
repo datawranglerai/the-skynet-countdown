@@ -1,0 +1,73 @@
+[
+ {
+  "mode": "redesign",
+  "depth": "polish",
+  "scope": "site",
+  "date": "2026-11-11",
+  "prompt": "polish index.html and src of The Skynet Countdown, an editorial index of AI incidents with a symbolic clock",
+  "genre": "editorial",
+  "theme": "the project (DESIGN.md locked system)",
+  "shape": "kept",
+  "hero": "kept",
+  "nav": "logo, four links and the soundtrack switch (kept)",
+  "footer": "logo, description and support left, link column right, credits row (kept)",
+  "imagery": "three credited Unsplash photographs and the SVG clock (kept)",
+  "signature": "the open clock dial with the Event Horizon band",
+  "sections": [
+   "clock hero",
+   "stats strip",
+   "history chart",
+   "recent reports",
+   "framework close",
+   "footer"
+  ],
+  "waived": [
+   "64",
+   "37",
+   "2b",
+   "29",
+   "3",
+   "42",
+   "82",
+   "49b",
+   "75"
+  ],
+  "fixed": [
+   "48",
+   "26a",
+   "40",
+   "75",
+   "34",
+   "50",
+   "6a",
+   "38i",
+   "49a",
+   "63",
+   "4",
+   "55a",
+   "29",
+   "25",
+   "26b",
+   "62",
+   "41",
+   "F1",
+   "F3",
+   "F6",
+   "F16",
+   "F19",
+   "F20"
+  ],
+  "open": [
+   "54",
+   "67",
+   "38iii"
+  ],
+  "pages": [
+   "/",
+   "/#/incidents",
+   "/#/incidents/:id",
+   "/#/methodology",
+   "/#/manifesto"
+  ]
+ }
+]

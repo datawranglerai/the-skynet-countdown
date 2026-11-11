@@ -35,7 +35,7 @@ export function SupportLink() {
 
 export function SeverityBadge({ severity, score }: { severity: RiskSeverity; score?: number }) {
   const noMovement = severity === 'NO_MOVEMENT' || score === 0;
-  return <span className={`severity severity-${noMovement ? 'zero' : severity.toLowerCase()}`}><span />{noMovement ? 'NO MOVEMENT' : severity}</span>;
+  return <span className={`severity severity-${noMovement ? 'zero' : severity.toLowerCase()}`}>{noMovement ? 'NO MOVEMENT' : severity}</span>;
 }
 
 export function dateLabel(value: string, year = false) {
@@ -56,18 +56,30 @@ export function ScoreStrip({ incident }: { incident: Incident }) {
   </div>;
 }
 
-export function IncidentCard({ incident, index }: { incident: Incident; index: number }) {
+// The card shows the opening of the story, ending on a full sentence where one fits.
+function excerpt(text: string, limit = 260) {
+  const clean = text.trim();
+  if (clean.length <= limit) return clean;
+  const window = clean.slice(0, limit + 1);
+  const end = Math.max(window.lastIndexOf('. '), window.lastIndexOf('.\n'), window.endsWith('.') ? window.length - 1 : -1);
+  if (end > 40) return clean.slice(0, end + 1);
+  const first = clean.indexOf('. ');
+  if (first > 0 && first < 400) return clean.slice(0, first + 1);
+  const cut = clean.slice(0, limit);
+  return `${cut.slice(0, Math.max(cut.lastIndexOf(' '), 0)).replace(/[,;:]$/, '')}…`;
+}
+
+export function IncidentCard({ incident }: { incident: Incident }) {
   const belowHorizonThreshold = incident.clockPhase === 'event-horizon' && incident.effectivePoints === 0;
   const gapDestination = incident.clockPhase === 'event-horizon' ? 'MIDNIGHT' : 'EVENT HORIZON';
   return <article className="incident-card">
     <div className="card-top"><SeverityBadge severity={incident.scoring.severity} score={incident.scoring.totalPoints} /><time dateTime={incident.assessment.date}>{dateLabel(incident.assessment.date)}</time></div>
-    <div className="card-number">FIELD REPORT / {String(index + 1).padStart(2, '0')}</div>
     <h3><a href={`#/incidents/${incident.id}`}>{incident.headline}<span className="card-link-cover" /></a></h3>
-    <p>{incident.editorial?.story ?? incident.assessment.title}</p>
+    <p>{excerpt(incident.editorial?.story ?? incident.assessment.title)}</p>
     <div className="card-bottom"><div><ScoreStrip incident={incident} /><span className="mono-label">{incident.scoring.totalPoints}/{MAX_SCORE} RISK SCORE</span></div><span className={`card-movement${belowHorizonThreshold ? ' no-movement' : ''}`}><span>{belowHorizonThreshold
       ? <><b>NO MOVEMENT</b><small>BELOW EVENT HORIZON THRESHOLD</small></>
       : <><b>{formatGapClosedPercent(incident.gapClosedPercent)}</b><small>OF GAP TO {gapDestination}</small></>}
-    </span><Arrow diagonal /></span></div>
+    </span></span></div>
   </article>;
 }
 

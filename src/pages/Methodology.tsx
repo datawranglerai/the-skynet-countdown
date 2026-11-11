@@ -61,17 +61,25 @@ const phaseLabel = (phase: ClockPhase) =>
   phase === 'approach' ? 'Approach' : 'After Event Horizon';
 
 function ExampleInspector({ incidents }: { incidents: Incident[] }) {
-  const exampleIds = useMemo(() => {
+  const examples = useMemo(() => {
     const zero = incidents.find((incident) => incident.scoring.totalPoints === 0);
     const trifecta = incidents.find((incident) => incident.scoring.trifectaCount === 3);
     const highest = incidents.reduce<Incident | undefined>(
       (best, incident) => (!best || incident.scoring.totalPoints > best.scoring.totalPoints ? incident : best),
       undefined,
     );
-    return [...new Set([zero?.id, trifecta?.id, highest?.id].filter(Boolean) as string[])];
+    const picks: Array<[Incident | undefined, string]> = [[zero, 'A zero score'], [trifecta, 'A full Trifecta'], [highest, 'The highest score']];
+    const seen = new Set<string>();
+    const out: Array<{ id: string; label: string }> = [];
+    for (const [candidate, label] of picks) {
+      if (!candidate || seen.has(candidate.id)) continue;
+      seen.add(candidate.id);
+      out.push({ id: candidate.id, label });
+    }
+    return out;
   }, [incidents]);
 
-  const initialId = exampleIds[0] ?? incidents[0]?.id ?? '';
+  const initialId = examples[0]?.id ?? incidents[0]?.id ?? '';
   const [selectedId, setSelectedId] = useState(initialId);
   const incident = incidents.find((item) => item.id === selectedId) ?? incidents[0];
   const selectExample = (id: string) => {
@@ -96,16 +104,17 @@ function ExampleInspector({ incidents }: { incidents: Incident[] }) {
             </option>
           ))}
         </select>
-        {exampleIds.length > 1 && (
+        {examples.length > 1 && (
           <div className="method-example-shortcuts" aria-label="Suggested examples">
-            {exampleIds.map((id, index) => (
+            {examples.map((example, index) => (
               <button
-                className={incident.id === id ? 'is-active' : ''}
-                key={id}
+                className={incident.id === example.id ? 'is-active' : ''}
+                key={example.id}
                 type="button"
-                onClick={() => selectExample(id)}
+                onClick={() => selectExample(example.id)}
               >
-                Example {String(index + 1).padStart(2, '0')}
+                <span>Example {String(index + 1).padStart(2, '0')}</span>
+                <span>{example.label}</span>
               </button>
             ))}
           </div>
@@ -320,8 +329,8 @@ export default function Methodology({ dataset }: MethodologyProps) {
     <div className="method-page" data-analytics-area="methodology">
       <section className="method-hero container" aria-labelledby="method-title">
         <div className="method-hero-heading">
-          <p className="eyebrow">Methodology · v{CALIBRATION.version}</p>
           <h1 id="method-title">Show your<br />working<span>.</span></h1>
+          <p className="method-version">Methodology v{CALIBRATION.version}</p>
         </div>
         <figure className="method-reference">
           <img
@@ -352,7 +361,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
 
         <div className="method-tiers">
           <section className="method-tier method-tier-trifecta">
-            <header><span>Tier 01</span><strong>0–7 points</strong></header>
+            <header><span>Tier 01</span><strong>0 to 7 points</strong></header>
             <h3>The Lethal Trifecta</h3>
             <p>Each condition is binary and needs direct evidence. We weight combinations more heavily because access, hostile input and permission to act externally pose more risk together than their individual scores suggest.</p>
             <div className="method-criteria-list">
@@ -373,7 +382,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
           </section>
 
           <section className="method-tier method-tier-amplifiers">
-            <header><span>Tier 02</span><strong>0–10 points</strong></header>
+            <header><span>Tier 02</span><strong>0 to 10 points</strong></header>
             <h3>Risk amplifiers</h3>
             <p>These five criteria capture broader risks. Each scores 0 (absent), 1 (present) or 2 (significantly present). Add their points to the Trifecta score.</p>
             <div className="method-criteria-list">
@@ -414,7 +423,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
             <p className="eyebrow">02 · Calibration</p>
             <h2 id="formula-title">Within each phase, the same score closes the same share.</h2>
             <div className="method-calibration-intro">
-              <p>The clock starts at {CALIBRATION.startingSeconds / 60} symbolic minutes to midnight, the reading <a href="https://www.imd.org/ibyimd/artificial-intelligence/imd-ai-safety-clock-moves-to-15-minutes-to-midnight/">IMD's AI Safety Clock</a> published in September 2026. We chose an independent, dated assessment that readers can check. It is still an editorial judgement.</p>
+              <p>The clock starts at {CALIBRATION.startingSeconds / 60} symbolic minutes to midnight, the reading <a href="https://www.imd.org/ibyimd/artificial-intelligence/imd-ai-safety-clock-moves-to-15-minutes-to-midnight/">IMD’s AI Safety Clock</a> published in September 2026. We chose an independent, dated assessment that readers can check. It is still an editorial judgement.</p>
               <p>After that starting point, our own assessments and formula determine every movement. The clock does not stay synchronised with IMD’s.</p>
             </div>
           </div>
@@ -494,22 +503,18 @@ export default function Methodology({ dataset }: MethodologyProps) {
 
         <div className="method-horizon-rules" aria-label="Clock rules after Event Horizon">
           <article>
-            <span>01</span>
             <h3>Ten points to move</h3>
             <p>All incidents remain scored, published and visible. Only incidents scoring at least {CALIBRATION.eventHorizonMinimumScore}/{MAX_SCORE} move the clock in this phase. Classification bands do not change: CRITICAL still begins at 7.</p>
           </article>
           <article>
-            <span>02</span>
             <h3>Faster clock movement</h3>
             <p>The qualifying score closes a share of the remaining gap to midnight using a {CALIBRATION.eventHorizonHalfwayPoints}-point half-scale. At the boundary, a 10-point incident moves the hand about {calculateMovementSeconds(0, 10, 'event-horizon').toFixed(2)} seconds; a {MAX_SCORE}-point incident about {calculateMovementSeconds(0, MAX_SCORE, 'event-horizon').toFixed(2)} seconds.</p>
           </article>
           <article>
-            <span>03</span>
             <h3>The formula never reaches midnight</h3>
             <p>After entry, T(E) = {CALIBRATION.horizonSeconds} × 2<sup>−E/{CALIBRATION.eventHorizonHalfwayPoints}</sup>, where E is the cumulative eligible evidence recorded since entry. Qualifying incidents can bring the hand indefinitely close to midnight, but the formula never declares that loss of control has occurred.</p>
           </article>
           <article>
-            <span>04</span>
             <h3>A separate entry adjustment</h3>
             <p>Any editorial adjustment used to cross the boundary is recorded separately from incident movement. Earlier incidents are not rescored under the faster formula, and corrections or event regrouping remain possible.</p>
           </article>
@@ -549,12 +554,12 @@ export default function Methodology({ dataset }: MethodologyProps) {
           </div>
           <div className="method-open-source-copy">
             <p>The public repository documents the method used here: eight criteria, the Trifecta scoring table, amplifier scoring guides and the clock formula. You can adapt it for your own incident log, deployment decisions or governance failures.</p>
-            <p>Change what doesn't fit. Use the repository to propose changes or challenge a score on this site.</p>
+            <p>Change what doesn’t fit. Use the repository to propose changes or challenge a score on this site.</p>
             <div className="method-open-source-actions">
               <a className="button button-outline" href={FRAMEWORK_REPOSITORY_URL} target="_blank" rel="noopener noreferrer" aria-label="Read the method on GitHub (opens in a new tab)">Read the method on GitHub <Arrow diagonal /></a>
               <a className="text-link" href={`${FRAMEWORK_REPOSITORY_URL}/blob/main/CONTRIBUTING.md`} target="_blank" rel="noopener noreferrer" aria-label="Propose a change on GitHub (opens in a new tab)">Propose a change <Arrow diagonal /></a>
             </div>
-            <p className="method-open-source-status"><strong>In development</strong> · The implementation is catching up with this site's methodology.</p>
+            <p className="method-open-source-status"><strong>In development</strong> · The implementation is catching up with this site’s methodology.</p>
           </div>
         </div>
       </section>
@@ -575,7 +580,12 @@ export default function Methodology({ dataset }: MethodologyProps) {
           <article>
             <p className="eyebrow">Current data release</p>
             <strong>{dataset.incidents.length}</strong><span>unique events</span>
-            <p>{dataset.assessmentCount} assessments · {dataset.editorialCount} reports covering {dataset.incidents.filter((item) => item.editorial).length} events · {dataset.incidents.filter((item) => !item.editorial).length} assessment-only events · {dataset.incidents.filter((item) => item.scoring.trifectaCount === 3).length} full-Trifecta events.</p>
+            <ul className="method-release-facts">
+              <li>{dataset.assessmentCount} assessments</li>
+              <li>{dataset.editorialCount} reports covering {dataset.incidents.filter((item) => item.editorial).length} events</li>
+              <li>{dataset.incidents.filter((item) => !item.editorial).length} assessment-only events</li>
+              <li>{dataset.incidents.filter((item) => item.scoring.trifectaCount === 3).length} full-Trifecta events</li>
+            </ul>
           </article>
           <article>
             <h3>How records are grouped</h3>
@@ -588,7 +598,7 @@ export default function Methodology({ dataset }: MethodologyProps) {
           </article>
           <article>
             <h3>Download the records</h3>
-            <p>The downloads preserve assessment and report versions, with links to events and sources. Their total scores, classifications, clock readings and timings record what the workflow produced. The site calculates its published 0–{MAX_SCORE} scores and clock from the individual criterion values. New records appear as the live dataset updates.</p>
+            <p>The downloads preserve assessment and report versions, with links to events and sources. Their total scores, classifications, clock readings and timings record what the workflow produced. The site calculates its published 0 to {MAX_SCORE} scores and clock from the individual criterion values. New records appear as the live dataset updates.</p>
             <div className="method-downloads">
               <a className="button button-primary" href={assessmentsUrl} download>Assessment CSV</a>
               <a className="button" href={storiesUrl} download>Editorial CSV</a>

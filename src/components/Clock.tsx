@@ -76,7 +76,7 @@ export default function Clock({ dataset }: { dataset: Dataset }) {
         <path d="M129 290h12m-6-6v12m324-6h12m-6-6v12" stroke="#68705f" />
         <text x="300" y="139" textAnchor="middle" className="dial-label">MIDNIGHT / 00:00</text>
       </svg>
-      <div className="clock-readout"><div className="clock-eyebrow"><span /> CURRENT POSITION</div><div className={`clock-digits${clockLabel.startsWith('>') ? ' is-boundary' : ''}`}>{clockLabel}</div><div className="clock-origin"><span>FROM</span><strong>{formatTime(CALIBRATION.startingSeconds)}</strong><span className="clock-unit">SYMBOLIC MIN : SEC</span></div><div className="clock-pressure"><span className="pressure-dot" />{formatPressure(dataset.pressure)}<span>/100 EVIDENCE PRESSURE</span></div></div>
+      <div className="clock-readout"><div className="clock-eyebrow"><span /> CURRENT POSITION</div><div className={`clock-digits${clockLabel.startsWith('>') ? ' is-boundary' : ''}`}>{clockLabel}</div><div className="clock-origin"><span>FROM</span><strong>{formatTime(CALIBRATION.startingSeconds)}</strong><span className="clock-unit">SYMBOLIC MIN : SEC</span></div><div className="clock-pressure">{formatPressure(dataset.pressure)}<span>/100 EVIDENCE PRESSURE</span></div></div>
       </div>
       <a className="event-horizon-callout" href="#/methodology/event-horizon" aria-label="Event Horizon at 02:00: point of no return. Read the methodology">
         <span className="event-horizon-callout-title">EVENT HORIZON</span>
@@ -86,8 +86,8 @@ export default function Clock({ dataset }: { dataset: Dataset }) {
     </div>
     {horizonActive && <div className="event-horizon-status is-active">
       <span className="event-horizon-state"><i />PHASE ACTIVE</span>
-      {dataset.clock.approval?.editorialUrl && <a className="event-horizon-editorial" href={dataset.clock.approval.editorialUrl}>READ THE DECISION ↗</a>}
+      {dataset.clock.approval?.editorialUrl && <a className="event-horizon-editorial" href={dataset.clock.approval.editorialUrl}>READ THE DECISION</a>}
     </div>}
-    <div className="clock-panel-bottom"><a href="#/methodology">SHOW THE WORKING ↗</a></div>
+    <div className="clock-panel-bottom"><a href="#/methodology">SHOW THE WORKING</a></div>
   </div>;
 }

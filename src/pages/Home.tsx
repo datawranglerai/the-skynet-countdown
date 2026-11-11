@@ -11,21 +11,21 @@ export default function Home({ dataset }: { dataset: Dataset }) {
   const recent = [...dataset.incidents].reverse().filter((incident) => incident.editorial).slice(0, 3);
   return <>
     <section className="hero container">
-      <div className="hero-copy"><h1>THE FUTURE<br />IS NOT <span>SET.</span></h1><p className="hero-subheading">But we’re keeping score.</p><p className="hero-description">We track AI developments that put human control at risk. Each incident has a score, with the reasons and sources published alongside it.</p><div className="hero-actions"><a className="button button-primary" href="#/incidents">Browse the archive <Arrow /></a><a className="text-link" href="#/methodology">How the clock works <Arrow diagonal /></a></div><div className="hero-footnote"><span>↳</span> THE TERMINATOR REFERENCE IS A JOKE.<br /><span className="footnote-second">THE FOOTNOTES AREN’T.</span></div></div>
+      <div className="hero-copy"><h1>THE FUTURE<br />IS NOT <span>SET.</span></h1><p className="hero-subheading">But we’re keeping score.</p><p className="hero-description">We track AI developments that put human control at risk. Each incident has a score, with the reasons and sources published alongside it.</p><div className="hero-actions"><a className="button button-primary" href="#/incidents">Browse the archive</a><a className="text-link" href="#/methodology">How the clock works</a></div><div className="hero-footnote">THE TERMINATOR REFERENCE IS A JOKE.<br /><span className="footnote-second">THE FOOTNOTES AREN’T.</span></div></div>
       <Clock dataset={dataset} />
     </section>
     <section className="stats-strip container" aria-label="Dataset summary">
       <div><span className="stat-number">{String(dataset.incidents.length).padStart(2, '0')}</span><span className="stat-caption">DEVELOPMENTS<br />ON THE RECORD</span></div>
       <div><span className="stat-number">{dataset.totalPoints}</span><span className="stat-caption">CUMULATIVE<br />EVIDENCE POINTS</span></div>
       <div><span className="stat-number stat-accent">{String(dataset.incidents.filter((incident) => incident.assessment.fullTrifecta).length).padStart(2, '0')}</span><span className="stat-caption">FULL TRIFECTA<br />DETECTED</span></div>
-      <div className="stat-latest"><span className="stat-caption">LATEST RECORDED EVENT</span><span className="stat-date">{dateLabel(dataset.lastUpdated, true).toUpperCase()}</span><span className="stat-caption">UPDATED AS EVIDENCE ARRIVES</span></div>
+      <div className="stat-latest"><span className="stat-caption">LATEST RECORDED EVENT</span><span className="stat-date">{dateLabel(dataset.lastUpdated, true).toUpperCase()}</span></div>
     </section>
-    <section className="section container" id="trajectory"><div className="section-heading"><div><div className="eyebrow">01 / THE TRAJECTORY</div><h2>How the clock has moved.</h2></div><a className="text-link" href="#/methodology">Understand the scale <Arrow diagonal /></a></div><Timeline incidents={dataset.incidents} clock={dataset.clock} currentRemainingSeconds={dataset.remainingSeconds} /></section>
-    <section className="section section-records container" data-analytics-area="recent-incidents"><div className="section-heading"><div><div className="eyebrow">02 / RECENT REPORTS</div><h2>The latest incidents.</h2></div><a className="text-link" href="#/incidents">All {dataset.incidents.length} developments <Arrow /></a></div><div className="incident-grid">{recent.map((incident, index) => <IncidentCard incident={incident} index={index} key={incident.id} />)}</div></section>
+    <section className="section container" id="trajectory"><div className="section-heading"><div><div className="eyebrow">01 / THE TRAJECTORY</div><h2>How the clock has moved.</h2></div><a className="text-link" href="#/methodology">Understand the scale</a></div><Timeline incidents={dataset.incidents} clock={dataset.clock} currentRemainingSeconds={dataset.remainingSeconds} /></section>
+    <section className="section section-records container" data-analytics-area="recent-incidents"><div className="section-heading"><div><div className="eyebrow">02 / RECENT REPORTS</div><h2>The latest incidents.</h2></div><a className="text-link" href="#/incidents">All {dataset.incidents.length} developments</a></div><div className="incident-grid">{recent.map((incident) => <IncidentCard incident={incident} key={incident.id} />)}</div></section>
     <section className="manifesto-feature container" aria-labelledby="manifesto-title">
       <div className="eyebrow manifesto-eyebrow">03 / THE FRAMEWORK</div>
       <div className="manifesto-copy">
-        <h2 id="manifesto-title">NO FATE BUT<br /><span>WHAT WE <em>MAKE.</em></span></h2>
+        <h2 id="manifesto-title">NO FATE BUT<br /><span>WHAT WE <span className="manifesto-accent">MAKE.</span></span></h2>
       </div>
       <figure className="manifesto-visual">
         <div className="manifesto-portrait">
@@ -53,7 +53,7 @@ export default function Home({ dataset }: { dataset: Dataset }) {
         </a>
       </div>
       <div className="manifesto-framework">
-        <a className="text-link" href="#/methodology">Read the methodology <Arrow diagonal /></a>
+        <a className="text-link" href="#/methodology">Read the methodology</a>
       </div>
     </section>
   </>;

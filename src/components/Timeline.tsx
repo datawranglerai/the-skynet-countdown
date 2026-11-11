@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { trackEvent } from '../analytics';
 import type { Dataset, Incident } from '../lib/types';
 import { CALIBRATION, formatTime, formatGapClosedPercent } from '../lib/calibration';
-import { Arrow, dateLabel, movementLabel } from './Shared';
+import { dateLabel, movementLabel } from './Shared';
 
 export default function Timeline({ incidents, clock, currentRemainingSeconds }: { incidents: Incident[]; clock?: Dataset['clock']; currentRemainingSeconds?: number }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -37,7 +37,7 @@ export default function Timeline({ incidents, clock, currentRemainingSeconds }: 
       <div className="chart-key"><span><i /> SYMBOLIC DISTANCE TO MIDNIGHT</span><span>CALCULATED FROM INCIDENT SCORES</span></div>
       <svg className="timeline-chart" viewBox="0 0 930 240" role="img" aria-label={`Clock history from ${dateLabel(incidents[0].assessment.date)} to ${dateLabel(incidents.at(-1)!.assessment.date)}. Starting at ${startingSeconds / 60} symbolic minutes, the clock reaches ${formatTime(currentRemainingSeconds ?? incidents.at(-1)!.remainingSeconds)}.${clock?.transition ? ' The human-approved Event Horizon entry is marked separately from incident movement.' : ''} Use the slider below to inspect each event.`}>
         <defs><linearGradient id="chart-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#f15b40" stopOpacity=".14" /><stop offset="1" stopColor="#f15b40" stopOpacity="0" /></linearGradient></defs>
-        {[25, 80, 135, 190].map((gridY, index) => <g key={gridY}><line x1="24" y1={gridY} x2="878" y2={gridY} stroke="#30372f" strokeDasharray="3 6" /><text x="894" y={gridY + 4} className="chart-axis">{index * startingSeconds / 180}m</text></g>)}
+        {[25, 80, 135, 190].map((gridY, index) => <g key={gridY}><line x1="24" y1={gridY} x2="878" y2={gridY} stroke="#30372f" strokeDasharray="3 6" /><text x="926" y={gridY + 4} textAnchor="end" className="chart-axis">{index * startingSeconds / 180}m</text></g>)}
         <line className="timeline-horizon-line" x1="24" y1={horizonY} x2="878" y2={horizonY} />
         <text x="30" y={horizonY - 6} className="timeline-horizon-label">EVENT HORIZON · 02:00</text>
         <path d={`${fullPath} V207H24Z`} fill="url(#chart-fill)" />
@@ -58,13 +58,12 @@ export default function Timeline({ incidents, clock, currentRemainingSeconds }: 
     </div>
     <div className="timeline-selected" aria-live="polite">
       <div className="eyebrow">{dateLabel(event.assessment.date, true)}</div>
-      <span className="timeline-time">{formatTime(event.remainingSeconds)}</span>
-      <span className="mono-label">SYMBOLIC MINUTES REMAINING</span>
+      <p className="timeline-reading"><span className="timeline-time">{formatTime(event.remainingSeconds)}</span><span className="mono-label">SYMBOLIC MINUTES REMAINING</span></p>
       <h3><a href={`#/incidents/${event.id}`}>{event.headline}</a></h3>
       <div className="timeline-event-bottom"><span>{belowHorizonThreshold
-        ? <><b className="timeline-gap no-movement">BELOW EVENT HORIZON THRESHOLD · NO CLOCK MOVEMENT</b><small>{event.scoring.totalPoints} PUBLISHED POINTS · 10 REQUIRED TO MOVE THE CLOCK</small></>
-        : <><b className="timeline-gap">{formatGapClosedPercent(event.gapClosedPercent)} OF GAP TO {gapDestination}</b><small>{event.effectivePoints} CLOCK-ELIGIBLE POINTS · {movementLabel(event.movementSeconds)} AT THIS POINT</small></>}
-      </span><a href={`#/incidents/${event.id}`} aria-label={`Read ${event.headline}`}><Arrow diagonal /></a></div>
+        ? <><b className="timeline-gap no-movement">BELOW EVENT HORIZON THRESHOLD<br />NO CLOCK MOVEMENT</b><small>{event.scoring.totalPoints} PUBLISHED POINTS<br />10 REQUIRED TO MOVE THE CLOCK</small></>
+        : <><b className="timeline-gap">{formatGapClosedPercent(event.gapClosedPercent)} OF GAP TO {gapDestination}</b><small>{event.effectivePoints} CLOCK-ELIGIBLE POINTS<br />{movementLabel(event.movementSeconds)} AT THIS POINT</small></>}
+      </span></div>
     </div>
   </div>;
 }
