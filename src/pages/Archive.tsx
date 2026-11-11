@@ -19,7 +19,7 @@ export default function Archive({ dataset }: { dataset: Dataset }) {
     return text.includes(query.trim().toLowerCase()) && matchesSeverity && (!leadingOnly || assessment.leadingIndicator);
   }).sort((a, b) => sort === 'score' ? b.scoring.totalPoints - a.scoring.totalPoints || b.assessment.date.localeCompare(a.assessment.date) : sort === 'oldest' ? a.assessment.date.localeCompare(b.assessment.date) : b.assessment.date.localeCompare(a.assessment.date)), [dataset.incidents, query, severity, leadingOnly, sort]);
 
-  return <div className="container archive-page" data-analytics-area="archive"><header className="page-intro"><div className="eyebrow">THE EVIDENCE</div><h1>THE INCIDENT<br /><span>ARCHIVE.</span></h1><p>Read what happened and the reasoning behind each score.</p>
+  return <div className="container archive-page" data-analytics-area="archive"><header className="page-intro"><h1>THE INCIDENT<br />ARCHIVE<span>.</span></h1><p>Read what happened and the reasoning behind each score.</p>
       <p className="archive-ai-disclosure">
         <span className="archive-ai-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1" /><path d="M9 2v4m6-4v4M9 18v4m6-4v4M2 9h4m-4 6h4m12-6h4m-4 6h4" /><rect x="10" y="10" width="4" height="4" /></svg>AI-generated records</span>
         <span>Sources linked in every report.</span>

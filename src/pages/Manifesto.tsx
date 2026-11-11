@@ -19,7 +19,7 @@ export default function Manifesto() {
     <article className="manifesto-page container" aria-labelledby="manifesto-heading" data-analytics-area="manifesto">
       <header className="manifesto-hero">
         <div className="manifesto-hero-copy">
-          <h1 id="manifesto-heading"><span>The future </span><span>is not <span className="manifesto-accent">set.</span></span></h1>
+          <h1 id="manifesto-heading"><span>The future </span><span>is not set<span className="manifesto-accent">.</span></span></h1>
         </div>
         <figure className="manifesto-hero-visual">
           <div className="manifesto-atmosphere">
@@ -40,7 +40,7 @@ export default function Manifesto() {
 
       <div className="manifesto-essay">
         <div className="manifesto-deck">
-          <h2>With great power comes great <span>irresponsibility.</span></h2>
+          <h2>With great power comes great irresponsibility<span>.</span></h2>
         </div>
         <div className="manifesto-paragraphs">
           {paragraphs.map((paragraph, index) => (

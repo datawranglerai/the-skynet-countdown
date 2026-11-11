@@ -20,12 +20,11 @@ export default function Home({ dataset }: { dataset: Dataset }) {
       <div><span className="stat-number stat-accent">{String(dataset.incidents.filter((incident) => incident.assessment.fullTrifecta).length).padStart(2, '0')}</span><span className="stat-caption">FULL TRIFECTA<br />DETECTED</span></div>
       <div className="stat-latest"><span className="stat-caption">LATEST RECORDED EVENT</span><span className="stat-date">{dateLabel(dataset.lastUpdated, true).toUpperCase()}</span></div>
     </section>
-    <section className="section container" id="trajectory"><div className="section-heading"><div><div className="eyebrow">01 / THE TRAJECTORY</div><h2>How the clock has moved.</h2></div><a className="text-link" href="#/methodology">Understand the scale</a></div><Timeline incidents={dataset.incidents} clock={dataset.clock} currentRemainingSeconds={dataset.remainingSeconds} /></section>
-    <section className="section section-records container" data-analytics-area="recent-incidents"><div className="section-heading"><div><div className="eyebrow">02 / RECENT REPORTS</div><h2>The latest incidents.</h2></div><a className="text-link" href="#/incidents">All {dataset.incidents.length} developments</a></div><div className="incident-grid">{recent.map((incident) => <IncidentCard incident={incident} key={incident.id} />)}</div></section>
+    <section className="section container" id="trajectory"><div className="section-heading"><div><h2>How the clock has moved.</h2></div><a className="text-link" href="#/methodology">Understand the scale</a></div><Timeline incidents={dataset.incidents} clock={dataset.clock} currentRemainingSeconds={dataset.remainingSeconds} /></section>
+    <section className="section section-records container" data-analytics-area="recent-incidents"><div className="section-heading"><div><h2>The latest incidents.</h2></div><a className="text-link" href="#/incidents">All {dataset.incidents.length} developments</a></div><div className="incident-grid">{recent.map((incident) => <IncidentCard incident={incident} key={incident.id} />)}</div></section>
     <section className="manifesto-feature container" aria-labelledby="manifesto-title">
-      <div className="eyebrow manifesto-eyebrow">03 / THE FRAMEWORK</div>
       <div className="manifesto-copy">
-        <h2 id="manifesto-title">NO FATE BUT<br /><span>WHAT WE <span className="manifesto-accent">MAKE.</span></span></h2>
+        <h2 id="manifesto-title">NO FATE BUT<br /><span>WHAT WE MAKE<span className="manifesto-accent">.</span></span></h2>
       </div>
       <figure className="manifesto-visual">
         <div className="manifesto-portrait">

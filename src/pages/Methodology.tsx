@@ -245,7 +245,7 @@ function IncidentCalculator({ dataset }: { dataset: Dataset }) {
           </div>
         </fieldset>
         <div className="method-control-group">
-          <p className="eyebrow">01 · Trifecta</p>
+          <p className="eyebrow">Trifecta</p>
           {CRITERIA.filter(({ tier }) => tier === 'trifecta').map((criterion) => (
             <label className="method-toggle" key={criterion.key}>
               <input
@@ -261,7 +261,7 @@ function IncidentCalculator({ dataset }: { dataset: Dataset }) {
         </div>
 
         <div className="method-control-group">
-          <p className="eyebrow">02 · Amplifiers</p>
+          <p className="eyebrow">Amplifiers</p>
           {CRITERIA.filter(({ tier }) => tier === 'amplifier').map((criterion) => (
             <fieldset className="method-stepper" key={criterion.key}>
               <legend>{criterion.shortLabel}</legend>
@@ -354,7 +354,6 @@ export default function Methodology({ dataset }: MethodologyProps) {
 
       <section className="method-score-section container" aria-labelledby="scoring-title">
         <div className="section-heading">
-          <p className="eyebrow">01 · Assessment</p>
           <h2 id="scoring-title">How incidents are scored.</h2>
           <p>Score what happened, not the most dramatic thing that could happen next.</p>
         </div>
@@ -420,7 +419,6 @@ export default function Methodology({ dataset }: MethodologyProps) {
       <section className="method-formula-section" aria-labelledby="formula-title">
         <div className="container method-formula-layout">
           <div className="section-heading">
-            <p className="eyebrow">02 · Calibration</p>
             <h2 id="formula-title">Within each phase, the same score closes the same share.</h2>
             <div className="method-calibration-intro">
               <p>The clock starts at {CALIBRATION.startingSeconds / 60} symbolic minutes to midnight, the reading <a href="https://www.imd.org/ibyimd/artificial-intelligence/imd-ai-safety-clock-moves-to-15-minutes-to-midnight/">IMD’s AI Safety Clock</a> published in September 2026. We chose an independent, dated assessment that readers can check. It is still an editorial judgement.</p>
@@ -463,7 +461,6 @@ export default function Methodology({ dataset }: MethodologyProps) {
 
       <section id="event-horizon" tabIndex={-1} className="container method-horizon-section" aria-labelledby="event-horizon-title">
         <div className="method-horizon-heading">
-          <p className="eyebrow">03 · Phase boundary</p>
           <p className="method-horizon-time">{formatTime(CALIBRATION.horizonSeconds)}</p>
           <h2 id="event-horizon-title">Event Horizon<span>.</span></h2>
           <p className={`method-horizon-status ${dataset.clock.approval ? 'is-active' : ''}`}>
@@ -528,7 +525,6 @@ export default function Methodology({ dataset }: MethodologyProps) {
 
       <section className="container method-examples-section" aria-labelledby="examples-title">
         <div className="section-heading">
-          <p className="eyebrow">04 · Evidence</p>
           <h2 id="examples-title">Inspect a worked assessment.</h2>
           <p>Choose an incident to see the reasons for its score, the share of the gap it closed and the seconds it moved the clock at that position.</p>
         </div>
@@ -538,7 +534,6 @@ export default function Methodology({ dataset }: MethodologyProps) {
       <section className="method-calculator-section" aria-labelledby="calculator-title">
         <div className="container">
           <div className="section-heading">
-            <p className="eyebrow">05 · Calculator</p>
             <h2 id="calculator-title">Try a hypothetical incident.</h2>
             <p>Set the eight criteria to see the score and resulting clock movement.</p>
           </div>
@@ -549,7 +544,6 @@ export default function Methodology({ dataset }: MethodologyProps) {
       <section className="container method-open-source" aria-labelledby="open-method-title">
         <div className="method-open-source-panel">
           <div className="method-open-source-heading">
-            <p className="eyebrow">06 · Open method</p>
             <h2 id="open-method-title">The method is open<span>.</span></h2>
           </div>
           <div className="method-open-source-copy">
@@ -566,7 +560,6 @@ export default function Methodology({ dataset }: MethodologyProps) {
 
       <section className="container method-provenance" aria-labelledby="provenance-title">
         <div className="section-heading">
-          <p className="eyebrow">07 · Provenance</p>
           <h2 id="provenance-title">How records are produced.</h2>
         </div>
         <ol className="method-pipeline">
@@ -611,7 +604,6 @@ export default function Methodology({ dataset }: MethodologyProps) {
       <section className="method-limitations" aria-labelledby="limitations-title">
         <div className="container">
           <div className="section-heading">
-            <p className="eyebrow">08 · Read before panicking</p>
             <h2 id="limitations-title">What this index cannot tell you.</h2>
           </div>
           <div className="method-limitations-grid">
